@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,20 +7,54 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
+model Business {
   id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
+  name      String
+  slug      String   @unique
+  tagline   String?
+  city      String
+  address   String
+  phone     String
+  email     String?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  services  Service[]
 }
 
-model Post {
+model Service {
+  id             String   @id @default(cuid())
+  businessId     String
+  business       Business @relation(fields: [businessId], references: [id])
+  name           String
+  description    String?
+  durationMin    Int
+  priceCents     Int
+  peakPriceCents Int
+  category       String?
+  active         Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  appointments   Appointment[]
+}
+
+model Client {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String
+  email       String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  appointments Appointment[]
+}
+
+model Appointment {
   id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
+  serviceId String
+  service   Service  @relation(fields: [serviceId], references: [id])
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id])
+  startAt   DateTime
+  endAt     DateTime
+  priceCents Int
+  status    String   @default("pending") // pending | confirmed | completed | cancelled
+  notes     String?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
