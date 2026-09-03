@@ -190,3 +190,33 @@ Stage Summary:
 - Dve novi prodajni funkciji: "kdo je na vrsti" (ponavljajoči obiski) in samodejno varovanje baze
 - Upsell zgodba: papirni koledar ne zna "vsake 4 tedne" — sistem pokliče stranke namesto lastnice; samodejni backup zmanjša podporo
 - Naslednji možni koraki: no-show sledenje, iCal izvoz, odpoved prek povezave, pilot namestitev pri pravem salonu
+
+---
+Task ID: 9
+Agent: Z.ai Code (glavni agent)
+Task: No-show sledenje + odpoved prek povezave + iCal izvoz (nadaljevanje seznama funkcij)
+
+Work Log:
+- Prisma: Appointment.cancelToken (unikatna 12-mestna koda, @unique) + db:push; status dobi vrednost no_show
+- NOV API /api/appointments/cancel: GET (podatki termina po žetonu, brez imena/telefona) + POST (odpoved, validacija: 404 neznano, 409 že odpovedan/čas minil) — javna pot, žeton = overitev
+- NOV API /api/appointments/ical (PIN): VCALENDAR/VEVENT z CRLF, escape \; , DTSTART/DTEND UTC, STATUS TENTATE/CONFIRMED, obdobje -30 dni do +6 mesecev; Content-Disposition .ics
+- POST /api/appointments: generira cancelToken; GET: zdaj PIN-zaščiten (telefoni strank niso več javni) + vrni cancelToken
+- PATCH /api/appointments/[id]: enum + no_show
+- Clients: izostanki se štejejo ločeno (groupBy no_show), ne v obiske/prihodke; vsi statusni filtri po API-jih notIn [cancelled, no_show]
+- CancelDialog (nova komponenta na /?cancel=token, mount v page.tsx): stanja loading/ready/cancelling/cancelled/error, URL počiščen po odprtju
+- BookingWidget potrditev: prikaz odpovedne povezave + Kopiraj (lib/clipboard.ts — Clipboard API z timeoutom 1,5 s + execCommand fallback za http LAN)
+- RemindersDialog: WhatsApp besedilo vsebuje "Če ne morete priti, termin odpovejte tukaj: <povezava>"
+- Dashboard: gumb "Ni prila" (UserX) na preteklih terminih; gumb za kopiranje odpovedne povezave (Link2) na prihodnjih; iCal gumb (CalendarArrowDown — CalendarDown ne obstaja v lucide!) v glavi; print brez no_show
+- ClientsTab: rdeča oznaka "N× ni prišla" (AlertTriangle)
+- POPRAVKI NAJDENI Z E2E: (1) loadAppointments 401 med zaklenjenostjo → efekti zdaj čakajo na !locked; (2) samodejni odklep s shranjenim PIN-om po osvežitvi; (3) clipboard obesitev → timeout race; (4) mobilni preliv demo zavihkov → kratke oznake (Stranka/Lastnik) pod sm
+- Demo: vsi termini dobili cancelToken (backfill), Maja Kos današnji 10:00 = no_show (demo rdeče oznake); seed mk() generira žetone
+- Restart dev (turbopack): rm .next + start-dev.sh; instrumentacija OK, samodejna varnostna kopija ustvarjena
+- E2E (agent-browser): celoten strankin tok (rezervacija → prikaz povezave → obisk /?cancel= → dialog s podatki → Odpovej → "Termin je odpovedan" → DB status=cancelled); PIN: 401 brez/napačnega, 200 pravi; koledar naložen po odklepu; "Ni prila" gumb → oznaka + števec pri stranki; copy-link gumb → toast; spomniki → wa.me href vsebuje ?cancel=; iCal gumb → toast + veljavna .ics (CRLF); 409 ob ponovni odpovedi; mobilni 375px: brez preliva, noga na dnu; 0 konzolnih napak; lint čist
+- Testni podatki počiščeni (Odpoved Test, Test Niprisla), PIN ponastavljen (demo odprta)
+- README (nove funkcije, poti API-jev, podatkovni model) + usb-template NAVODILA/ZA-TEBE dopolnjeni
+- Push: commit 698da5f na github.com/markec12345678/TerminAI (remote == local)
+
+Stage Summary:
+- Tri nove prodajne funkcije: odpoved z enim klikom (stranka sama), no-show evidenca (kdo nastavlja), iCal izvoz (koledar v telefonu)
+- Varnostna zgoda: seznam terminov (telefoni!) zdaj za PIN-om, javna rezervacija pa ostaja odprta
+- Naslednji možni koraki: pilot namestitev pri pravem salonu, demo skript za prodajo, online faza (WhatsApp Business API = samodejna odpoved/spomniki)
