@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Sparkles, ArrowDown, Bell, CalendarCheck, TrendingUp, PhoneOff } from 'lucide-react'
+import { Sparkles, ArrowDown, Bell, CalendarCheck, TrendingUp, PhoneOff, WifiOff } from 'lucide-react'
 
 export function Hero() {
   return (
@@ -12,8 +12,8 @@ export function Hero() {
       <div className="relative mx-auto grid max-w-6xl gap-10 px-4 pb-16 pt-14 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-12 lg:pb-24 lg:pt-20">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1.5 text-xs font-medium text-primary">
-            <Sparkles className="h-3.5 w-3.5" />
-            AI recepcionarka · slovenski salon
+            <WifiOff className="h-3.5 w-3.5" />
+            Deluje tudi brez interneta · podatki ostanejo pri vas
           </div>
 
           <h1 className="mt-5 font-display text-4xl font-semibold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
@@ -23,8 +23,9 @@ export function Hero() {
 
           <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
             TerminAI je rezervacijski sistem za frizerske, kozmetične in druge salone. Stranke rezervirajo same
-            <strong className="text-foreground"> 24/7</strong>, AI recepcionarka Ana odgovarja namesto vas, spomniki
-            pa izostanke zmanjšajo za <strong className="text-foreground">do 40 %</strong>.
+            <strong className="text-foreground"> 24/7</strong> — na vašem računalniku, brez naročnine in brez
+            odvisnosti od interneta. Izostanki se zmanjšajo za <strong className="text-foreground">do 40 %</strong>,
+            AI recepcionarka Ana pa je na voljo kot <strong className="text-foreground">dodatek</strong>.
           </p>
 
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -66,7 +67,7 @@ export function Hero() {
             <div className="mt-2 font-medium">Ana Novak</div>
             <div className="text-xs text-muted-foreground">Striženje — ženske · sob 10:30</div>
             <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600">
-              <Bell className="h-3 w-3" /> SMS spominik poslan
+              <WifiOff className="h-3 w-3" /> Brez interneta · offline
             </div>
           </div>
 

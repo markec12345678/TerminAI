@@ -42,3 +42,23 @@ Stage Summary:
 - Postopek pri stranki: NAMESTI.bat → "Nastavi pravi salon" (reset) → vnos NJIHOVIH storitev prek UI → test na telefonih (isti WiFi, http://IP:3456) → NAREDI-REZERVO.bat pred odhodom
 - Dev server: teče kot daemon (start-dev.sh) — stabilen čez klice
 - Še online faza (kasneje): prenos baze na strežnik, vklop AI, SMS integracija
+
+---
+Task ID: 3
+Agent: Z.ai Code (glavni agent)
+Task: Rebranding strani z SaaS/AI-centričnega na offline/USB model — AI kot neobvezen dodatek
+
+Work Log:
+- Hero: badge "AI recepcionarka" → "Deluje tudi brez interneta · podatki ostanejo pri vas"; kop omenja Ano izključno kot dodatek; kartica "SMS spominik poslan" → "Brez interneta · offline"
+- Features: dodani kartici "Deluje brez interneta" (WifiOff) in "Podatki ostanejo pri vas" (HardDrive); Ana AI pomaknjena na zadnje mesto z oznako "dodatek"; odstranjeni SMS/Baza kartici
+- Kako deluje: 3 koraki preoblikovani v zgodbo namestitve (USB ključek pri stranki → stranke rezervirajo prek WiFi → sistem je vaš, nihče ga ne more izklopiti)
+- Cene: SaaS (Start 0€/Rast 29€/Pro 59€ mesečno) zamenjano z offline modelom: Osnovni paket 199 € enkrat (izpostavljen, "Najbolj priljubljen") + Vzdrževanje 19 €/mes neobvezno + Dodatek Ana AI 39 €/mes; vsak paket dobi ikono, CTA-ji povezani na #demo/#faq
+- FAQ: nova vprašanja o offline delovanju, lokaciji podatkov, prenehanju vzdrževanja; Ana izključno kot dodatek
+- FinalCta/footer/layout metadata: "AI rezervacijski sistem" → "rezervacijski sistem (deluje tudi offline)"
+- Demo opis: Ana označena kot "neobvezen AI dodatek — tu vključena samo za predstavitev"
+- Lint čist; E2E: nova cena/FQ/features/koraki se pravilno prikazujejo, CTA navigacija #demo deluje, FAQ harmonika deluje, celoten rezervacijski tok (storitev → PON 14, 09:30 → Maja Test → "Termin potrjen!") uspešen, termin v bazi prek API, testni termin izbrisan (baza čista), footer prilepljen na dno, 0 konzolnih napak, mobilni 375px OK
+
+Stage Summary:
+- Celotna stran zdaj prodaja enako zgodbo kot USB paket: offline zmogljivost, lastništvo kode, 199 € enkrat + neobvezna 19 €/39 €
+- AI (Ana) povsde označena kot dodatek — skladno z AI_ENABLED=false v USB buildu
+- Naslednji možni koraki: online faza (prenos na strežnik), SMS integracija, avtentikacija lastnika

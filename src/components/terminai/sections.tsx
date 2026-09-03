@@ -6,16 +6,17 @@ import { Button } from '@/components/ui/button'
 import {
   Clock,
   Bot,
-  BellRing,
   Flame,
   LayoutDashboard,
-  ShieldCheck,
   Smartphone,
   ArrowRight,
   Store,
   Users,
   Wallet,
   Check,
+  WifiOff,
+  HardDrive,
+  Wrench,
 } from 'lucide-react'
 
 const FEATURES = [
@@ -25,14 +26,14 @@ const FEATURES = [
     text: 'Stranke rezervirajo kadar koli — tudi ob 23. uri, ko vi že spite. Vsak prosti termin je na voljo.',
   },
   {
-    icon: <Bot className="h-5 w-5" />,
-    title: 'AI recepcionarka Ana',
-    text: 'V slovenščini odgovarja na vprašanja o cenah, storitvah in delovnem času. Namesto vas, brez prestanka.',
+    icon: <WifiOff className="h-5 w-5" />,
+    title: 'Deluje brez interneta',
+    text: 'Sistem teče na računalniku v salonu. Stranke rezervirajo prek telefona v vašem omrežju — internetne povezave sploh ne potrebujete.',
   },
   {
-    icon: <BellRing className="h-5 w-5" />,
-    title: 'SMS & e-mail spomniki',
-    text: 'Samodejno spomni stranko dan prej. Izostanki se zmanjšajo za 30–40 % — to je čist prihodek.',
+    icon: <HardDrive className="h-5 w-5" />,
+    title: 'Podatki ostanejo pri vas',
+    text: 'Baza strank, termini in prihodki so shranjeni na vašem računalniku — ne v oblaku tretje osebe. Rezervna kopija na USB s klikom.',
   },
   {
     icon: <Flame className="h-5 w-5" />,
@@ -45,9 +46,9 @@ const FEATURES = [
     text: 'Koledar, prihodki, zasedenost in baza strank na enem zaslonu. Tudi na telefonu.',
   },
   {
-    icon: <ShieldCheck className="h-5 w-5" />,
-    title: 'Baza strank & zgodovina',
-    text: 'Vsak obisk shranjen: kolikokrat je stranka tu, kaj ima rada, koliko prinese. Marketing postane natančen.',
+    icon: <Bot className="h-5 w-5" />,
+    title: 'Ana AI — dodatek',
+    text: 'AI recepcionarka v slovenščini odgovarja na vprašanja o cenah in terminih. Opcijski dodatek, ko sistem povežete na splet.',
   },
 ]
 
@@ -55,20 +56,20 @@ const STEPS = [
   {
     icon: <Store className="h-6 w-6" />,
     step: '1',
-    title: 'Aktivirajte salon',
-    text: 'Vnesete storitve, cene in delovni čas. V 15 minutah je vaša rezervacijska stran živa na spletu.',
+    title: 'Namestitev pri vas',
+    text: 'Prinesem sistem na USB ključku, na vašem računalniku ga namestim in skupaj vnesemo vaše storitve in cene. Uro kasneje vse deluje — brez interneta, brez naročnine.',
   },
   {
     icon: <Users className="h-6 w-6" />,
     step: '2',
     title: 'Stranke rezervirajo same',
-    text: 'Povezavo delite na Instagramu, Google profilu in vizitki. Ana odgovarja, spomniki letijo, vi ne dvignete telefon.',
+    text: 'Stranke odprejo rezervacijsko stran na telefonu (dovolj je vaš WiFi). Ko bo čas, sistem po želji povežemo na splet — isti podatki, isto izkušnja.',
   },
   {
     icon: <Wallet className="h-6 w-6" />,
     step: '3',
-    title: 'Vi samo pobirate denar',
-    text: 'Vsako jutro pregled dneva na telefonu. Manj praznih terminov, manj izostankov, več prihodkov.',
+    title: 'Sistem je vaš',
+    text: 'Vsako jutro pregled dneva na telefonu. Manj praznih terminov, več prihodkov — in ko enkrat plačate, izdelka nihče ne more izklopiti.',
   },
 ]
 
@@ -131,42 +132,52 @@ export function Features() {
 
 const PLANS = [
   {
-    name: 'Start',
-    price: '0 €',
-    period: 'prvih 30 dni',
-    desc: 'Za preizkus brez tveganja.',
-    features: ['Neomejene rezervacije', 'AI recepcionarka Ana', 'SMS spomniki', '1 izvajalec'],
-    cta: 'Začni brezplačno',
-    highlight: false,
-  },
-  {
-    name: 'Rast',
-    price: '29 €',
-    period: 'na mesec',
-    desc: 'Za salone, ki želijo zrasti.',
+    icon: <HardDrive className="h-4 w-4" />,
+    name: 'Osnovni paket',
+    price: '199 €',
+    period: 'enkrat',
+    desc: 'Sistem postane vaš.',
     features: [
-      'Vse iz Start',
-      'Pametne vršne cene',
-      'Nadzorna plošča & statistika',
-      'Baza strank & zgodovina',
-      'Podpora v slovenščini',
+      'Namestitev na vašem računalniku',
+      'Vnos vaših storitev in cen skupaj z vami',
+      'Deluje popolnoma offline',
+      'Rezervna kopija baze na USB',
+      'Brez naročnine — plačate enkrat',
     ],
-    cta: 'Izberi Rast',
+    cta: 'Preizkusi živi demo',
+    ctaHref: '#demo',
     highlight: true,
   },
   {
-    name: 'Pro',
-    price: '59 €',
-    period: 'na mesec',
-    desc: 'Za ekipe in verige salonov.',
+    icon: <Wrench className="h-4 w-4" />,
+    name: 'Vzdrževanje',
+    price: '19 €',
+    period: 'na mesec · neobvezno',
+    desc: 'Mir in podpora, ko jo potrebujete.',
     features: [
-      'Vse iz Rast',
-      'Do 5 izvajalcev',
-      'Google & Instagram povezava',
-      'Tvoja domena & logotip',
-      'Prednostna podpora',
+      'Posodobitve sistema',
+      'Tehnična pomoč v slovenščini',
+      'Pregled rezervnih kopij',
+      'Preklic kadar koli',
     ],
-    cta: 'Izberi Pro',
+    cta: 'Dogovorimo se',
+    ctaHref: '#demo',
+    highlight: false,
+  },
+  {
+    icon: <Bot className="h-4 w-4" />,
+    name: 'Dodatek Ana AI',
+    price: '39 €',
+    period: 'na mesec · ko greste na splet',
+    desc: 'AI recepcionarka in spomniki.',
+    features: [
+      'Ana odgovarja strankam v slovenščini',
+      'SMS & e-mail spomniki na termine',
+      'Povezava sistema na splet',
+      'Vklop / izklop kadar koli',
+    ],
+    cta: 'Preberi več',
+    ctaHref: '#faq',
     highlight: false,
   },
 ]
@@ -177,10 +188,11 @@ export function Pricing() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-            Cena enega striženja na dan. <span className="italic text-primary">Doslovno.</span>
+            Enkrat plačate. <span className="italic text-primary">Sistem je vaš.</span>
           </h2>
           <p className="mt-3 text-muted-foreground">
-            29 €/mes prinese že 2–3 dodatna termina. Vse ostalo je čist dobiček. Brez skritega, brez dolgoročne pogodbe.
+            Brez naročnine za osnovni sistem, brez skritega, brez tveganja: namestitev pri vas, preizkus na vaših
+            strankah, plačilo šele ko ste zadovoljni. Vzdrževanje in Ana AI sta neobvezna.
           </p>
         </div>
 
@@ -196,11 +208,16 @@ export function Pricing() {
             >
               {p.highlight && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground shadow">
-                  Najbolj priljubljena
+                  Najbolj priljubljen
                 </div>
               )}
               <CardContent className="p-6">
-                <h3 className="font-display text-xl font-semibold">{p.name}</h3>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    {p.icon}
+                  </span>
+                  <h3 className="font-display text-xl font-semibold">{p.name}</h3>
+                </div>
                 <p className="mt-1 text-sm text-muted-foreground">{p.desc}</p>
                 <div className="mt-4 flex items-baseline gap-1.5">
                   <span className="font-display text-4xl font-semibold">{p.price}</span>
@@ -215,11 +232,14 @@ export function Pricing() {
                   ))}
                 </ul>
                 <Button
+                  asChild
                   className={`mt-6 w-full gap-1.5 ${p.highlight ? 'shadow-lg shadow-primary/25' : ''}`}
                   variant={p.highlight ? 'default' : 'outline'}
                   size="lg"
                 >
-                  {p.cta} <ArrowRight className="h-4 w-4" />
+                  <a href={p.ctaHref}>
+                    {p.cta} <ArrowRight className="h-4 w-4" />
+                  </a>
                 </Button>
               </CardContent>
             </Card>
@@ -227,7 +247,8 @@ export function Pricing() {
         </div>
 
         <p className="mt-6 flex items-center justify-center gap-2 text-center text-xs text-muted-foreground">
-          <Smartphone className="h-3.5 w-3.5" /> Vsi paketi: brez namestitve, brez kreditne kartice za preizkus.
+          <Smartphone className="h-3.5 w-3.5" /> Preizkus brez stroškov: namestim sistem pri vas, stranke ga
+          preizkusijo, plačate šele po odločitvi.
         </p>
       </div>
     </section>
@@ -236,28 +257,28 @@ export function Pricing() {
 
 const FAQS = [
   {
-    q: 'Koliko časa trava uvedba?',
-    a: 'Približno 15 minut: vnesete storitve, cene in delovni čas. Pomagate si lahko z AI, ki predlaga storitve iz vaše stroke. Rezervacijska stran je takoj živa.',
+    q: 'Ali sistem deluje brez interneta?',
+    a: 'Da. TerminAI teče na računalniku v vašem salonu — internetne povezave ne potrebuje. Stranke rezervirajo prek telefona, ki je povezan v vaš WiFi. Na splet ga po želji povežemo kasneje, brez prenosa podatkov.',
+  },
+  {
+    q: 'Koliko časa traja uvedba?',
+    a: 'Približno eno uro: namestim sistem na vaš računalnik in skupaj vnesemo vaše storitve, cene in delovni čas. Že isti dan ga lahko preizkusijo vaše stranke.',
+  },
+  {
+    q: 'Kje so shranjeni moji podatki?',
+    a: 'Na vašem računalniku — baza strank, termini in prihodki ne gredo v noben oblak. Rezervno kopijo naredite na USB ključek z enim klikom, tako so podatki varni tudi ob okvari računalnika.',
+  },
+  {
+    q: 'Kaj če prenehate z vzdrževanjem ali odjavim Ana AI?',
+    a: 'Nič se ne izklopi. Osnovni sistem je vaš in deluje naprej — tudi brez vzdrževanja in brez Anje. Dodatka sta neobvezna in ju lahko kadar koli prekličete ali znova vklopite.',
   },
   {
     q: 'Kaj če stranka nima telefona s pametnim zaslonom?',
     a: 'Rezervacijska stran deluje na vsakem telefonu z brskalnikom — brez namestitve aplikacije. Starejše stranke lahko seveda pokličejo, vi pa termin vpišete v nadzorno ploščo.',
   },
   {
-    q: 'Kako točno AI recepcionarka zmanjša moj telefon?',
-    a: 'Ana odgovarja na ponavljajoča vprašanja (cene, trajanje, delovni čas, odpovedi) na vaši spletni strani in vam pošlje povzetek. Ocena naših salonov: 60–80 % manj klicev in sporočil.',
-  },
-  {
-    q: 'Ali se stranke res izogibajo izostankom zaradi spomnikov?',
-    a: 'SMS spominik 24 ur pred terminom je najbolj učinkovit — saloni poročajo o 30–40 % manj izostankih. Vsak preprečen izostanek je 35 € ali več prihodka.',
-  },
-  {
-    q: 'Kaj se zgodi po 30-dnevnem brezplačnem obdobju?',
-    a: 'Nič se ne izbriše. Če ne izberete paketa, sistem preprosto preklopi v način "samo ogled". Vaši podatki in zgodovina ostanejo shranjeni, kadar koli lahko nadaljujete.',
-  },
-  {
-    q: 'Ali lahko zavedem več izvajalcev (dva frizerja)?',
-    a: 'Da — paket Rast pokriva 1 izvajalca, Pro pa do 5. Vsak izvajalec ima svoj koledar, stranka pa vidi le skupne proste termine.',
+    q: 'Kako Ana AI zmanjša moj telefon?',
+    a: 'Ana je dodatek za obdobje, ko sistem povežete na splet: odgovarja na ponavljajoča vprašanja (cene, trajanje, delovni čas) strankam na vaši strani. Saloni poročajo o 60–80 % manj klicih in sporočilih.',
   },
 ]
 
@@ -295,7 +316,8 @@ export function FinalCta() {
           Vaš nasledji termin je že <span className="italic">rezerviran.</span>
         </h2>
         <p className="relative mx-auto mt-3 max-w-xl text-primary-foreground/85">
-          Pridružite se salonom, ki so zamenjali telefon in papirnat koledar za sistem, ki dela tudi, ko ne delate vi.
+          Prinesem ga na USB ključku, namestim pri vas in vaše stranke ga preizkusijo — plačate šele, ko vidite, da
+          deluje. Brez naročnine, brez odvisnosti od interneta, brez tveganja.
         </p>
         <div className="relative mt-7 flex flex-col justify-center gap-3 sm:flex-row">
           <Button asChild size="lg" variant="secondary" className="gap-2 text-base">

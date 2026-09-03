@@ -21,9 +21,9 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "TerminAI — AI rezervacijski sistem za salone in storitve",
+  title: "TerminAI — rezervacijski sistem za salone (deluje tudi offline)",
   description:
-    "Stranke rezervirajo same 24/7, AI recepcionarka odgovarja namesto vas, spomniki preprečujejo izostanke. Brez manjkajočih terminov — več prihodkov za frizerske in kozmetične salone.",
+    "Rezervacijski sistem za frizerske in kozmetične salone: stranke rezervirajo same 24/7, sistem teče na vašem računalniku tudi brez interneta, podatki ostanejo pri vas. AI recepcionarka Ana kot neobvezen dodatek.",
   keywords: ["rezervacije", "termini", "salon", "offline", "Slovenija", "koledar"],
 };
 

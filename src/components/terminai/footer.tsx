@@ -15,7 +15,7 @@ export function Footer() {
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
-              AI rezervacijski sistem za salone in storitve.
+              Rezervacijski sistem za salone — deluje tudi offline, AI po želji.
             </p>
           </div>
 

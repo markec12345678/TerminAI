@@ -55,8 +55,10 @@ export function DemoSection() {
             Preizkusite kot <span className="italic text-primary">stranka</span> — ali skozi oči <span className="italic text-primary">lastnika</span>
           </h2>
           <p className="mt-3 text-muted-foreground">
-            Vse spodaj je pravi, delujoč sistem: rezervirajte termin, povprašajte Ano, preklopite v nadzorno ploščo in
-            potrjujte ali odpovedujte. Demo salon: <strong className="text-foreground">{business?.name ?? 'Studio Aura'}, Ljubljana</strong>.
+            Vse spodaj je pravi, delujoč sistem: rezervirajte termin, preklopite v nadzorno ploščo in potrjujte ali
+            odpovedujte. Ana na desni je <strong className="text-foreground">neobvezen AI dodatek</strong> — tu je
+            vključena samo za predstavitev. Demo salon:{' '}
+            <strong className="text-foreground">{business?.name ?? 'Studio Aura'}, Ljubljana</strong>.
           </p>
         </div>
 
