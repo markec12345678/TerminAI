@@ -5,8 +5,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { UserRound, Store } from 'lucide-react'
 import { BookingWidget } from './booking-widget'
 import { AiAssistant } from './ai-assistant'
+import { AiAssistantOffline } from './ai-assistant-offline'
 import { Dashboard } from './dashboard'
 import type { BusinessDto, ServiceDto } from './types'
+
+// Build-time zastavica: USB/offline build ima NEXT_PUBLIC_AI_ENABLED=false
+const AI_ENABLED = process.env.NEXT_PUBLIC_AI_ENABLED !== 'false'
 
 export function DemoSection() {
   const [services, setServices] = useState<ServiceDto[]>([])
@@ -14,24 +18,31 @@ export function DemoSection() {
   const [loading, setLoading] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
 
-  useEffect(() => {
-    ;(async () => {
-      try {
-        const res = await fetch('/api/services')
-        if (res.ok) {
-          const data = await res.json()
-          setServices(data.services)
-          setBusiness(data.business)
-        }
-      } finally {
-        setLoading(false)
+  const loadServices = useCallback(async () => {
+    try {
+      const res = await fetch('/api/services')
+      if (res.ok) {
+        const data = await res.json()
+        setServices(data.services)
+        setBusiness(data.business)
       }
-    })()
+    } finally {
+      setLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    loadServices()
+  }, [loadServices])
 
   const onBooked = useCallback(() => {
     setRefreshKey((k) => k + 1)
   }, [])
+
+  const onServicesChanged = useCallback(() => {
+    setRefreshKey((k) => k + 1)
+    loadServices()
+  }, [loadServices])
 
   return (
     <section id="demo" className="scroll-mt-16 bg-gradient-to-b from-muted/40 to-background py-16 sm:py-20">
@@ -76,12 +87,19 @@ export function DemoSection() {
               />
             </div>
             <div className="lg:col-span-2 lg:sticky lg:top-20">
-              <AiAssistant />
+              {AI_ENABLED ? (
+                <AiAssistant />
+              ) : (
+                <AiAssistantOffline
+                  businessName={business?.name ?? 'salon'}
+                  businessPhone={business?.phone ?? ''}
+                />
+              )}
             </div>
           </TabsContent>
 
           <TabsContent value="lastnik" className="mt-6">
-            <Dashboard onRefreshKey={refreshKey} />
+            <Dashboard onRefreshKey={refreshKey} onServicesChanged={onServicesChanged} />
           </TabsContent>
         </Tabs>
       </div>

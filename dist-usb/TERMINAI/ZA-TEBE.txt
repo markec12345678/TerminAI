@@ -1,0 +1,43 @@
+TERMINAI — NAVODILA ZA NAMESTITELJA (te)
+==========================================
+
+VSEBINA USB:
+  TERMINAI/          <- to skopiras na racunalnik stranke (NAMESTI.bat)
+    app/             <- aplikacija + SQLite baza (demo: Studio Aura)
+    runtime/         <- bun.exe (Windows) + bun-linux (Linux)
+    ZAGON.bat        <- zagon (port 3456)
+    NAMESTI.bat      <- namestitev v C:\TerminAI + bližnjica
+    NAREDI-REZERVO.bat <- backup baze na USB
+    start.sh         <- Linux/Mac zagon
+    NAVODILA.txt     <- navodila, ki jih pustis stranki
+
+POSTUPOK PRI STRANKI:
+  1. Vstavi USB, pozeni NAMESTI.bat (skopira vse v C:\TerminAI).
+  2. Aplikacija se zazene — brskalnik se odpre.
+  3. Zavihek "Nadzorna plosca lastnika" > "Storitve & salon":
+     klikni "Nastavi pravi salon" — vpisi NJIHOVE podatke.
+  4. Dodaj NJIHOVE storitve (ime, trajanje, redna + vršna cena).
+  5. Test z 2 telefonom: telefon na NJIHOV WiFi ->
+     http://<IP-racunalnika>:3456 (IP izpise ZAGON.bat / ipconfig)
+  6. Stranka naj naredi 1-2 rezervaciji, potrdi ju v plosci.
+  7. PRED ODHODOM: pozeni NAREDI-REZERVO.bat (backup na USB).
+
+FIREWALL (Windows):
+  Ob prvem zagonu Windows vprasa -> "Dovoli dostop" + kljukica
+  ZASEBNA omrezja. Brez tega telefoni strank ne dostopajo.
+  Ce okno ni prislo: Control Panel > Firewall > Allowed apps > bun.
+
+TEHNINE PODATKI:
+  - Port: 3456 (localhost + LAN 0.0.0.0)
+  - Baza: SQLite, app/custom.db (portabilna, backup = copy)
+  - AI: IZKLOPLJENA v tem paketu (offline build, 0 stroškov)
+  - Fonti/favicon: vsi lokalni, nobenega CDNa — deluje brez interneta
+  - Update: skopiraj novo app/ mapo prek stare (bazo NE prekrij,
+    razen ce zelis reset!)
+
+PREHOD ONLINE (naslednja faza):
+  - baza custom.db se uvozi na streznik (enaka shema)
+  - AI zastavica se vklopi (Ana)
+  - domena + SMS spomniki
+
+TESTIRANO: build 2026-09-03 (glej worklog.md).

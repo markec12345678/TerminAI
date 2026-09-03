@@ -17,7 +17,10 @@ import {
   Wallet,
   RefreshCw,
   UserRound,
+  Store,
 } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ServicesManager } from './services-manager'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid } from 'recharts'
 import type { AppointmentDto, StatsDto } from './types'
 import { dateParts, durationLabel, formatPrice, timeOfIso } from './types'
@@ -64,7 +67,7 @@ function StatCard({
   )
 }
 
-export function Dashboard({ onRefreshKey }: { onRefreshKey: number }) {
+export function Dashboard({ onRefreshKey, onServicesChanged }: { onRefreshKey: number; onServicesChanged?: () => void }) {
   const [stats, setStats] = useState<StatsDto | null>(null)
   const [appointments, setAppointments] = useState<AppointmentDto[]>([])
   const [dates, setDates] = useState<string[]>([])
@@ -151,6 +154,18 @@ export function Dashboard({ onRefreshKey }: { onRefreshKey: number }) {
 
   return (
     <div className="space-y-4">
+      <Tabs defaultValue="koledar">
+        <TabsList className="h-auto rounded-full p-1">
+          <TabsTrigger value="koledar" className="gap-2 rounded-full px-4 py-2">
+            <CalendarDays className="h-4 w-4" /> Koledar & statistika
+          </TabsTrigger>
+          <TabsTrigger value="storitve" className="gap-2 rounded-full px-4 py-2">
+            <Store className="h-4 w-4" /> Storitve & salon
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="koledar" className="mt-4">
+      <div className="space-y-4">
       {/* Statistika */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {loading || !stats ? (
@@ -359,6 +374,13 @@ export function Dashboard({ onRefreshKey }: { onRefreshKey: number }) {
           </Card>
         </div>
       </div>
+      </div>
+        </TabsContent>
+
+        <TabsContent value="storitve" className="mt-4">
+          <ServicesManager refreshKey={onRefreshKey} onServicesChanged={onServicesChanged} />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

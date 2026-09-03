@@ -24,10 +24,7 @@ export const metadata: Metadata = {
   title: "TerminAI — AI rezervacijski sistem za salone in storitve",
   description:
     "Stranke rezervirajo same 24/7, AI recepcionarka odgovarja namesto vas, spomniki preprečujejo izostanke. Brez manjkajočih terminov — več prihodkov za frizerske in kozmetične salone.",
-  keywords: ["rezervacije", "termini", "salon", "AI", " Slovenija", "koledar"],
-  icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
-  },
+  keywords: ["rezervacije", "termini", "salon", "offline", "Slovenija", "koledar"],
 };
 
 export default function RootLayout({

@@ -13,6 +13,17 @@ const chatSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    // Offline način (USB/lokalna namestitev): AI izklopljena, nič API klicev
+    if (process.env.AI_ENABLED === 'false') {
+      return NextResponse.json(
+        {
+          offline: true,
+          error: 'AI asistent ni na voljo v offline načinu. Za rezervacijo uporabite rezervacijski okvir.',
+        },
+        { status: 503 }
+      )
+    }
+
     const body = await req.json()
     const parsed = chatSchema.safeParse(body)
     if (!parsed.success) {

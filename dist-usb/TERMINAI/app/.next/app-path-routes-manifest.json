@@ -1,0 +1,15 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/api/ai/route": "/api/ai",
+  "/api/appointments/[id]/route": "/api/appointments/[id]",
+  "/api/appointments/route": "/api/appointments",
+  "/api/availability/route": "/api/availability",
+  "/api/route": "/api",
+  "/api/services/[id]/route": "/api/services/[id]",
+  "/api/services/route": "/api/services",
+  "/api/setup/route": "/api/setup",
+  "/api/stats/route": "/api/stats",
+  "/icon.svg/route": "/icon.svg",
+  "/page": "/"
+}

@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[97367,["/_next/static/chunks/74f1b9da08b28ae5.js"],"ViewportBoundary"]
+3:I[97367,["/_next/static/chunks/74f1b9da08b28ae5.js"],"MetadataBoundary"]
+4:"$Sreact.suspense"
+5:I[27201,["/_next/static/chunks/74f1b9da08b28ae5.js"],"IconMark"]
+0:{"buildId":"STCNF4VTVPEhcf3AEQiau","rsc":["$","$1","h",{"children":[["$","meta",null,{"name":"robots","content":"noindex"}],["$","$L2",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]}],["$","div",null,{"hidden":true,"children":["$","$L3",null,{"children":["$","$4",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"TerminAI — AI rezervacijski sistem za salone in storitve"}],["$","meta","1",{"name":"description","content":"Stranke rezervirajo same 24/7, AI recepcionarka odgovarja namesto vas, spomniki preprečujejo izostanke. Brez manjkajočih terminov — več prihodkov za frizerske in kozmetične salone."}],["$","meta","2",{"name":"keywords","content":"rezervacije,termini,salon,offline,Slovenija,koledar"}],["$","link","3",{"rel":"icon","href":"/icon.svg?icon.e4b6faff.svg","sizes":"any","type":"image/svg+xml"}],["$","$L5","4",{}]]}]}]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"loading":null,"isPartial":false}

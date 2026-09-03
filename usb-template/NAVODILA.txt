@@ -1,0 +1,29 @@
+TERMINAI — NAVODILA ZA SALON
+=============================
+
+KAKO VSAK DAN ZAZENEM?
+  1. Dvokliknite ikono TERMINAI na namizju (ali ZAGON.bat).
+  2. Odpre se crno okno — pustite ga odprto med delom!
+  3. Brskalnik se sam odpre na strani salona.
+  4. Ob koncu dneva okno lahko zaprete (X zgoraj desno).
+
+POMEMBNO:
+  - Okna NE smete zapirati medtem, ko stranke rezervirajo.
+  - Rezervirajo lahko stranke v salonu na svojih telefonih,
+    ce so povezani na isti WiFi kot racunalnik salona.
+  - Podatki se shranjujejo NA TEM racunalniku (baza custom.db).
+
+KAKO NAREDIM REZERVNO KOPIJO?
+  1. Vsakic, ko pride namestitelj, naredi backup na USB.
+  2. Lahko sami: dvoklik NAREDI-REZERVO.bat — rezerva gre na
+     C:\TerminAI\REZERVA (kopirajte na USB kljuc redno!).
+
+KJE SO MOJI PODATKI?
+  - Vsi termini, stranke in storitve so v datoteki:
+    C:\TerminAI\app\custom.db
+  - To datoteko lahko skopirate na USB kot zavarovanje.
+
+CE NE DELUJE:
+  - Pogon ponovno zazenite (ZAGON.bat).
+  - Windows vprasalnik "dovoli dostop" potrdite (zasebna omrezja).
+  - Ce racunalnik izklopcijo, aplikacija se ustavi — to je normalno.
