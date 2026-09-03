@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 import type { AppointmentDto, AvailabilityDto, ServiceDto, SlotDto } from './types'
 import { dateParts, durationLabel, formatPrice, timeOfIso } from './types'
+import { WhatsAppIcon, waLink, waBookingText } from './whatsapp'
 
 type Step = 'service' | 'datetime' | 'details' | 'done'
 
@@ -458,6 +459,27 @@ export function BookingWidget({ services, businessName, businessTagline, busines
           </div>
         ) : null}
       </CardContent>
+
+      {/* Nadomestni kanal za stranke izven salona: klic ali WhatsApp (zastonj, brez API-ja) */}
+      {!loading && (
+        <div className="border-t bg-muted/30 px-4 py-3 sm:px-6">
+          <div className="flex flex-col items-center justify-between gap-2.5 sm:flex-row">
+            <p className="text-xs text-muted-foreground">Niste v salonu? Pišite ali pokličite — vpišemo vas:</p>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline" size="sm" className="gap-1.5">
+                <a href={`tel:${businessPhone.replace(/\s/g, '')}`}>
+                  <Phone className="h-3.5 w-3.5" /> Pokliči
+                </a>
+              </Button>
+              <Button asChild size="sm" className="gap-1.5 bg-[#25D366] text-white hover:bg-[#1eb856]">
+                <a href={waLink(businessPhone, waBookingText(service?.name))} target="_blank" rel="noopener noreferrer">
+                  <WhatsAppIcon className="h-3.5 w-3.5" /> WhatsApp
+                </a>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </Card>
   )
 }

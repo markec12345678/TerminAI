@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -21,9 +21,12 @@ import {
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ServicesManager } from './services-manager'
+import { ManualBookingDialog } from './manual-booking-dialog'
+import { QRCodeSVG } from 'qrcode.react'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid } from 'recharts'
 import type { AppointmentDto, StatsDto } from './types'
 import { dateParts, durationLabel, formatPrice, timeOfIso } from './types'
+import { QrCode } from 'lucide-react'
 
 const STATUS_META: Record<AppointmentDto['status'], { label: string; className: string }> = {
   pending: { label: 'Čaka', className: 'bg-amber-100 text-amber-700 border-amber-200' },
@@ -152,6 +155,12 @@ export function Dashboard({ onRefreshKey, onServicesChanged }: { onRefreshKey: n
     prihodki: Math.round(w.revenueCents / 100),
   }))
 
+  const onManualCreated = (a: AppointmentDto) => {
+    void a
+    loadStats()
+    if (selectedDate) loadAppointments(selectedDate)
+  }
+
   return (
     <div className="space-y-4">
       <Tabs defaultValue="koledar">
@@ -188,18 +197,21 @@ export function Dashboard({ onRefreshKey, onServicesChanged }: { onRefreshKey: n
               <CalendarDays className="h-4 w-4 text-primary" />
               <h3 className="font-semibold">Koledar terminov</h3>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                loadStats()
-                if (selectedDate) loadAppointments(selectedDate)
-              }}
-              aria-label="Osveži"
-              title="Osveži"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <ManualBookingDialog date={selectedDate} onCreated={onManualCreated} />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  loadStats()
+                  if (selectedDate) loadAppointments(selectedDate)
+                }}
+                aria-label="Osveži"
+                title="Osveži"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4 p-4">
             <div className="terminai-scroll flex gap-2 overflow-x-auto pb-1" role="radiogroup" aria-label="Izberite dan">
@@ -372,6 +384,8 @@ export function Dashboard({ onRefreshKey, onServicesChanged }: { onRefreshKey: n
               </ul>
             </CardContent>
           </Card>
+
+          <ShareQrCard />
         </div>
       </div>
       </div>
@@ -382,5 +396,44 @@ export function Dashboard({ onRefreshKey, onServicesChanged }: { onRefreshKey: n
         </TabsContent>
       </Tabs>
     </div>
+  )
+}
+
+/** QR koda s trenutnim naslovom sistema — stranka v salonu jo oslika in rezervira sama. */
+function ShareQrCard() {
+  // window.location.origin je na voljo samo v brskalniku (SSR varno)
+  const origin = useSyncExternalStore(
+    () => () => {},
+    () => window.location.origin,
+    () => null
+  )
+
+  return (
+    <Card className="border-border/60">
+      <CardContent className="flex flex-col items-center gap-4 p-4 sm:flex-row">
+        <div className="flex h-32 w-32 shrink-0 items-center justify-center rounded-xl border bg-white p-2">
+          {origin ? (
+            <QRCodeSVG value={origin} size={112} bgColor="#ffffff" fgColor="#1a1412" />
+          ) : (
+            <Skeleton className="h-28 w-28" />
+          )}
+        </div>
+        <div className="min-w-0 space-y-1.5 text-center sm:text-left">
+          <div className="flex items-center justify-center gap-2 sm:justify-start">
+            <QrCode className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold">Stranka v salonu rezervira sama</h3>
+          </div>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Stranka s telefonom oslika kodo (telefon mora biti na vašem WiFi) in takoj rezervira —
+            brez registracije, na vsakem telefonu. Kodo lahko natisnete in prilepite na ogledalo.
+          </p>
+          {origin && (
+            <p className="truncate rounded-md bg-muted/60 px-2 py-1 font-mono text-[11px] text-muted-foreground" title={origin}>
+              {origin.replace(/^https?:\/\//, '')}
+            </p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   )
 }

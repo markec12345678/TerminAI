@@ -76,3 +76,24 @@ Work Log:
 
 Stage Summary:
 - Dev server teče sveže (clean cache) na portu 3000 z novo vsebino; uporabnik mora osvežiti predogled (reload / Open in New Tab)
+
+---
+Task ID: 5
+Agent: Z.ai Code (glavni agent)
+Task: Rezervacija strank izven salona — WhatsApp (zastonj), ročni vnos termina, QR koda
+
+Work Log:
+- Nov datoteka src/components/terminai/whatsapp.tsx: WhatsAppIcon (simple-icons SVG), waNumber (normalizacija +386 40 123 456 → 38640123456, vodilna 0 → 386), waLink (wa.me klik-za-klepet), waBookingText (izpolnjeno sporočilo, po želji z izbrano storitvijo) — BREZ API-ja, 0 stroškov
+- BookingWidget: nova footer vrstica pod vsemi koraki — gumb POKLICI (tel:) + WHATSAPP (zelen, #25D366) z vnaprej izpolnjenim sporočilom; vidno v vseh korakih, tudi na mobilni
+- Nova datoteka manual-booking-dialog.tsx: "Dodaj termin" dialog (ime, telefon, storitev Select, 14-dnevni trak dni, termini iz /api/availability z vršnimi oznakami, opomba, povzetek z ceno) → POST /api/appointments (isti API kot javni widget, race-safe prekrivanja)
+- Dashboard: gumb "Dodaj termin" v glavi koledarja (predizbran trenutni dan) + osvežitev statistike/koledarja po vnosu; nova kartica ShareQrCard (qrcode.react, QRCodeSVG trenutnega window.location.origin — v USB buildu http://IP:3456; useSyncExternalStore za SSR varnost, odpravljen lint react-hooks/set-state-in-effect)
+- Popravek React opozorila: Select value ?? '' (controlled)
+- FAQ: novo vprašanje "Kako stranka rezervira, kadar ni v salonu?" (WhatsApp/klic → Dodaj termin → online faza 24/7)
+- USB predloga (NAVODILA.txt, ZA-TEBE.txt): dodana navodila za WhatsApp gumb, ročni vnos, QR kodo in nadgradnjo
+- E2E: WhatsApp href pravilen (38640123456, besedilo se dopolni z izbrano storitvijo), ročni vnos celoten tok (Petra WhatsApp, tor 09:00, Barvanje 85 € → toast + API potrditev + prikaz) — testni termin izbrisan; QR prikazuje localhost:3000; 0 konzolnih napak/opozoril; lint čist; mobilna preverjena
+
+Stage Summary:
+- Stranka od doma: WhatsApp gumb (zastonj, brez API-ja) → lastnik vpiše v 30 s z "Dodaj termin"
+- Stranka v salonu: QR koda (natisnjena na ogledalu) → WiFi → samostojna rezervacija
+- qrcode.react@4.2.0 nameščen (offlne komponenta)
+- Naslednji možni koraki: online faza (Strežnik + domena + Ana + SMS), WhatsApp Business API avtomatizacija kot del Ane

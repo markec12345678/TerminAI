@@ -27,3 +27,18 @@ CE NE DELUJE:
   - Pogon ponovno zazenite (ZAGON.bat).
   - Windows vprasalnik "dovoli dostop" potrdite (zasebna omrezja).
   - Ce racunalnik izklopcijo, aplikacija se ustavi — to je normalno.
+
+KAKO REZERVIRAJO STRANKE, KI NISO V SALONU?
+  - Na rezervacijski strani sta gumba POKLICI in WHATSAPP.
+  - Stranka klikne WhatsApp, sporoilo pride na v telefon.
+  - Termin vpiete v nadzorno ploo z gumbom "Dodaj termin"
+    (nadzorna ploo → zavihek "Stran za lastnika").
+
+QR KODA ZA STRANKE:
+  - V nadzorni ploi je QR koda z naslovom rezervacijske strani.
+  - Natisnite jo in prilepite na ogledalo: stranka oslika kodo
+    s telefonom (na vaem WiFi) in takoj rezervira sama.
+
+CE ŽELITE TUDI SPOMNIKE IN ANO (AI):
+  - To je dodatek, ki zahteva povezavo na internet.
+  - Pokliite namestitelja — sistem se nadgradi brez izgube podatkov.

@@ -257,6 +257,10 @@ export function Pricing() {
 
 const FAQS = [
   {
+    q: 'Kako stranka rezervira, kadar ni v salonu?',
+    a: 'Stranka vam piše po WhatsAppu ali pokliče — na rezervacijski strani je gumb WhatsApp, ki odpre pogovor z vnaprej izpolnjenim sporočilom (brezplačno, brez dodatnih aplikacij). Termin nato vpišete v nadzorno ploščo v nekaj sekundah z gumbom "Dodaj termin". Ko sistem kasneje povežemo na splet, bo samodejna rezervacija na voljo od povsod, 24/7.',
+  },
+  {
     q: 'Ali sistem deluje brez interneta?',
     a: 'Da. TerminAI teče na računalniku v vašem salonu — internetne povezave ne potrebuje. Stranke rezervirajo prek telefona, ki je povezan v vaš WiFi. Na splet ga po želji povežemo kasneje, brez prenosa podatkov.',
   },

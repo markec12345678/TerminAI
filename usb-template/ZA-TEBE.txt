@@ -41,3 +41,11 @@ PREHOD ONLINE (naslednja faza):
   - domena + SMS spomniki
 
 TESTIRANO: build 2026-09-03 (glej worklog.md).
+
+NOVOSTI (namestitelj):
+  - Gumb WHATSAPP na rezervacijski strani (wa.me klik-za-klepet,
+    zastonj, telefonska stevilka salona iz baze — Business.phone).
+  - "Dodaj termin" v nadzorni ploi: rocni vnos za rezervacije,
+    pritele po telefonu/WhatsAppu. Enak API kot javni widget.
+  - QR koda v nadzorni ploi (qrcode.react, offline, trenutni naslov).
+  - Pri prodaji: pokaite QR kodo stranki v salonu — takoj demo ucinek.
