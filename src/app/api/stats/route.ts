@@ -1,9 +1,13 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
 import { db } from '@/lib/db'
-import { naiveDate, nowWallClock, todayKey, dateKey, addMinutes, getHoursForDay } from '@/lib/booking'
+import { naiveDate, nowWallClock, todayKey, dateKey, addMinutes, getHoursForDayAsync } from '@/lib/booking'
+import { pinAllows } from '@/lib/pin'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    if (!(await pinAllows(req))) {
+      return NextResponse.json({ error: 'Napačen PIN — vnesite PIN lastnika.' }, { status: 401 })
+    }
     const today = todayKey()
     const todayStart = naiveDate(today, '00:00')
     const todayEnd = naiveDate(today, '23:59')
@@ -26,8 +30,8 @@ export async function GET() {
       db.client.count(),
     ])
 
-    // Zasedenost dneva: zasedene minute / vse odprte minute
-    const hours = getHoursForDay(today)
+    // Zasedenost dneva: zasedene minute / vse odprte minute (ure salona iz baze)
+    const hours = await getHoursForDayAsync(today)
     let occupancy = 0
     if (hours) {
       const [oh, om] = hours.open.split(':').map(Number)

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { ensureSeed, BUSINESS_SLUG } from '@/lib/booking'
+import { pinAllows } from '@/lib/pin'
 
 export async function GET() {
   try {
@@ -29,6 +30,9 @@ const createSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    if (!(await pinAllows(req))) {
+      return NextResponse.json({ error: 'Napačen PIN — vnesite PIN lastnika.' }, { status: 401 })
+    }
     const body = await req.json()
     const parsed = createSchema.safeParse(body)
     if (!parsed.success) {

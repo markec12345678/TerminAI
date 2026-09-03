@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { BUSINESS_SLUG, nowWallClock } from '@/lib/booking'
+import { pinAllows } from '@/lib/pin'
 
 const setupSchema = z.object({
   mode: z.literal('fresh'),
@@ -27,6 +28,9 @@ const editSchema = z.object({
  */
 export async function PATCH(req: NextRequest) {
   try {
+    if (!(await pinAllows(req))) {
+      return NextResponse.json({ error: 'Napačen PIN — vnesite PIN lastnika.' }, { status: 401 })
+    }
     const body = await req.json()
     const parsed = editSchema.safeParse(body)
     if (!parsed.success) {
@@ -62,6 +66,9 @@ export async function PATCH(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
+    if (!(await pinAllows(req))) {
+      return NextResponse.json({ error: 'Napačen PIN — vnesite PIN lastnika.' }, { status: 401 })
+    }
     const body = await req.json()
     const parsed = setupSchema.safeParse(body)
     if (!parsed.success) {

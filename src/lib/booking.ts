@@ -10,8 +10,9 @@ import type { Service } from '@prisma/client'
 
 export const BUSINESS_SLUG = 'studio-aura'
 
-// Delovni časi (0 = nedelja ... 6 = sobota)
-const WORKING_HOURS: Record<number, { open: string; close: string } | null> = {
+// Privzeti delovni časi (0 = nedelja ... 6 = sobota) — uporabijo se kot
+// začetna vrednost, dokler salon ne nastavi svojih v modulu Delovni čas.
+const DEFAULT_HOURS: Record<number, { open: string; close: string } | null> = {
   0: null, // nedelja - zaprto
   1: { open: '09:00', close: '18:00' },
   2: { open: '09:00', close: '18:00' },
@@ -71,7 +72,37 @@ export function isPeak(dateStr: string, time: string): boolean {
 }
 
 export function getHoursForDay(dateStr: string): { open: string; close: string } | null {
-  return WORKING_HOURS[dayOfWeek(dateStr)] ?? null
+  return DEFAULT_HOURS[dayOfWeek(dateStr)] ?? null
+}
+
+/** Prenese privzete ure v bazo (idempotentno) — prvi zagon. */
+async function seedDefaultHours(businessId: string): Promise<void> {
+  const existing = await db.workingHours.count({ where: { businessId } })
+  if (existing > 0) return
+  const rows = Object.entries(DEFAULT_HOURS)
+    .filter(([, h]) => h !== null)
+    .map(([day, h]) => ({ businessId, dayOfWeek: Number(day), open: (h as { open: string; close: string }).open, close: (h as { open: string; close: string }).close }))
+  if (rows.length > 0) {
+    await db.workingHours.createMany({ data: rows })
+  }
+}
+
+/** Delovni časi salona iz baze (z avtomatskim sejanjem privzetih). */
+export async function getBusinessHours(): Promise<Map<number, { open: string; close: string }>> {
+  const business = await db.business.findUnique({ where: { slug: BUSINESS_SLUG }, select: { id: true } })
+  if (!business) return new Map()
+  let rows = await db.workingHours.findMany({ where: { businessId: business.id } })
+  if (rows.length === 0) {
+    await seedDefaultHours(business.id)
+    rows = await db.workingHours.findMany({ where: { businessId: business.id } })
+  }
+  return new Map(rows.map((r) => [r.dayOfWeek, { open: r.open, close: r.close }]))
+}
+
+/** Delovni čas za dan, kot ga je nastavil salon (async, iz baze). */
+export async function getHoursForDayAsync(dateStr: string): Promise<{ open: string; close: string } | null> {
+  const hours = await getBusinessHours()
+  return hours.get(dayOfWeek(dateStr)) ?? null
 }
 
 export interface Slot {
@@ -86,13 +117,13 @@ export interface AppointmentBlock {
   endAt: Date
 }
 
-/** Zgenerira vse možne terminske lokacije za storitev na dan. */
-export function generateSlots(service: Service, dateStr: string, blocks: AppointmentBlock[]): Slot[] {
-  const hours = getHoursForDay(dateStr)
-  if (!hours) return []
+/** Zgenerira vse možne terminske lokacije za storitev na dan. Ure so lahko podane (iz baze). */
+export function generateSlots(service: Service, dateStr: string, blocks: AppointmentBlock[], hours?: { open: string; close: string } | null): Slot[] {
+  const dayHours = hours !== undefined ? hours : getHoursForDay(dateStr)
+  if (!dayHours) return []
 
-  const open = naiveDate(dateStr, hours.open)
-  const close = naiveDate(dateStr, hours.close)
+  const open = naiveDate(dateStr, dayHours.open)
+  const close = naiveDate(dateStr, dayHours.close)
   const now = nowWallClock()
   const slots: Slot[] = []
 
@@ -161,6 +192,7 @@ export async function seedDemo(): Promise<void> {
       email: 'info@studio-aura.si',
     },
   })
+  await seedDefaultHours(business.id)
 
   const services = await Promise.all(
     [

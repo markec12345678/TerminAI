@@ -24,6 +24,7 @@ import {
   CalendarDays,
 } from 'lucide-react'
 import { WhatsAppIcon as WaIcon, waLink } from './whatsapp'
+import { ownerFetch } from '@/lib/owner-fetch'
 import type { ManualPrefill } from './manual-booking-dialog'
 import type { AppointmentDto } from './types'
 
@@ -109,7 +110,7 @@ export function MessageInbox({ onBookForCustomer }: Props) {
 
   const loadHistory = useCallback(async () => {
     try {
-      const res = await fetch('/api/messages')
+      const res = await ownerFetch('/api/messages')
       if (res.ok) {
         const data = await res.json()
         setHistory(data.messages)
@@ -130,7 +131,7 @@ export function MessageInbox({ onBookForCustomer }: Props) {
     setAnalyzing(true)
     setResult(null)
     try {
-      const res = await fetch('/api/messages', {
+      const res = await ownerFetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, phone, email, body }),

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
+import { pinAllows } from '@/lib/pin'
 
 const patchSchema = z.object({
   status: z.enum(['pending', 'confirmed', 'completed', 'cancelled']),
@@ -8,6 +9,9 @@ const patchSchema = z.object({
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    if (!(await pinAllows(req))) {
+      return NextResponse.json({ error: 'Napačen PIN — vnesite PIN lastnika.' }, { status: 401 })
+    }
     const { id } = await params
     const body = await req.json()
     const parsed = patchSchema.safeParse(body)
@@ -38,8 +42,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    if (!(await pinAllows(req))) {
+      return NextResponse.json({ error: 'Napačen PIN — vnesite PIN lastnika.' }, { status: 401 })
+    }
     const { id } = await params
     await db.appointment.delete({ where: { id } })
     return NextResponse.json({ ok: true })

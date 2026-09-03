@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { generateSlots, dayNameFull, getHoursForDay, isPeak, naiveDate } from '@/lib/booking'
+import { generateSlots, dayNameFull, getHoursForDayAsync, isPeak, naiveDate } from '@/lib/booking'
 
 export async function GET(req: NextRequest) {
   try {
@@ -25,12 +25,18 @@ export async function GET(req: NextRequest) {
       select: { startAt: true, endAt: true },
     })
 
-    const slots = generateSlots(service, date, appointments.map((a) => ({ startAt: a.startAt, endAt: a.endAt })))
+    const hours = await getHoursForDayAsync(date)
+    const slots = generateSlots(
+      service,
+      date,
+      appointments.map((a) => ({ startAt: a.startAt, endAt: a.endAt })),
+      hours
+    )
 
     return NextResponse.json({
       date,
       dayName: dayNameFull(date),
-      open: getHoursForDay(date) !== null,
+      open: hours !== null,
       peakDay: isPeak(date, '12:00') && dayNameFull(date) === 'Sobota',
       slots,
     })

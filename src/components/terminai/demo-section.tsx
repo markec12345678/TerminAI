@@ -101,7 +101,11 @@ export function DemoSection() {
           </TabsContent>
 
           <TabsContent value="lastnik" className="mt-6">
-            <Dashboard onRefreshKey={refreshKey} onServicesChanged={onServicesChanged} />
+            <Dashboard
+              onRefreshKey={refreshKey}
+              onServicesChanged={onServicesChanged}
+              businessName={business?.name ?? 'Studio Aura'}
+            />
           </TabsContent>
         </Tabs>
       </div>

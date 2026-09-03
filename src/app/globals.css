@@ -143,3 +143,25 @@
   background-image: radial-gradient(oklch(0.9 0.03 20) 1px, transparent 1px);
   background-size: 22px 22px;
 }
+
+/* Tiskanje dnevenga reda — vse razen print-area skrito */
+#print-area {
+  display: none;
+}
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #print-area {
+    display: block !important;
+    visibility: visible;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: #fff;
+  }
+  #print-area * {
+    visibility: visible;
+  }
+}

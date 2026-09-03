@@ -16,8 +16,21 @@ model Business {
   address   String
   phone     String
   email     String?
+  pinHash   String?  // zaščita lastniškega območja (4–6 mestni PIN)
   createdAt DateTime @default(now())
   services  Service[]
+  hours     WorkingHours[]
+}
+
+model WorkingHours {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+  dayOfWeek  Int      // 0 = nedelja ... 6 = sobota
+  open       String   // "09:00"
+  close      String   // "18:00"
+
+  @@unique([businessId, dayOfWeek])
 }
 
 model Service {

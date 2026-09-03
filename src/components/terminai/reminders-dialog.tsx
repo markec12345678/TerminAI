@@ -1,0 +1,135 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Bell, Clock, CheckCircle2 } from 'lucide-react'
+import { ownerFetch } from '@/lib/owner-fetch'
+import { WhatsAppIcon as WaIcon, waLink } from './whatsapp'
+import type { AppointmentDto } from './types'
+import { timeOfIso } from './types'
+
+interface Props {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  businessName: string
+  tomorrowDate: string | null // YYYY-MM-DD
+}
+
+function reminderText(businessName: string, a: AppointmentDto): string {
+  return `Lep pozdrav iz ${businessName}! 🌸 Opominjamo vas na vaš termin jutri ob ${timeOfIso(a.startAt)} — ${a.service.name}. Veselimo se vas!`
+}
+
+/**
+ * Spomniki za jutrišnje termine — pošteni offline nadomestek za SMS:
+ * za vsako stranko se pripravi WhatsApp sporočilo, lastnik ga s klikom pošlje.
+ * (Online faza: isto besedilo bo odšlo samodejno.)
+ */
+export function RemindersDialog({ open, onOpenChange, businessName, tomorrowDate }: Props) {
+  const [data, setData] = useState<{ date: string; appointments: AppointmentDto[] } | null>(null)
+  const [sent, setSent] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    if (!open || !tomorrowDate) return
+    let cancelled = false
+    ownerFetch(`/api/appointments?date=${tomorrowDate}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => {
+        if (cancelled) return
+        setData({ date: tomorrowDate, appointments: d.appointments })
+        setSent(new Set())
+      })
+      .catch(() => {
+        if (cancelled) return
+        setData({ date: tomorrowDate, appointments: [] })
+        setSent(new Set())
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [open, tomorrowDate])
+
+  const loading = open && (!data || data.date !== tomorrowDate)
+  const appointments = data?.date === tomorrowDate ? data.appointments : []
+  const active = appointments.filter((a) => a.status !== 'cancelled')
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 font-display">
+            <Bell className="h-5 w-5 text-primary" /> Spomniki za jutri
+          </DialogTitle>
+          <DialogDescription>
+            Za vsako stranko se pripravi sporočilo — kliknite WhatsApp ob vsaki, ki ste jo poslali.
+          </DialogDescription>
+        </DialogHeader>
+
+        {loading ? (
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-16" />
+            ))}
+          </div>
+        ) : active.length === 0 ? (
+          <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+            Jutri ni terminov — nič za opomniti. 🌸
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {active.map((a) => {
+              const isSent = sent.has(a.id)
+              return (
+                <div
+                  key={a.id}
+                  className={`flex items-center gap-3 rounded-xl border p-3 transition-colors ${
+                    isSent ? 'border-emerald-200 bg-emerald-50/50' : 'border-border/60'
+                  }`}
+                >
+                  <span className="flex h-10 w-12 shrink-0 flex-col items-center justify-center rounded-lg bg-secondary text-sm font-semibold">
+                    <Clock className="h-3 w-3 text-muted-foreground" />
+                    {timeOfIso(a.startAt)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">{a.client.name}</div>
+                    <div className="truncate text-xs text-muted-foreground">{a.service.name}</div>
+                  </div>
+                  {isSent ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
+                      <CheckCircle2 className="h-4 w-4" /> poslano
+                    </span>
+                  ) : (
+                    <Button asChild size="sm" className="gap-1.5 bg-[#25D366] text-white hover:bg-[#1eb856]">
+                      <a
+                        href={waLink(a.client.phone, reminderText(businessName, a))}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setSent((s) => new Set(s).add(a.id))}
+                      >
+                        <WaIcon className="h-3.5 w-3.5" /> Pošlji
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Zapri
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}

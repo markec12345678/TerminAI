@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useToast } from '@/hooks/use-toast'
+import { ownerFetch, setStoredPin } from '@/lib/owner-fetch'
 import {
   CalendarDays,
   TrendingUp,
@@ -20,11 +22,16 @@ import {
   Store,
   MessageSquare,
   Plus,
+  Printer,
+  Lock,
+  CalendarClock,
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ServicesManager } from './services-manager'
 import { ManualBookingDialog, type ManualPrefill } from './manual-booking-dialog'
 import { MessageInbox } from './message-inbox'
+import { ClientsTab } from './clients-tab'
+import { RemindersDialog } from './reminders-dialog'
 import { QRCodeSVG } from 'qrcode.react'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid } from 'recharts'
 import type { AppointmentDto, StatsDto } from './types'
@@ -73,7 +80,7 @@ function StatCard({
   )
 }
 
-export function Dashboard({ onRefreshKey, onServicesChanged }: { onRefreshKey: number; onServicesChanged?: () => void }) {
+export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { onRefreshKey: number; onServicesChanged?: () => void; businessName: string }) {
   const [stats, setStats] = useState<StatsDto | null>(null)
   const [appointments, setAppointments] = useState<AppointmentDto[]>([])
   const [dates, setDates] = useState<string[]>([])
@@ -83,7 +90,52 @@ export function Dashboard({ onRefreshKey, onServicesChanged }: { onRefreshKey: n
   const [busyId, setBusyId] = useState<string | null>(null)
   const [manualOpen, setManualOpen] = useState(false)
   const [manualPrefill, setManualPrefill] = useState<ManualPrefill | null>(null)
+
+  // PIN zaščita lastniškega območja
+  const [locked, setLocked] = useState(true) // zaklenjen, dokler ne preverimo
+  const [pinInput, setPinInput] = useState('')
+  const [pinError, setPinError] = useState<string | null>(null)
+  const [pinChecking, setPinChecking] = useState(false)
+
+  // Spomniki za jutri
+  const [remindersOpen, setRemindersOpen] = useState(false)
   const { toast } = useToast()
+
+  // Ali je PIN nastavljen? (javni podatek)
+  useEffect(() => {
+    fetch('/api/pin')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => {
+        setLocked(!!d.pinSet) // brez PIN-a → odprto (prvi zagon)
+      })
+      .catch(() => setLocked(false))
+  }, [])
+
+  const unlock = async () => {
+    if (pinInput.length < 4) return
+    setPinChecking(true)
+    setPinError(null)
+    try {
+      const res = await fetch('/api/pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify', pin: pinInput }),
+      })
+      if (!res.ok) {
+        setPinError('Napačen PIN. Poskusite znova.')
+        setPinInput('')
+        return
+      }
+      setStoredPin(pinInput)
+      setLocked(false)
+      // Statistika je zaščitena s PIN-om — naloži jo zdaj, ko je PIN shranjen
+      loadStats()
+    } catch {
+      setPinError('Povezava ni uspela.')
+    } finally {
+      setPinChecking(false)
+    }
+  }
 
   useEffect(() => {
     const out: string[] = []
@@ -99,7 +151,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged }: { onRefreshKey: n
 
   const loadStats = useCallback(async () => {
     try {
-      const res = await fetch('/api/stats')
+      const res = await ownerFetch('/api/stats')
       if (res.ok) setStats(await res.json())
     } catch {
       /* prikažemo skeleton */
@@ -134,7 +186,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged }: { onRefreshKey: n
   const updateStatus = async (id: string, status: AppointmentDto['status']) => {
     setBusyId(id)
     try {
-      const res = await fetch(`/api/appointments/${id}`, {
+      const res = await ownerFetch(`/api/appointments/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
@@ -173,6 +225,42 @@ export function Dashboard({ onRefreshKey, onServicesChanged }: { onRefreshKey: n
 
   return (
     <div className="space-y-4">
+      {/* PIN vrata — zaščita lastniškega območja */}
+      {locked ? (
+        <Card className="mx-auto max-w-sm border-primary/30">
+          <CardContent className="space-y-4 p-6 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Lock className="h-6 w-6" />
+            </div>
+            <div>
+              <h3 className="font-display text-xl font-semibold">Nadzorna plošča je zaklenjena</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Vnesite PIN lastnika — rezervacija strank ostaja odprta.
+              </p>
+            </div>
+            <div className="space-y-1.5 text-left">
+              <Input
+                type="password"
+                inputMode="numeric"
+                value={pinInput}
+                onChange={(e) => setPinInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                onKeyDown={(e) => { if (e.key === 'Enter') unlock() }}
+                placeholder="PIN (4–6 števk)"
+                className="text-center text-lg tracking-[0.3em]"
+                aria-label="PIN lastnika"
+                autoFocus
+              />
+              {pinError && <p className="text-xs text-red-500">{pinError}</p>}
+            </div>
+            <Button className="w-full gap-1.5" disabled={pinInput.length < 4 || pinChecking} onClick={unlock}>
+              {pinChecking ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />} Odkleni
+            </Button>
+            <p className="text-[11px] text-muted-foreground">
+              PIN ste nastavili v zavihku Storitve &amp; salon. Če ste ga pozabili, ga namestitelj ponastavi.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
       <Tabs defaultValue="koledar">
         <TabsList className="h-auto rounded-full p-1">
           <TabsTrigger value="koledar" className="gap-2 rounded-full px-4 py-2">
@@ -180,6 +268,9 @@ export function Dashboard({ onRefreshKey, onServicesChanged }: { onRefreshKey: n
           </TabsTrigger>
           <TabsTrigger value="sporocila" className="gap-2 rounded-full px-4 py-2">
             <MessageSquare className="h-4 w-4" /> Sporočila
+          </TabsTrigger>
+          <TabsTrigger value="stranke" className="gap-2 rounded-full px-4 py-2">
+            <Users className="h-4 w-4" /> Stranke
           </TabsTrigger>
           <TabsTrigger value="storitve" className="gap-2 rounded-full px-4 py-2">
             <Store className="h-4 w-4" /> Storitve & salon
@@ -213,6 +304,15 @@ export function Dashboard({ onRefreshKey, onServicesChanged }: { onRefreshKey: n
             <div className="flex items-center gap-2">
               <Button size="sm" className="gap-1.5" onClick={() => openManual(null)}>
                 <Plus className="h-4 w-4" /> Dodaj termin
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => window.print()}
+                aria-label="Natisni dnevni red"
+                title="Natisni dnevni red"
+              >
+                <Printer className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
@@ -380,23 +480,32 @@ export function Dashboard({ onRefreshKey, onServicesChanged }: { onRefreshKey: n
           <Card className="border-primary/20 bg-primary/5">
             <CardContent className="space-y-3 p-4">
               <div className="flex items-center gap-2">
-                <Bell className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-semibold">Danes v ozadju AI & avtomatika</h3>
+                <CalendarClock className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold">Jutri pred vami</h3>
               </div>
               <ul className="space-y-2 text-xs text-muted-foreground">
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
-                  Ana je odgovorila na <strong className="text-foreground">{(stats?.clients ?? 0) * 3}+ vprašanj</strong> strank
+                  <strong className="text-foreground">{stats?.remindersTomorrow ?? 0}</strong> terminov jutri
                 </li>
                 <li className="flex items-center gap-2">
                   <Bell className="h-3.5 w-3.5 shrink-0 text-primary" />
-                  Spomniki poslani za <strong className="text-foreground">{stats?.remindersTomorrow ?? 0}</strong> jutrišnjih terminov
+                  Spomniki za <strong className="text-foreground">{stats?.remindersTomorrow ?? 0}</strong> strank pripravljeni — s klikom jih pošljete po WhatsAppu
                 </li>
                 <li className="flex items-center gap-2">
                   <Users className="h-3.5 w-3.5 shrink-0 text-amber-600" />
-                  <strong className="text-foreground">{stats?.clients ?? 0}</strong> strank v bazi — samodejno posodobljeno
+                  <strong className="text-foreground">{stats?.clients ?? 0}</strong> strank v bazi — baza je vaša
                 </li>
               </ul>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-1.5"
+                onClick={() => setRemindersOpen(true)}
+                disabled={(stats?.remindersTomorrow ?? 0) === 0}
+              >
+                <Bell className="h-4 w-4" /> Pripravi spomnike ({stats?.remindersTomorrow ?? 0})
+              </Button>
             </CardContent>
           </Card>
 
@@ -410,10 +519,15 @@ export function Dashboard({ onRefreshKey, onServicesChanged }: { onRefreshKey: n
           <MessageInbox onBookForCustomer={openManual} />
         </TabsContent>
 
+        <TabsContent value="stranke" className="mt-4">
+          <ClientsTab />
+        </TabsContent>
+
         <TabsContent value="storitve" className="mt-4">
           <ServicesManager refreshKey={onRefreshKey} onServicesChanged={onServicesChanged} />
         </TabsContent>
       </Tabs>
+      )}
 
       {/* Skupni dialog za ročni vnos — odprt s koledarja ali iz Sporočil */}
       <ManualBookingDialog
@@ -423,6 +537,54 @@ export function Dashboard({ onRefreshKey, onServicesChanged }: { onRefreshKey: n
         prefill={manualPrefill}
         onCreated={onManualCreated}
       />
+
+      {/* Spomniki za jutri (WhatsApp osnutki) */}
+      <RemindersDialog
+        open={remindersOpen}
+        onOpenChange={setRemindersOpen}
+        businessName={businessName}
+        tomorrowDate={dates[1] ?? null}
+      />
+
+      {/* Tiskanje dnevenga reda (vidno samo pri tiskanju) */}
+      <div id="print-area">
+        <div style={{ fontFamily: 'Georgia, serif', color: '#000', padding: '24px' }}>
+          <div style={{ textAlign: 'center', borderBottom: '2px solid #000', paddingBottom: 8, marginBottom: 16 }}>
+            <div style={{ fontSize: 20, fontWeight: 700 }}>{businessName}</div>
+            <div style={{ fontSize: 13 }}>Dnevni red — {selectedDate ? `${dateParts(selectedDate).dayName}, ${dateParts(selectedDate).dayNum}. ${dateParts(selectedDate).month}` : ''}</div>
+          </div>
+          {appointments.filter((a) => a.status !== 'cancelled').length === 0 ? (
+            <p style={{ textAlign: 'center', fontStyle: 'italic', marginTop: 32 }}>Ni terminov.</p>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #000', textAlign: 'left' }}>
+                  <th style={{ padding: '6px 4px', width: 52 }}>Ura</th>
+                  <th style={{ padding: '6px 4px' }}>Stranka</th>
+                  <th style={{ padding: '6px 4px' }}>Storitev</th>
+                  <th style={{ padding: '6px 4px', width: 90 }}>Telefon</th>
+                </tr>
+              </thead>
+              <tbody>
+                {appointments
+                  .filter((a) => a.status !== 'cancelled')
+                  .sort((a, b) => a.startAt.localeCompare(b.startAt))
+                  .map((a) => (
+                    <tr key={a.id} style={{ borderBottom: '1px solid #ccc' }}>
+                      <td style={{ padding: '7px 4px', fontWeight: 700 }}>{timeOfIso(a.startAt)}</td>
+                      <td style={{ padding: '7px 4px' }}>{a.client.name}</td>
+                      <td style={{ padding: '7px 4px' }}>{a.service.name}</td>
+                      <td style={{ padding: '7px 4px' }}>{a.client.phone}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          )}
+          <div style={{ marginTop: 24, fontSize: 11, color: '#555', textAlign: 'right' }}>
+            Natisnjeno {new Date().getUTCDate()}.{new Date().getUTCMonth() + 1}.{new Date().getUTCFullYear()} · TerminAI
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { naiveDate, nowWallClock, isPeak, generateSlots } from '@/lib/booking'
+import { naiveDate, nowWallClock, isPeak, generateSlots, getHoursForDayAsync } from '@/lib/booking'
 
 const createSchema = z.object({
   serviceId: z.string().min(1),
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
       where: { startAt: { gte: dayStart, lte: dayEnd }, status: { not: 'cancelled' } },
       select: { startAt: true, endAt: true },
     })
-    const slots = generateSlots(service, date, existing)
+    const slots = generateSlots(service, date, existing, await getHoursForDayAsync(date))
     const slot = slots.find((s) => s.time === time)
     if (!slot || !slot.available) {
       return NextResponse.json({ error: 'Ta termin ni več prost — izberite drugega.' }, { status: 409 })

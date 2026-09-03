@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { BUSINESS_SLUG, generateSlots, nextDays, naiveDate, todayKey } from '@/lib/booking'
+import { BUSINESS_SLUG, generateSlots, nextDays, naiveDate, todayKey, getHoursForDayAsync } from '@/lib/booking'
 import { parseMessage, composeReply, dayLabel, type ReplyAvailability } from '@/lib/message-parser'
+import { pinAllows } from '@/lib/pin'
 
 const createSchema = z.object({
   phone: z.string().min(6, 'Telefon stranke je obvezen').max(24),
@@ -11,9 +12,12 @@ const createSchema = z.object({
   body: z.string().min(2, 'Sporočilo je prekratko').max(500),
 })
 
-/** Zgodovina sporočil (najnovejša first). */
-export async function GET() {
+/** Zgodovina sporočil (najnovejša first) — vsebuje telefone strank, samo lastnik. */
+export async function GET(req: NextRequest) {
   try {
+    if (!(await pinAllows(req))) {
+      return NextResponse.json({ error: 'Napačen PIN — vnesite PIN lastnika.' }, { status: 401 })
+    }
     const messages = await db.message.findMany({
       orderBy: { createdAt: 'desc' },
       take: 50,
@@ -32,6 +36,9 @@ export async function GET() {
  */
 export async function POST(req: NextRequest) {
   try {
+    if (!(await pinAllows(req))) {
+      return NextResponse.json({ error: 'Napačen PIN — vnesite PIN lastnika.' }, { status: 401 })
+    }
     const body = await req.json()
     const parsedInput = createSchema.safeParse(body)
     if (!parsedInput.success) {
@@ -77,7 +84,7 @@ export async function POST(req: NextRequest) {
           where: { startAt: { gte: dayStart, lte: dayEnd }, status: { not: 'cancelled' } },
           select: { startAt: true, endAt: true },
         })
-        const slots = generateSlots(svcRow, target, existing)
+        const slots = generateSlots(svcRow, target, existing, await getHoursForDayAsync(target))
         const free = slots.filter((s) => s.available)
 
         // Zahtevana ura — prost/zaseden?
@@ -98,7 +105,7 @@ export async function POST(req: NextRequest) {
               where: { startAt: { gte: ds, lte: de }, status: { not: 'cancelled' } },
               select: { startAt: true, endAt: true },
             })
-            const f = generateSlots(svcRow, d, ex).filter((s) => s.available)
+            const f = generateSlots(svcRow, d, ex, await getHoursForDayAsync(d)).filter((s) => s.available)
             if (f.length > 0) altDays.push({ dayLabel: dayLabel(d), times: f.slice(0, 2).map((s) => s.time) })
           }
         }

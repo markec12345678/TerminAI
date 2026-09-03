@@ -34,9 +34,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
-import { Plus, Pencil, Trash2, Scissors, RefreshCcw, Store, Clock, Flame, MapPin, Phone, Mail, Save, Building2 } from 'lucide-react'
+import { ownerFetch, setStoredPin } from '@/lib/owner-fetch'
+import { Plus, Pencil, Trash2, Scissors, RefreshCcw, Store, Clock, Flame, MapPin, Phone, Mail, Save, Building2, KeyRound, CalendarClock } from 'lucide-react'
 import type { ServiceDto, BusinessDto } from './types'
 import { durationLabel, formatPrice } from './types'
+import { Switch } from '@/components/ui/switch'
 
 const DURATIONS = [15, 30, 45, 60, 90, 120, 150, 180]
 
@@ -80,6 +82,16 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
   const [bizForm, setBizForm] = useState({ name: '', phone: '', address: '', email: '' })
   const [bizSaving, setBizSaving] = useState(false)
 
+  // Delovni čas (7 dni, iz baze)
+  const [hoursRows, setHoursRows] = useState<{ dayOfWeek: number; dayName: string; open: string; close: string; closed: boolean }[]>([])
+  const [hoursSaving, setHoursSaving] = useState(false)
+
+  // PIN zaščita
+  const [pinSet, setPinSet] = useState(false)
+  const [pinNew, setPinNew] = useState('')
+  const [pinCurrent, setPinCurrent] = useState('')
+  const [pinSaving, setPinSaving] = useState(false)
+
   // Reset na čist salon
   const [resetOpen, setResetOpen] = useState(false)
   const [newName, setNewName] = useState('')
@@ -112,6 +124,18 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
   useEffect(() => {
     load()
   }, [load, refreshKey])
+
+  // Delovni čas + stanje PIN-a (enkrat)
+  useEffect(() => {
+    fetch('/api/hours')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => setHoursRows(d.hours))
+      .catch(() => setHoursRows([]))
+    fetch('/api/pin')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => setPinSet(d.pinSet))
+      .catch(() => setPinSet(false))
+  }, [])
 
   const openAdd = () => {
     setEditing(null)
@@ -152,12 +176,12 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
         category: form.category,
       }
       const res = editing
-        ? await fetch(`/api/services/${editing.id}`, {
+        ? await ownerFetch(`/api/services/${editing.id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
           })
-        : await fetch('/api/services', {
+        : await ownerFetch('/api/services', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
@@ -184,7 +208,7 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
   const remove = async (s: ServiceDto) => {
     setBusyId(s.id)
     try {
-      const res = await fetch(`/api/services/${s.id}`, { method: 'DELETE' })
+      const res = await ownerFetch(`/api/services/${s.id}`, { method: 'DELETE' })
       const data = await res.json()
       if (!res.ok) {
         toast({ title: 'Brisanje blokirano', description: data.error, variant: 'destructive' })
@@ -203,7 +227,7 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
   const freshStart = async () => {
     setResetting(true)
     try {
-      const res = await fetch('/api/setup', {
+      const res = await ownerFetch('/api/setup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -240,7 +264,7 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
     }
     setBizSaving(true)
     try {
-      const res = await fetch('/api/setup', {
+      const res = await ownerFetch('/api/setup', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -264,6 +288,69 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
       toast({ title: 'Napaka', description: 'Povezava ni uspela.', variant: 'destructive' })
     } finally {
       setBizSaving(false)
+    }
+  }
+
+  const saveHours = async () => {
+    const openDays = hoursRows.filter((r) => !r.closed)
+    for (const r of openDays) {
+      if (r.open >= r.close) {
+        toast({ title: 'Napačen delovni čas', description: `${r.dayName}: konec mora biti pozneje od začetka.`, variant: 'destructive' })
+        return
+      }
+    }
+    setHoursSaving(true)
+    try {
+      const res = await ownerFetch('/api/hours', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hours: openDays.map((r) => ({ dayOfWeek: r.dayOfWeek, open: r.open, close: r.close })),
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast({ title: 'Napaka', description: data.error ?? 'Shranjevanje ni uspelo.', variant: 'destructive' })
+        return
+      }
+      toast({ title: 'Delovni čas shranjen ✓', description: 'Prosti termini se takoj preračunajo.' })
+    } catch {
+      toast({ title: 'Napaka', description: 'Povezava ni uspela.', variant: 'destructive' })
+    } finally {
+      setHoursSaving(false)
+    }
+  }
+
+  const savePin = async () => {
+    if (pinNew.length < 4) {
+      toast({ title: 'PIN je prekratki', description: 'Uporabite 4–6 števk.', variant: 'destructive' })
+      return
+    }
+    if (pinSet && pinCurrent.length < 4) {
+      toast({ title: 'Manjka trenutni PIN', description: 'Za spremembo vnesite trenutni PIN.', variant: 'destructive' })
+      return
+    }
+    setPinSaving(true)
+    try {
+      const res = await fetch('/api/pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set', pin: pinNew, currentPin: pinCurrent || undefined }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast({ title: 'Napaka', description: data.error ?? 'Nastavitev ni uspela.', variant: 'destructive' })
+        return
+      }
+      toast({ title: 'PIN nastavljen ✓', description: 'Nadzorna plošča se ob naslednjem obisku zaklene.' })
+      setStoredPin(pinNew) // takoj uporabi novi PIN v tej seji
+      setPinSet(true)
+      setPinNew('')
+      setPinCurrent('')
+    } catch {
+      toast({ title: 'Napaka', description: 'Povezava ni uspela.', variant: 'destructive' })
+    } finally {
+      setPinSaving(false)
     }
   }
 
@@ -305,6 +392,105 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
           </div>
           <Button className="mt-3 gap-1.5" size="sm" disabled={bizSaving} onClick={saveBiz}>
             {bizSaving ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Shrani podatke
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Delovni čas */}
+      <Card className="border-border/60">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-4">
+          <div className="flex items-center gap-2">
+            <CalendarClock className="h-4 w-4 text-primary" />
+            <h3 className="font-semibold">Delovni čas</h3>
+          </div>
+          <span className="text-xs text-muted-foreground">določa proste termine</span>
+        </CardHeader>
+        <CardContent className="space-y-2 p-4">
+          {hoursRows.length === 0 ? (
+            <Skeleton className="h-10 w-full" />
+          ) : (
+            hoursRows.map((r) => (
+              <div key={r.dayOfWeek} className="flex items-center gap-3 rounded-xl border border-border/60 px-3 py-2">
+                <span className="w-24 shrink-0 text-sm font-medium">{r.dayName}</span>
+                <Switch
+                  checked={!r.closed}
+                  onCheckedChange={(open) => setHoursRows((rows) => rows.map((x) => (x.dayOfWeek === r.dayOfWeek ? { ...x, closed: !open } : x)))}
+                  aria-label={`${r.dayName} odprto/zaprto`}
+                />
+                <div className="ml-auto flex items-center gap-2">
+                  <Input
+                    type="time"
+                    value={r.open ?? ''}
+                    disabled={r.closed}
+                    onChange={(e) => setHoursRows((rows) => rows.map((x) => (x.dayOfWeek === r.dayOfWeek ? { ...x, open: e.target.value } : x)))}
+                    className="h-9 w-[104px]"
+                    aria-label={`${r.dayName} odprtje`}
+                  />
+                  <span className="text-muted-foreground">–</span>
+                  <Input
+                    type="time"
+                    value={r.close ?? ''}
+                    disabled={r.closed}
+                    onChange={(e) => setHoursRows((rows) => rows.map((x) => (x.dayOfWeek === r.dayOfWeek ? { ...x, close: e.target.value } : x)))}
+                    className="h-9 w-[104px]"
+                    aria-label={`${r.dayName} zaprtje`}
+                  />
+                </div>
+              </div>
+            ))
+          )}
+          <Button className="mt-2 gap-1.5" size="sm" disabled={hoursSaving} onClick={saveHours}>
+            {hoursSaving ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Shrani delovni čas
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* PIN zaščita */}
+      <Card className="border-border/60">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-4">
+          <div className="flex items-center gap-2">
+            <KeyRound className="h-4 w-4 text-primary" />
+            <h3 className="font-semibold">Zaščita lastnika (PIN)</h3>
+          </div>
+          {pinSet ? (
+            <span className="text-xs font-medium text-emerald-600">vklopljena</span>
+          ) : (
+            <span className="text-xs text-amber-600">ni nastavljena</span>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-3 p-4">
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            PIN zaklene nadzorno ploščo — stranke lahko še vedno rezervirajo, urejanje podatkov pa je možno samo z PIN-om.
+            Priporočamo 4–6 števk, ki jih poznate samo vi.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {pinSet && (
+              <div className="space-y-1.5">
+                <Label htmlFor="pin-current">Trenutni PIN</Label>
+                <Input
+                  id="pin-current"
+                  type="password"
+                  inputMode="numeric"
+                  value={pinCurrent}
+                  onChange={(e) => setPinCurrent(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  maxLength={6}
+                />
+              </div>
+            )}
+            <div className="space-y-1.5">
+              <Label htmlFor="pin-new">{pinSet ? 'Nov PIN' : 'PIN (4–6 števk)'}</Label>
+              <Input
+                id="pin-new"
+                type="password"
+                inputMode="numeric"
+                value={pinNew}
+                onChange={(e) => setPinNew(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                maxLength={6}
+              />
+            </div>
+          </div>
+          <Button className="gap-1.5" size="sm" disabled={pinSaving} onClick={savePin}>
+            {pinSaving ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />} {pinSet ? 'Zamenjaj PIN' : 'Nastavi PIN'}
           </Button>
         </CardContent>
       </Card>

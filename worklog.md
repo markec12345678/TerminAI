@@ -120,3 +120,26 @@ Stage Summary:
 - Celoten workflow "stranka piše → program razume → odgovor s cenami in termini → WhatsApp/e-pošta/kopija → termin vnešen" deluje 100% offline in brez AI stroškov
 - Zgodovina sporočil v bazi (dolg sled) — online faza: isti modul + WhatsApp Business API = avtomatska recepcija (39 € dodatek)
 - Upsell zgodba za prodajo: danes človek pritisne "pošlji", jutri stroj
+
+---
+Task ID: 7
+Agent: Z.ai Code (glavni agent)
+Task: Analiza vrzeli + 5 kritičnih popravkov — PIN zaščita, delovni čas iz baze, baza strank, tiskanje dnevnega reda, pošteni spomniki
+
+Work Log:
+- ANALIZA: (1) ni zaščite lastniškega območja 🔴, (2) delovni časi hardkodirani 🔴, (3) baza strank nevidna 🟠, (4) ni tiskanja 🟠, (5) "SMS poslani" izmišljeno 🟡
+- Prisma: Business.pinHash + model WorkingHours (dayOfWeek 0-6, open, close, unique [businessId, dayOfWeek]) + db:push
+- src/lib/pin.ts: hashPin (sha256 slug:pin), checkPin (no-pin/ok/wrong), pinAllows; src/lib/owner-fetch.ts: sessionStorage terminai_pin → glava x-owner-pin
+- booking.ts: DEFAULT_HOURS (fallback + seed), getBusinessHours/getHoursForDayAsync (avto-sejanje), generateSlots(service, date, blocks, hours?) — vsi klicoči posodobljeni (availability, appointments POST, messages POST x2, stats); seedDefaultHours brez skipDuplicates (SQLite ne podpira — popravljen PrismaClientValidationError)
+- API: GET/PUT /api/hours (validacija open<close), GET/POST /api/pin (set/verify/change), GET /api/clients (obiski, prihodki, zadnji/naslednji termin, priljubljena storitev); PIN zaščita na: setup POST+PATCH, services POST/PATCH/DELETE, appointments [id] PATCH/DELETE, messages GET+POST, stats GET, hours PUT (POST /api/appointments ostaja javen za stranke!)
+- Dashboard: PIN vrata (lock kartica, verify, sessionStorage, loadStats po odklepu — popravljen hrošč), 4. zavihek Stranke (iskanje, badge "zvesta stranka" 5+ obiskov), gumb Natisni + #print-area (dnevni red: ura/stranka/storitev/telefon, print CSS v globals.css), kartica "Jutri pred vami" + RemindersDialog (WhatsApp osnutki za jutrišnje termine, "poslano" oznake)
+- ServicesManager: kartici Delovni čas (7 dni, Switch + time inputi, PUT z validacijo) in Zaščita PIN (set/change, setStoredPin po menjavi — popravljen robni primer); ownerFetch povsod; Input value ?? '' (popravljen React value null)
+- clients-tab.tsx + reminders-dialog.tsx (setData vzorec namesto setState v effect — lint pravilo)
+- E2E: PIN cikel (nastavi 1234 → 401 brez/napačnega → 200 pravilnega → setup POST 401 brez PIN), delovni čas (ponedeljek 08-20 → sloti 08:00-19:30 ✓, nedelja zaprta ✓, UI toggle tor → zaprto v bazi ✓), stranke (10 strank, 8 obiskov, iskanje), spomniki (wa.me s personaliziranim besedilom "…jutri ob 15:30 — Striženje"), PIN menjava (1234→4321→verify ✓, session posodobljen), print-area z dnevnom redom, Tina Test termin počiščen, PIN ponastavljen na nedoločen za demo (dashboard odprt, nastavi se v kartici), 0 konzolnih napak, lint čist, mobilna OK
+- Restart strežnika: port 3000 TIME_WAIT zamik (start-dev.sh ponovni poskusi), .next čist
+
+Stage Summary:
+- Varnostna zgodba za prodajo: "nadzorna plošča zaklenjena s PIN-om, stranke rezervirajo prosto" — 401 zaščita vseh lastniških poti
+- Delovni čas popolnoma nastavljiv (vsak salon svoj urnik) — vpliva na termine, sporočila, statistiko
+- Baza strank z zgodovino + tiskanje dnevenga reda + WhatsApp spomniki = popolna dnevna rutina frizerke offline
+- Kasneje (online faza): več storitev v terminu, več izvajalcev, SMS API, odpoved stranke prek povezave
