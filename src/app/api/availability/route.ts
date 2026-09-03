@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     const appointments = await db.appointment.findMany({
       where: {
         startAt: { gte: dayStart, lte: dayEnd },
-        status: { not: 'cancelled' },
+        status: { notIn: ['cancelled', 'no_show'] },
       },
       select: { startAt: true, endAt: true },
     })

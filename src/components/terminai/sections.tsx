@@ -277,6 +277,10 @@ const FAQS = [
     a: 'Nič se ne izklopi. Osnovni sistem je vaš in deluje naprej — tudi brez vzdrževanja in brez Anje. Dodatka sta neobvezna in ju lahko kadar koli prekličete ali znova vklopite.',
   },
   {
+    q: 'Kaj če stranka ne more priti na termin?',
+    a: 'Vsak termin ima svojo odpovedno povezavo: WhatsApp spominik, ki ga pošljete dan prej, jo vsebuje — stranka klikne in termin odpove sama, termin se takoj sprosti. Če ne pride in ne odpove, z enim klikom označite "ni prišla" in izostanki se samodejno štejejo pri stranki v bazi.',
+  },
+  {
     q: 'Kaj če stranka nima telefona s pametnim zaslonom?',
     a: 'Rezervacijska stran deluje na vsakem telefonu z brskalnikom — brez namestitve aplikacije. Starejše stranke lahko seveda pokličejo, vi pa termin vpišete v nadzorno ploščo.',
   },

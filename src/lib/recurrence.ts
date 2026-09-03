@@ -40,14 +40,14 @@ export async function getRecurrenceOverview(): Promise<RecurrenceEntryDto[]> {
 
   // Zadnji termin vsakega (stranka, storitev) para z recurWeeks
   const recurring = await db.appointment.findMany({
-    where: { recurWeeks: { not: null }, status: { not: 'cancelled' } },
+    where: { recurWeeks: { not: null }, status: { notIn: ['cancelled', 'no_show'] } },
     include: { service: true, client: true },
     orderBy: { startAt: 'desc' },
   })
 
   // Vsi neodpovedani termini — za ugotavljanje pokritosti
   const all = await db.appointment.findMany({
-    where: { status: { not: 'cancelled' } },
+    where: { status: { notIn: ['cancelled', 'no_show'] } },
     select: { id: true, clientId: true, serviceId: true, startAt: true },
   })
 

@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 
     const [todayAppointments, monthAppointments, pendingCount, clientsCount] = await Promise.all([
       db.appointment.findMany({
-        where: { startAt: { gte: todayStart, lte: todayEnd }, status: { not: 'cancelled' } },
+        where: { startAt: { gte: todayStart, lte: todayEnd }, status: { notIn: ['cancelled', 'no_show'] } },
         include: { service: true, client: true },
         orderBy: { startAt: 'asc' },
       }),
@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
       const ds = naiveDate(dayKeyStr, '00:00')
       const de = naiveDate(dayKeyStr, '23:59')
       const appts = await db.appointment.findMany({
-        where: { createdAt: { gte: ds, lte: de }, status: { not: 'cancelled' } },
+        where: { createdAt: { gte: ds, lte: de }, status: { notIn: ['cancelled', 'no_show'] } },
         select: { priceCents: true },
       })
       weekAgg.push({
@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
     const tomorrowStart = addMinutes(todayStart, 1440)
     const tomorrowEnd = addMinutes(todayEnd, 1440)
     const tomorrowCount = await db.appointment.count({
-      where: { startAt: { gte: tomorrowStart, lte: tomorrowEnd }, status: { not: 'cancelled' } },
+      where: { startAt: { gte: tomorrowStart, lte: tomorrowEnd }, status: { notIn: ['cancelled', 'no_show'] } },
     })
 
     return NextResponse.json({

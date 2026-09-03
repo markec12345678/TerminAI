@@ -65,13 +65,15 @@ export function DemoSection() {
         <Tabs defaultValue="stranka" className="mt-8">
           <div className="flex justify-center">
             <TabsList className="h-auto rounded-full p-1">
-              <TabsTrigger value="stranka" className="gap-2 rounded-full px-5 py-2 data-[state=active]:shadow-sm">
+              <TabsTrigger value="stranka" className="gap-2 rounded-full px-4 py-2 data-[state=active]:shadow-sm sm:px-5">
                 <UserRound className="h-4 w-4" />
-                Stran za stranko
+                <span className="sm:hidden">Stranka</span>
+                <span className="hidden sm:inline">Stran za stranko</span>
               </TabsTrigger>
-              <TabsTrigger value="lastnik" className="gap-2 rounded-full px-5 py-2 data-[state=active]:shadow-sm">
+              <TabsTrigger value="lastnik" className="gap-2 rounded-full px-4 py-2 data-[state=active]:shadow-sm sm:px-5">
                 <Store className="h-4 w-4" />
-                Nadzorna plošča lastnika
+                <span className="sm:hidden">Lastnik</span>
+                <span className="hidden sm:inline">Nadzorna plošča lastnika</span>
               </TabsTrigger>
             </TabsList>
           </div>

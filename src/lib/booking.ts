@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto'
 import { db } from '@/lib/db'
 import type { Service } from '@prisma/client'
 
@@ -239,6 +240,7 @@ export async function seedDemo(): Promise<void> {
       priceCents: peak ? svc.peakPriceCents : svc.priceCents,
       status,
       recurWeeks: recurWeeks ?? null,
+      cancelToken: randomUUID().replace(/-/g, '').slice(0, 12),
     }
   }
 

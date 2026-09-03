@@ -17,13 +17,21 @@ export async function GET(req: NextRequest) {
     const clients = await db.client.findMany({
       include: {
         appointments: {
-          where: { status: { not: 'cancelled' } },
+          where: { status: { notIn: ['cancelled', 'no_show'] } },
           include: { service: { select: { name: true } } },
           orderBy: { startAt: 'desc' },
         },
       },
       orderBy: { createdAt: 'asc' },
     })
+
+    // Izostanki (no_show) — poseben števec na stranko, ki se ne šteje v obiske
+    const noShowAgg = await db.appointment.groupBy({
+      by: ['clientId'],
+      where: { status: 'no_show' },
+      _count: { _all: true },
+    })
+    const noShowMap = new Map(noShowAgg.map((g) => [g.clientId, g._count._all]))
 
     const rows = clients.map((c) => {
       const done = c.appointments.filter((a) => a.status === 'completed' || a.startAt <= now)
@@ -36,6 +44,7 @@ export async function GET(req: NextRequest) {
         name: c.name,
         phone: c.phone,
         visits: c.appointments.length,
+        noShows: noShowMap.get(c.id) ?? 0,
         totalCents,
         lastVisit: last ? last.startAt.toISOString().slice(0, 10) : null,
         next: next

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -22,9 +22,13 @@ import {
   Bell,
   MapPin,
   Flame,
+  Link2,
+  Copy,
+  Check,
 } from 'lucide-react'
 import type { AppointmentDto, AvailabilityDto, ServiceDto, SlotDto } from './types'
-import { dateParts, durationLabel, formatPrice, timeOfIso } from './types'
+import { dateParts, durationLabel, formatPrice, timeOfIso, cancelUrl } from './types'
+import { copyToClipboard } from '@/lib/clipboard'
 import { WhatsAppIcon, waLink, waBookingText } from './whatsapp'
 
 type Step = 'service' | 'datetime' | 'details' | 'done'
@@ -52,7 +56,15 @@ export function BookingWidget({ services, businessName, businessTagline, busines
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [confirmed, setConfirmed] = useState<AppointmentDto | null>(null)
+  const [linkCopied, setLinkCopied] = useState(false)
   const { toast } = useToast()
+
+  // Trenutni naslov strani (SSR varno) — za odpovedno povezavo
+  const origin = useSyncExternalStore(
+    () => () => {},
+    () => window.location.origin,
+    () => ''
+  )
 
   // Se naslednjih 14 dni
   useEffect(() => {
@@ -452,6 +464,38 @@ export function BookingWidget({ services, businessName, businessTagline, busines
               <Bell className="h-4 w-4 shrink-0 text-primary" />
               SMS spominik bo poslan na {confirmed.client.phone} dan pred terminom.
             </div>
+
+            {/* Odpovedna povezava — stranka lahko termin odpove sama z enim klikom */}
+            {confirmed.cancelToken && origin && (
+              <div className="mx-auto mt-3 max-w-sm rounded-xl border border-dashed p-3">
+                <p className="mb-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <Link2 className="h-3.5 w-3.5 shrink-0 text-primary" />
+                  Shranite to povezavo — z njo lahko termin odpovete kadar koli:
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="min-w-0 flex-1 truncate rounded-md bg-muted/60 px-2 py-1.5 font-mono text-[11px] text-foreground" title={cancelUrl(origin, confirmed.cancelToken)}>
+                    {cancelUrl(origin, confirmed.cancelToken).replace(/^https?:\/\//, '')}
+                  </code>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 shrink-0 gap-1.5"
+                    onClick={async () => {
+                      const ok = await copyToClipboard(cancelUrl(origin, confirmed.cancelToken!))
+                      if (ok) {
+                        setLinkCopied(true)
+                        setTimeout(() => setLinkCopied(false), 2000)
+                      } else {
+                        toast({ title: 'Kopiranje ni uspelo', description: 'Povezavo prepišite ročno.', variant: 'destructive' })
+                      }
+                    }}
+                  >
+                    {linkCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                    {linkCopied ? 'Kopirano' : 'Kopiraj'}
+                  </Button>
+                </div>
+              </div>
+            )}
 
             <Button variant="outline" className="mt-5" onClick={reset}>
               Nova rezervacija

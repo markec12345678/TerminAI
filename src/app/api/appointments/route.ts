@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { randomUUID } from 'crypto'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { naiveDate, nowWallClock, isPeak, generateSlots, getHoursForDayAsync } from '@/lib/booking'
@@ -16,6 +17,10 @@ const createSchema = z.object({
 
 export async function GET(req: NextRequest) {
   try {
+    // Seznam terminov vsebuje telefone strank — samo lastnik (PIN).
+    if (!(await pinAllows(req))) {
+      return NextResponse.json({ error: 'Napačen PIN — vnesite PIN lastnika.' }, { status: 401 })
+    }
     const from = req.nextUrl.searchParams.get('from')
     const to = req.nextUrl.searchParams.get('to')
     const date = req.nextUrl.searchParams.get('date')
@@ -46,6 +51,7 @@ export async function GET(req: NextRequest) {
         status: a.status,
         priceCents: a.priceCents,
         recurWeeks: a.recurWeeks,
+        cancelToken: a.cancelToken,
         notes: a.notes,
         service: { id: a.service.id, name: a.service.name, durationMin: a.service.durationMin },
         client: { id: a.client.id, name: a.client.name, phone: a.client.phone },
@@ -84,7 +90,7 @@ export async function POST(req: NextRequest) {
     const dayStart = naiveDate(date, '00:00')
     const dayEnd = naiveDate(date, '23:59')
     const existing = await db.appointment.findMany({
-      where: { startAt: { gte: dayStart, lte: dayEnd }, status: { not: 'cancelled' } },
+      where: { startAt: { gte: dayStart, lte: dayEnd }, status: { notIn: ['cancelled', 'no_show'] } },
       select: { startAt: true, endAt: true },
     })
     const slots = generateSlots(service, date, existing, await getHoursForDayAsync(date))
@@ -111,6 +117,7 @@ export async function POST(req: NextRequest) {
         priceCents,
         status: 'confirmed',
         recurWeeks: saveRecurWeeks,
+        cancelToken: randomUUID().replace(/-/g, '').slice(0, 12),
         notes: notes || undefined,
       },
       include: { service: true, client: true },
@@ -125,6 +132,7 @@ export async function POST(req: NextRequest) {
           status: appointment.status,
           priceCents: appointment.priceCents,
           recurWeeks: appointment.recurWeeks,
+          cancelToken: appointment.cancelToken,
           service: { id: appointment.service.id, name: appointment.service.name, durationMin: appointment.service.durationMin },
           client: { id: appointment.client.id, name: appointment.client.name, phone: appointment.client.phone },
         },

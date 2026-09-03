@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
         const dayStart = naiveDate(target, '00:00')
         const dayEnd = naiveDate(target, '23:59')
         const existing = await db.appointment.findMany({
-          where: { startAt: { gte: dayStart, lte: dayEnd }, status: { not: 'cancelled' } },
+          where: { startAt: { gte: dayStart, lte: dayEnd }, status: { notIn: ['cancelled', 'no_show'] } },
           select: { startAt: true, endAt: true },
         })
         const slots = generateSlots(svcRow, target, existing, await getHoursForDayAsync(target))
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
             const ds = naiveDate(d, '00:00')
             const de = naiveDate(d, '23:59')
             const ex = await db.appointment.findMany({
-              where: { startAt: { gte: ds, lte: de }, status: { not: 'cancelled' } },
+              where: { startAt: { gte: ds, lte: de }, status: { notIn: ['cancelled', 'no_show'] } },
               select: { startAt: true, endAt: true },
             })
             const f = generateSlots(svcRow, d, ex, await getHoursForDayAsync(d)).filter((s) => s.available)

@@ -12,7 +12,13 @@
 - Interaktivni koledar s 30-minutnimi termini in samodejnim zaznavanjem **prekrivanja**
 - Delovni čas po dnevih (nedelja–sobota), samodejni predlogi prostih terminov
 - **Vrhovni doplaček**: sobote in delavniki po 15. uri se zaračunajo po višji ceni
-- Statusi terminov: `pending → confirmed → completed / cancelled`
+- Statusi terminov: `pending → confirmed → completed / cancelled / no_show`
+
+### ❌ Odpoved z enim klikom (enkratna povezava)
+- Vsak termin ima svojo **odpovedno povezavo** (`/?cancel=token`) — brez PIN-a, token je overitev
+- Povezava je vključena v **WhatsApp spominik** („Če ne morete priti, termin odpovejte tukaj …“) in potrditev rezervacije
+- Stranka klikne, vidi termin in ga odpove — **termin se takoj sprosti** za druge
+- Lastnik lahko povezavo **kopira v odložišče** (gumb v koledarju) in jo pošlje po WhatsAppu
 
 ### 📱 Oddaljeno naročanje (brez plačljivih API-jeev)
 - **WhatsApp gumb** — stranka s klikom odpre pogovor (`wa.me`), sporočilo se samodejno izpolni z izbrano storitvijo
@@ -32,6 +38,12 @@
 - **Podatki salona**: ime, naslov, telefon, delovni čas
 - **Baza strank** z zgodovino obiskov
 - **Statistika**: prihodki, zasedenost, najbolj donosne storitve
+- **Izvoz iCal (.ics)** — koledar terminov uvozite v Google/Apple Koledar ali telefon
+
+### ⚠️ Sledenje izostankov (no-show)
+- En klik **„Ni prišla“** na pretekel termin (mesto klica odpovedi)
+- Izostanki se **samodejno štejejo pri stranki** — rdeča oznaka „2× ni prišla“ v bazi strank
+- Izostanki se ne štejejo v obiske, prihodke ali zasedenost
 
 ### 🔁 Ponavljajoči obiski — "kdo je na vrsti"
 - Termin dobi oznako ponavljanja (npr. **barvanje vsake 4 tedne**, striženje vsaka 3 tedna)
@@ -117,19 +129,22 @@ Baza (`db/custom.db`) je prenosljiva datoteka — rezervacija na USB in prenos n
 prisma/schema.prisma        # Business, Service, Client, Appointment, Message, WorkingHours
 src/app/api/                # REST API
 ├── appointments/           # CRUD termini + prekrivanja
-│   └── recurrence/         # "kdo je na vrsti" (ponavljajoči obiski)
+│   ├── recurrence/         # "kdo je na vrsti" (ponavljajoči obiski)
+│   ├── cancel/             # odpoved prek enkratne povezave (GET/POST, token)
+│   └── ical/               # izvoz koledarja (.ics)
 ├── availability/           # prosti termini
 ├── services/               # cenik (CRUD)
-├── clients/                # baza strank
+├── clients/                # baza strank (+ števec izostankov)
 ├── messages/               # SMS/WhatsApp sporočila + razčlenjevanje
 ├── stats/                  # statistika
 ├── hours/                  # delovni čas
 ├── backup/                 # varnostne kopije (seznam, ustvari, prenos)
 ├── setup/                  # inicializacija demo podatki
 └── pin/                    # zaščita lastniškega območja
-src/components/terminai/    # 17 UI komponent (hero, koledar, cenik, inbox …)
+src/components/terminai/    # UI komponente (hero, koledar, cenik, inbox …)
 src/lib/recurrence.ts       # logika ponavljajočih obiskov
 src/lib/backup.ts           # samodejni backup (VACUUM INTO)
+src/lib/clipboard.ts        # kopiranje v odložišče (tudi http:// LAN)
 src/instrumentation.ts      # vzdrževalne naloge ob zagonu strežnika
 db/custom.db                # SQLite baza (prenosljiva)
 db/backups/                 # samodejne varnostne kopije (zadnjih 14)
@@ -148,7 +163,7 @@ Message (neodvisna tabela za sprejeta sporočila strank)
 
 - termini shranjeni v **UTC**, prikaz v lokalnem času
 - cene v **centih** (natančnost, brez plavajoče vejice)
-- vsak termin: `startAt`, `endAt`, `priceCents` (zamrznjena cena ob naročilu)
+- vsak termin: `startAt`, `endAt`, `priceCents` (zamrznjena cena ob naročilu), `recurWeeks` (ponavljanje), `cancelToken` (odpovedna povezava), `status` vključno z `no_show` (izostanek)
 
 ---
 

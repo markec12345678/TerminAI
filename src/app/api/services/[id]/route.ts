@@ -58,7 +58,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const upcoming = await db.appointment.count({
       where: {
         serviceId: id,
-        status: { not: 'cancelled' },
+        status: { notIn: ['cancelled', 'no_show'] },
         startAt: { gte: now },
       },
     })

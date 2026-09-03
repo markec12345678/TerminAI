@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Users, Search, Phone, CalendarDays, Wallet, Heart } from 'lucide-react'
+import { Users, Search, Phone, CalendarDays, Wallet, Heart, AlertTriangle } from 'lucide-react'
 import { ownerFetch } from '@/lib/owner-fetch'
 import { formatPrice } from './types'
 
@@ -15,6 +15,7 @@ interface ClientRow {
   name: string
   phone: string
   visits: number
+  noShows: number
   totalCents: number
   lastVisit: string | null
   next: { at: string; service: string } | null
@@ -114,6 +115,15 @@ export function ClientsTab() {
                       {c.visits >= 5 && (
                         <Badge variant="outline" className="gap-1 border-primary/30 bg-primary/10 text-primary">
                           <Heart className="h-3 w-3" /> zvesta stranka
+                        </Badge>
+                      )}
+                      {c.noShows > 0 && (
+                        <Badge
+                          variant="outline"
+                          className="gap-1 border-rose-200 bg-rose-50 text-rose-600"
+                          title="Število izostankov — poteče če pravi termini"
+                        >
+                          <AlertTriangle className="h-3 w-3" /> {c.noShows}× ni prišla
                         </Badge>
                       )}
                     </div>

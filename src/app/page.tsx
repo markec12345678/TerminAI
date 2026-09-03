@@ -3,6 +3,7 @@ import { Hero } from '@/components/terminai/hero'
 import { DemoSection } from '@/components/terminai/demo-section'
 import { Features, Pricing, Faq, FinalCta } from '@/components/terminai/sections'
 import { Footer } from '@/components/terminai/footer'
+import { CancelDialog } from '@/components/terminai/cancel-dialog'
 
 export default function Home() {
   return (
@@ -17,6 +18,8 @@ export default function Home() {
         <FinalCta />
       </main>
       <Footer />
+      {/* Odpoved termina prek povezave (/?cancel=token) — stranka odpove sama */}
+      <CancelDialog />
     </div>
   )
 }

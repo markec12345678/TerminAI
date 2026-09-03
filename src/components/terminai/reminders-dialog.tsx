@@ -15,7 +15,7 @@ import { Bell, Clock, CheckCircle2 } from 'lucide-react'
 import { ownerFetch } from '@/lib/owner-fetch'
 import { WhatsAppIcon as WaIcon, waLink } from './whatsapp'
 import type { AppointmentDto } from './types'
-import { timeOfIso } from './types'
+import { timeOfIso, cancelUrl } from './types'
 
 interface Props {
   open: boolean
@@ -25,7 +25,12 @@ interface Props {
 }
 
 function reminderText(businessName: string, a: AppointmentDto): string {
-  return `Lep pozdrav iz ${businessName}! 🌸 Opominjamo vas na vaš termin jutri ob ${timeOfIso(a.startAt)} — ${a.service.name}. Veselimo se vas!`
+  const base = `Lep pozdrav iz ${businessName}! 🌸 Opominjamo vas na vaš termin jutri ob ${timeOfIso(a.startAt)} — ${a.service.name}. Veselimo se vas!`
+  // Odpovedna povezava — stranka odpove sama z enim klikom (če termin ne more priti)
+  if (a.cancelToken && typeof window !== 'undefined') {
+    return `${base}\n\nČe ne morete priti, termin odpovejte tukaj: ${cancelUrl(window.location.origin, a.cancelToken)}`
+  }
+  return base
 }
 
 /**
@@ -59,7 +64,7 @@ export function RemindersDialog({ open, onOpenChange, businessName, tomorrowDate
 
   const loading = open && (!data || data.date !== tomorrowDate)
   const appointments = data?.date === tomorrowDate ? data.appointments : []
-  const active = appointments.filter((a) => a.status !== 'cancelled')
+  const active = appointments.filter((a) => a.status !== 'cancelled' && a.status !== 'no_show')
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

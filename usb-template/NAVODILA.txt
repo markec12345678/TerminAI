@@ -66,6 +66,28 @@ PONAVLJAJOI TERMINI (barvanje vsake 4 tedne itd.):
     NAROI (termin vpian v 10 sekundah).
   - Stranka, ki je e naroena, je oznacena kot "e naroena".
 
+KAKO STRANKA ODPOVE TERMIN (sama, z enim klikom):
+  - Vsak termin ima svojo ODPOVEDNO POVEZAVO.
+  - Ta povezava je ze vkljuena v WhatsApp spomnik, ki ga posljete
+    dan prej ("e ne morete priti, termin odpovejte tukaj ...").
+  - Stranka klikne, vidi termin in potrdi odpoved — termin se
+    TAKOJ sprosti za druge stranke. Vi vidite odpoved v koledarju.
+  - Povezavo lahko kopirate tudi sami: v koledarju je gumb za
+    kopiranje (ikona verige) — posljite jo stranki po WhatsAppu.
+
+KAKO ZABELEIM, DA STRANKA NI PRILA?
+  - Pri pretekelm terminu kliknite gumb "Ni prila" (ikona osebe
+    z X). Rdea oznaka se vpie v termin.
+  - Izostanki se SAMO TEJO pri stranki v zavihku "Stranke"
+    ("2× ni prila") — takoj vidite, kdo vas nastavlja.
+  - Izostanek se ne teje v obiske niti v prihodke.
+
+KOLEDAR V TELEFONU (iCal):
+  - Gumb v glavi koledarja (ikona puscice dol) izvozi datoteko
+    terminai-koledar.ics.
+  - To datoteko uvozite v Google Koledar ali telefon — vsi
+    termini vidni tudi na mobilniku.
+
 PODATKI SALONA:
   - Zavihek "Storitve & salon" > kartica "Podatki salona":
     ime, telefon (za WhatsApp gumb!), naslov, e-posta.

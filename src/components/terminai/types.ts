@@ -37,9 +37,10 @@ export interface AppointmentDto {
   id: string
   startAt: string
   endAt: string
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
   priceCents: number
   recurWeeks?: number | null
+  cancelToken?: string | null
   notes?: string | null
   service: { id: string; name: string; durationMin: number }
   client: { id: string; name: string; phone: string }
@@ -85,6 +86,11 @@ export interface BackupListDto {
 
 export function formatPrice(cents: number): string {
   return `${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)} €`
+}
+
+/** Povezava za odpoved termina (stranka klikne in odpove sama). */
+export function cancelUrl(origin: string, token: string): string {
+  return `${origin.replace(/\/+$/, '')}/?cancel=${encodeURIComponent(token)}`
 }
 
 export function timeOfIso(iso: string): string {

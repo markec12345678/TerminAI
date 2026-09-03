@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useToast } from '@/hooks/use-toast'
-import { ownerFetch, setStoredPin } from '@/lib/owner-fetch'
+import { ownerFetch, setStoredPin, getStoredPin } from '@/lib/owner-fetch'
 import {
   CalendarDays,
   TrendingUp,
@@ -26,6 +26,9 @@ import {
   Lock,
   CalendarClock,
   Repeat,
+  UserX,
+  Link2,
+  CalendarArrowDown,
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ServicesManager } from './services-manager'
@@ -36,10 +39,11 @@ import { RemindersDialog } from './reminders-dialog'
 import { RecurrenceCard } from './recurrence-card'
 import { BackupCard } from './backup-card'
 import { recurrenceLabel } from '@/lib/labels'
+import { copyToClipboard } from '@/lib/clipboard'
 import { QRCodeSVG } from 'qrcode.react'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid } from 'recharts'
 import type { AppointmentDto, StatsDto } from './types'
-import { dateParts, durationLabel, formatPrice, timeOfIso } from './types'
+import { dateParts, durationLabel, formatPrice, timeOfIso, cancelUrl } from './types'
 import { QrCode } from 'lucide-react'
 
 const STATUS_META: Record<AppointmentDto['status'], { label: string; className: string }> = {
@@ -47,6 +51,7 @@ const STATUS_META: Record<AppointmentDto['status'], { label: string; className: 
   confirmed: { label: 'Potrjen', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
   completed: { label: 'Zaključen', className: 'bg-secondary text-secondary-foreground border-border' },
   cancelled: { label: 'Odpovedan', className: 'bg-red-50 text-red-600 border-red-200' },
+  no_show: { label: 'Ni prišla', className: 'bg-rose-100 text-rose-700 border-rose-200' },
 }
 
 function StatCard({
@@ -107,14 +112,39 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
   const [recurrenceKey, setRecurrenceKey] = useState(0)
   const { toast } = useToast()
 
-  // Ali je PIN nastavljen? (javni podatek)
+  // Ali je PIN nastavljen? (javni podatek) — shranjeni PIN iz seje samodejno
+  // odklene ploščo tudi po osvežitvi strani.
   useEffect(() => {
+    let cancelled = false
     fetch('/api/pin')
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((d) => {
-        setLocked(!!d.pinSet) // brez PIN-a → odprto (prvi zagon)
+      .then(async (d) => {
+        if (cancelled) return
+        if (!d.pinSet) {
+          setLocked(false)
+          return
+        }
+        const stored = getStoredPin()
+        if (stored) {
+          const r = await fetch('/api/pin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'verify', pin: stored }),
+          })
+          if (cancelled) return
+          if (r.ok) {
+            setLocked(false)
+            return
+          }
+        }
+        setLocked(true)
       })
-      .catch(() => setLocked(false))
+      .catch(() => {
+        if (!cancelled) setLocked(false)
+      })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const unlock = async () => {
@@ -169,10 +199,12 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
   const loadAppointments = useCallback(async (dateStr: string) => {
     setListLoading(true)
     try {
-      const res = await fetch(`/api/appointments?date=${dateStr}`)
+      const res = await ownerFetch(`/api/appointments?date=${dateStr}`)
       if (res.ok) {
         const data = await res.json()
         setAppointments(data.appointments)
+      } else {
+        setAppointments([])
       }
     } catch {
       setAppointments([])
@@ -181,13 +213,15 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
     }
   }, [])
 
+  // Podatke naložimo šele, ko je plošča odklenjena (API-ji zahtevajo PIN;
+  // sicer bi prvi klic padel s 401 in ostal prazen seznam terminov).
   useEffect(() => {
-    loadStats()
-  }, [loadStats, onRefreshKey])
+    if (!locked) loadStats()
+  }, [locked, loadStats, onRefreshKey])
 
   useEffect(() => {
-    if (selectedDate) loadAppointments(selectedDate)
-  }, [selectedDate, loadAppointments, onRefreshKey])
+    if (!locked && selectedDate) loadAppointments(selectedDate)
+  }, [locked, selectedDate, loadAppointments, onRefreshKey])
 
   const updateStatus = async (id: string, status: AppointmentDto['status']) => {
     setBusyId(id)
@@ -200,15 +234,64 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
       if (!res.ok) throw new Error()
       setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)))
       loadStats()
-      toast({
-        title: status === 'confirmed' ? 'Termin potrjen' : status === 'completed' ? 'Termin zaključen' : 'Termin odpovedan',
-        description:
-          status === 'cancelled' ? 'Stranka je obveščena prek SMS.' : status === 'confirmed' ? 'Potrditveni SMS je poslan.' : undefined,
-      })
+      toast(
+        status === 'no_show'
+          ? {
+              title: 'Zabeleženo: stranka ni prišla',
+              description: 'Izostanek se vidi pri stranki v zavihku Stranke.',
+            }
+          : {
+              title:
+                status === 'confirmed'
+                  ? 'Termin potrjen'
+                  : status === 'completed'
+                    ? 'Termin zaključen'
+                    : 'Termin odpovedan',
+              description:
+                status === 'cancelled' ? 'Stranka je obveščena prek SMS.' : status === 'confirmed' ? 'Potrditveni SMS je poslan.' : undefined,
+            }
+      )
     } catch {
       toast({ title: 'Napaka', description: 'Posodobitev ni uspela.', variant: 'destructive' })
     } finally {
       setBusyId(null)
+    }
+  }
+
+  /** Kopiraj odpovedno povezavo — pošljite jo stranki (WhatsApp), odpove sama. */
+  const copyCancelLink = async (a: AppointmentDto) => {
+    if (!a.cancelToken || typeof window === 'undefined') return
+    const ok = await copyToClipboard(cancelUrl(window.location.origin, a.cancelToken))
+    toast(
+      ok
+        ? {
+            title: 'Odpovedna povezava kopirana',
+            description: 'Pošljite jo stranki (WhatsApp) — termin odpove sama z enim klikom.',
+          }
+        : { title: 'Kopiranje ni uspelo', variant: 'destructive' }
+    )
+  }
+
+  /** Izvozi termine v iCal (.ics) — uvoz v Google/Apple Koledar ali telefon. */
+  const exportIcal = async () => {
+    try {
+      const res = await ownerFetch('/api/appointments/ical')
+      if (!res.ok) throw new Error()
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'terminai-koledar.ics'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      toast({
+        title: 'Koledar izvožen',
+        description: 'Datoteko terminai-koledar.ics uvozite v Google Koledar ali telefon.',
+      })
+    } catch {
+      toast({ title: 'Napaka', description: 'Izvoz koledarja ni uspel.', variant: 'destructive' })
     }
   }
 
@@ -322,6 +405,15 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                 <Printer className="h-4 w-4" />
               </Button>
               <Button
+                variant="outline"
+                size="icon"
+                onClick={exportIcal}
+                aria-label="Izvozi koledar (iCal)"
+                title="Izvozi koledar (iCal) — Google/telefon"
+              >
+                <CalendarArrowDown className="h-4 w-4" />
+              </Button>
+              <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => {
@@ -379,7 +471,9 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                     <div
                       key={a.id}
                       className={`flex flex-col gap-3 rounded-xl border p-3 transition-colors sm:flex-row sm:items-center ${
-                        a.status === 'cancelled' ? 'opacity-50' : 'border-border/60 hover:border-primary/30'
+                        a.status === 'cancelled' || a.status === 'no_show'
+                          ? 'opacity-50'
+                          : 'border-border/60 hover:border-primary/30'
                       }`}
                     >
                       <div className="flex w-16 shrink-0 flex-col items-center justify-center rounded-lg bg-secondary py-1.5">
@@ -409,7 +503,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                       <div className="flex items-center gap-2">
                         <span className="w-14 text-right font-semibold text-primary">{formatPrice(a.priceCents)}</span>
                         <div className="flex gap-1">
-                          {a.status === 'pending' && (
+                          {a.status === 'pending' && !past && (
                             <Button
                               size="icon"
                               variant="outline"
@@ -424,30 +518,58 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                           )}
                           {(a.status === 'confirmed' || a.status === 'pending') && (
                             <>
-                              {past && a.status === 'confirmed' && (
-                                <Button
-                                  size="icon"
-                                  variant="outline"
-                                  className="h-8 w-8"
-                                  onClick={() => updateStatus(a.id, 'completed')}
-                                  disabled={busyId === a.id}
-                                  aria-label="Zaključi termin"
-                                  title="Zaključi"
-                                >
-                                  <TrendingUp className="h-4 w-4" />
-                                </Button>
+                              {past ? (
+                                <>
+                                  <Button
+                                    size="icon"
+                                    variant="outline"
+                                    className="h-8 w-8"
+                                    onClick={() => updateStatus(a.id, 'completed')}
+                                    disabled={busyId === a.id}
+                                    aria-label="Zaključi termin"
+                                    title="Zaključi"
+                                  >
+                                    <TrendingUp className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="outline"
+                                    className="h-8 w-8 border-rose-200 text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+                                    onClick={() => updateStatus(a.id, 'no_show')}
+                                    disabled={busyId === a.id}
+                                    aria-label="Stranka ni prišla"
+                                    title="Ni prišla — zabeleži izostanek"
+                                  >
+                                    <UserX className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  {a.cancelToken && (
+                                    <Button
+                                      size="icon"
+                                      variant="outline"
+                                      className="h-8 w-8"
+                                      onClick={() => copyCancelLink(a)}
+                                      aria-label="Kopiraj odpovedno povezavo"
+                                      title="Kopiraj odpovedno povezavo — pošlji stranki"
+                                    >
+                                      <Link2 className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  <Button
+                                    size="icon"
+                                    variant="outline"
+                                    className="h-8 w-8 border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600"
+                                    onClick={() => updateStatus(a.id, 'cancelled')}
+                                    disabled={busyId === a.id}
+                                    aria-label="Odpovej termin"
+                                    title="Odpovej"
+                                  >
+                                    <XCircle className="h-4 w-4" />
+                                  </Button>
+                                </>
                               )}
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="h-8 w-8 border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600"
-                                onClick={() => updateStatus(a.id, 'cancelled')}
-                                disabled={busyId === a.id}
-                                aria-label="Odpovej termin"
-                                title="Odpovej"
-                              >
-                                <XCircle className="h-4 w-4" />
-                              </Button>
                             </>
                           )}
                         </div>
@@ -573,7 +695,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
             <div style={{ fontSize: 20, fontWeight: 700 }}>{businessName}</div>
             <div style={{ fontSize: 13 }}>Dnevni red — {selectedDate ? `${dateParts(selectedDate).dayName}, ${dateParts(selectedDate).dayNum}. ${dateParts(selectedDate).month}` : ''}</div>
           </div>
-          {appointments.filter((a) => a.status !== 'cancelled').length === 0 ? (
+          {appointments.filter((a) => a.status !== 'cancelled' && a.status !== 'no_show').length === 0 ? (
             <p style={{ textAlign: 'center', fontStyle: 'italic', marginTop: 32 }}>Ni terminov.</p>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
@@ -587,7 +709,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
               </thead>
               <tbody>
                 {appointments
-                  .filter((a) => a.status !== 'cancelled')
+                  .filter((a) => a.status !== 'cancelled' && a.status !== 'no_show')
                   .sort((a, b) => a.startAt.localeCompare(b.startAt))
                   .map((a) => (
                     <tr key={a.id} style={{ borderBottom: '1px solid #ccc' }}>
