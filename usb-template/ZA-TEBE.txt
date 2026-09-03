@@ -59,3 +59,17 @@ NOVOST 2 (namestitelj):
   - PATCH /api/setup (mode:edit): urejanje podatkov salona brez reset.
   - Pri prodaji: demo potek "stranka pie -> program odgovori ->
     termin vpie" naredi najvecji ucinek. Pokazite s primeri na zaciku.
+
+NOVOST 3 (namestitelj):
+  - PONAVLJAJOI TERMINI: "Dodaj termin" ima izbiro "Ponavljajoi
+    obisk" (2/3/4/6/8 tednov). Kartica "Ponavljajoi obiski — kdo je
+    na vrsti" v nadzorni ploi samodejno pokaže, koga poklicati
+    (rok potekel / na vrsti / kmalu / e naroena), z WhatsApp vabilom
+    in gumbom NAROI. GET /api/appointments/recurrence.
+  - SAMODEJNE VARNOSTNE KOPIJE: ob vsakem zagonu (max 1x dnevno)
+    VACUUM INTO snapshot v app/db/backups (zadnjih 14). Kartica
+    "Varnostne kopije" v zavihku Storitve & salon: seznam, ročna
+    kopija, PRENESI na USB. API: GET/POST /api/backup.
+  - Pri prodaji: pokaite "kdo je na vrsti" — frizerkam takoj klikne
+    (papirni koledar tega NE ZNA). Samodejni backup = manj podpore
+    zate (manj klicev ob okvari diska).

@@ -14,8 +14,12 @@ POMEMBNO:
   - Podatki se shranjujejo NA TEM racunalniku (baza custom.db).
 
 KAKO NAREDIM REZERVNO KOPIJO?
-  1. Vsakic, ko pride namestitelj, naredi backup na USB.
-  2. Lahko sami: dvoklik NAREDI-REZERVO.bat — rezerva gre na
+  1. SAMODEJNO: ob vsakem zagonu programa se naredi varnostna
+     kopija (enkrat dnevno). Zadnjih 14 kopij se hrani v mapi
+     C:\TerminAI\app\db\backups — NIC vam ni treba poceti.
+  2. USB: v zavihku "Storitve & salon" > "Varnostne kopije"
+     kliknite PRENESI — kopijo shranite na USB kljuc.
+  3. Lahko tudi dvoklik NAREDI-REZERVO.bat — rezerva gre na
      C:\TerminAI\REZERVA (kopirajte na USB kljuc redno!).
 
 KJE SO MOJI PODATKI?
@@ -51,6 +55,16 @@ MODUL "SPOROCILA" (najvecji casovni prihranek!):
   - Klik "Poslji po WhatsAppu" odpre pogovor z odgovorom — samo
     posljete. Klik "Vpisi termin" vpie termin z vsemi podatki.
   - Vsako sporoilo in odgovor ostane shranjen (zgodovina).
+
+PONAVLJAJOI TERMINI (barvanje vsake 4 tedne itd.):
+  - Ob vnosu termina izberite "Ponavljajoi obisk" (npr. vsake
+    4 tedne, vsaka 3 tedna).
+  - Nadzorna ploo ima kartico "Ponavljajoi obiski — kdo je na
+    vrsti": program SAM pove, katere stranke je treba poklicati
+    (rok je potekel / na vrsti / kmalu).
+  - Vsaka stranka ima gumb WHATSAPP (pripravljeno vabilo) in
+    NAROI (termin vpian v 10 sekundah).
+  - Stranka, ki je e naroena, je oznacena kot "e naroena".
 
 PODATKI SALONA:
   - Zavihek "Storitve & salon" > kartica "Podatki salona":

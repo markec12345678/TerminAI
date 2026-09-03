@@ -39,6 +39,7 @@ export interface AppointmentDto {
   endAt: string
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
   priceCents: number
+  recurWeeks?: number | null
   notes?: string | null
   service: { id: string; name: string; durationMin: number }
   client: { id: string; name: string; phone: string }
@@ -52,6 +53,34 @@ export interface StatsDto {
   occupancy: number
   remindersTomorrow: number
   week: { date: string; count: number; revenueCents: number }[]
+}
+
+export interface RecurrenceDto {
+  appointmentId: string
+  client: { id: string; name: string; phone: string }
+  service: { id: string; name: string }
+  recurWeeks: number
+  lastVisit: string
+  lastVisitLabel: string
+  nextDue: string
+  nextDueDate: string
+  nextDueLabel: string
+  status: 'overdue' | 'due' | 'upcoming'
+  covered: boolean
+}
+
+export interface BackupDto {
+  name: string
+  sizeBytes: number
+  createdAt: string
+  ageLabel: string
+}
+
+export interface BackupListDto {
+  backups: BackupDto[]
+  lastBackupAt: string | null
+  dir: string
+  auto: string
 }
 
 export function formatPrice(cents: number): string {

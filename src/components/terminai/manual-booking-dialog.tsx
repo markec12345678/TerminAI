@@ -22,7 +22,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
-import { Plus, Phone, CalendarPlus, Sparkles, Flame, MessageSquare } from 'lucide-react'
+import { ownerFetch } from '@/lib/owner-fetch'
+import { RECURRENCE_OPTIONS, recurrenceLabel } from '@/lib/labels'
+import { Plus, Phone, CalendarPlus, Sparkles, Flame, MessageSquare, Repeat } from 'lucide-react'
 import type { AppointmentDto, AvailabilityDto, ServiceDto, SlotDto } from './types'
 import { dateParts, formatPrice } from './types'
 
@@ -32,6 +34,7 @@ export interface ManualPrefill {
   serviceId?: string
   date?: string
   note?: string
+  recurWeeks?: number | null
 }
 
 interface Props {
@@ -70,6 +73,7 @@ export function ManualBookingDialog({ open, onOpenChange, date, prefill, onCreat
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [notes, setNotes] = useState('')
+  const [recurWeeks, setRecurWeeks] = useState<string>('none')
   const [submitting, setSubmitting] = useState(false)
   const { toast } = useToast()
 
@@ -84,6 +88,7 @@ export function ManualBookingDialog({ open, onOpenChange, date, prefill, onCreat
     setName(prefill?.name ?? '')
     setPhone(prefill?.phone ?? '')
     setNotes(prefill?.note ?? '')
+    setRecurWeeks(prefill?.recurWeeks != null ? String(prefill.recurWeeks) : 'none')
     setServicesLoading(true)
     fetch('/api/services')
       .then((r) => (r.ok ? r.json() : Promise.reject()))
@@ -119,16 +124,26 @@ export function ManualBookingDialog({ open, onOpenChange, date, prefill, onCreat
     setName('')
     setPhone('')
     setNotes('')
+    setRecurWeeks('none')
   }
 
   const submit = async () => {
     if (!serviceId || !pickedDate || !time) return
     setSubmitting(true)
     try {
-      const res = await fetch('/api/appointments', {
+      // ownerFetch: nosi PIN glavo, da ponavljajoča nastavitev ostane varovana
+      const res = await ownerFetch('/api/appointments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ serviceId, date: pickedDate, time, name, phone, notes }),
+        body: JSON.stringify({
+          serviceId,
+          date: pickedDate,
+          time,
+          name,
+          phone,
+          notes,
+          recurWeeks: recurWeeks === 'none' ? null : Number(recurWeeks),
+        }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -138,7 +153,10 @@ export function ManualBookingDialog({ open, onOpenChange, date, prefill, onCreat
       }
       toast({
         title: 'Termin vnešen ✓',
-        description: `${name} — ${service?.name}, ${dateParts(pickedDate).dayName} ob ${time}`,
+        description:
+          recurWeeks !== 'none'
+            ? `${name} — ${service?.name}, ${dateParts(pickedDate!).dayName} ob ${time} · ${recurrenceLabel(Number(recurWeeks))}`
+            : `${name} — ${service?.name}, ${dateParts(pickedDate!).dayName} ob ${time}`,
       })
       onOpenChange(false)
       reset()
@@ -284,16 +302,46 @@ export function ManualBookingDialog({ open, onOpenChange, date, prefill, onCreat
             </div>
           )}
 
-          {/* Opomba */}
-          <div className="space-y-1.5">
-            <Label htmlFor="mb-notes">Opomba (neobvezno)</Label>
-            <Textarea id="mb-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="npr. iz WhatsAppa — rada bi sobotni termin" rows={2} maxLength={300} />
+          {/* Ponavljanje + opomba */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1">
+                <Repeat className="h-3 w-3" /> Ponavljajoči obisk
+              </Label>
+              <Select value={recurWeeks} onValueChange={setRecurWeeks}>
+                <SelectTrigger className="w-full" aria-label="Ponavljajoči obisk">
+                  <SelectValue placeholder="Brez ponavljanja" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Brez ponavljanja</SelectItem>
+                  {RECURRENCE_OPTIONS.map((w) => (
+                    <SelectItem key={w} value={String(w)}>
+                      {recurrenceLabel(w)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] leading-snug text-muted-foreground">
+                Npr. barvanje vsake 4 tedne — sistem vas opomni, kdaj je stranka spet na vrsti.
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="mb-notes">Opomba (neobvezno)</Label>
+              <Textarea id="mb-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="npr. iz WhatsAppa — rada bi sobotni termin" rows={3} maxLength={300} />
+            </div>
           </div>
 
           {/* Povzetek */}
           {service && slot && (
             <div className="rounded-lg border bg-muted/40 p-3 text-sm">
-              <div className="font-medium">{service.name}</div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-medium">{service.name}</span>
+                {recurWeeks !== 'none' && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                    <Repeat className="h-3 w-3" /> {recurrenceLabel(Number(recurWeeks))}
+                  </span>
+                )}
+              </div>
               <div className="mt-1 flex items-center justify-between text-muted-foreground">
                 <span>
                   {dateParts(pickedDate!).dayName}, {dateParts(pickedDate!).dayNum}. {dateParts(pickedDate!).month} ob {slot.time}

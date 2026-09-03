@@ -227,7 +227,7 @@ export async function seedDemo(): Promise<void> {
   const tomorrowKey = dateKey(addMinutes(naiveDate(today, '00:00'), 1440))
   const dayAfterKey = dateKey(addMinutes(naiveDate(today, '00:00'), 2880))
 
-  const mk = (serviceIdx: number, clientIdx: number, dateStr: string, time: string, status: string) => {
+  const mk = (serviceIdx: number, clientIdx: number, dateStr: string, time: string, status: string, recurWeeks?: number) => {
     const svc = services[serviceIdx]
     const start = naiveDate(dateStr, time)
     const peak = isPeak(dateStr, time)
@@ -238,16 +238,24 @@ export async function seedDemo(): Promise<void> {
       endAt: addMinutes(start, svc.durationMin),
       priceCents: peak ? svc.peakPriceCents : svc.priceCents,
       status,
+      recurWeeks: recurWeeks ?? null,
     }
   }
 
+  // Zgodovina za predstavitev ponavljajočih terminov (28 dni nazaj)
+  const monthAgoKey = dateKey(addMinutes(naiveDate(today, '00:00'), -28 * 1440))
+  const threeWeeksAgoKey = dateKey(addMinutes(naiveDate(today, '00:00'), -21 * 1440))
+
   await db.appointment.createMany({
     data: [
+      // Ponavljajoči stranki — "kdo je na vrsti" (zgodovina)
+      mk(2, 2, monthAgoKey, '10:00', 'completed', 4), // Petra Zupan — barvanje vsake 4 tedne
+      mk(1, 1, threeWeeksAgoKey, '11:00', 'completed', 3), // Marko Kovač — striženje vsaka 3 tedna
       mk(0, 0, today, '09:30', 'confirmed'),
       mk(1, 1, today, '11:00', 'completed'),
       mk(3, 2, today, '13:00', 'confirmed'),
       mk(0, 3, today, '16:00', 'pending'),
-      mk(2, 4, tomorrowKey, '10:00', 'confirmed'),
+      mk(2, 4, tomorrowKey, '10:00', 'confirmed', 4), // Maja Kos — barvanje vsake 4 tedne
       mk(1, 5, tomorrowKey, '12:30', 'pending'),
       mk(0, 1, dayAfterKey, '15:30', 'confirmed'),
     ],

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { naiveDate, nowWallClock, isPeak, generateSlots, getHoursForDayAsync } from '@/lib/booking'
+import { pinAllows } from '@/lib/pin'
 
 const createSchema = z.object({
   serviceId: z.string().min(1),
@@ -10,6 +11,7 @@ const createSchema = z.object({
   name: z.string().min(2, 'Ime je prekratko').max(60),
   phone: z.string().min(6, 'Telefon ni veljaven').max(20),
   notes: z.string().max(300).optional().or(z.literal('')),
+  recurWeeks: z.number().int().min(2).max(8).optional().nullable(),
 })
 
 export async function GET(req: NextRequest) {
@@ -43,6 +45,7 @@ export async function GET(req: NextRequest) {
         endAt: a.endAt.toISOString(),
         status: a.status,
         priceCents: a.priceCents,
+        recurWeeks: a.recurWeeks,
         notes: a.notes,
         service: { id: a.service.id, name: a.service.name, durationMin: a.service.durationMin },
         client: { id: a.client.id, name: a.client.name, phone: a.client.phone },
@@ -64,7 +67,13 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
-    const { serviceId, date, time, name, phone, notes } = parsed.data
+    const { serviceId, date, time, name, phone, notes, recurWeeks } = parsed.data
+
+    // Ponavljajoči termin je lastniška nastavitev — javni obrazec je ne sme nastaviti
+    let saveRecurWeeks: number | null = recurWeeks ?? null
+    if (saveRecurWeeks !== null && !(await pinAllows(req))) {
+      saveRecurWeeks = null
+    }
 
     const service = await db.service.findUnique({ where: { id: serviceId } })
     if (!service) {
@@ -101,6 +110,7 @@ export async function POST(req: NextRequest) {
         endAt: new Date(start.getTime() + service.durationMin * 60000),
         priceCents,
         status: 'confirmed',
+        recurWeeks: saveRecurWeeks,
         notes: notes || undefined,
       },
       include: { service: true, client: true },
@@ -114,6 +124,7 @@ export async function POST(req: NextRequest) {
           endAt: appointment.endAt.toISOString(),
           status: appointment.status,
           priceCents: appointment.priceCents,
+          recurWeeks: appointment.recurWeeks,
           service: { id: appointment.service.id, name: appointment.service.name, durationMin: appointment.service.durationMin },
           client: { id: appointment.client.id, name: appointment.client.name, phone: appointment.client.phone },
         },

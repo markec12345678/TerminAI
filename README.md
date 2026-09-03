@@ -33,6 +33,17 @@
 - **Baza strank** z zgodovino obiskov
 - **Statistika**: prihodki, zasedenost, najbolj donosne storitve
 
+### 🔁 Ponavljajoči obiski — "kdo je na vrsti"
+- Termin dobi oznako ponavljanja (npr. **barvanje vsake 4 tedne**, striženje vsaka 3 tedna)
+- Sistem sam izračuna, **katere stranke je treba poklicati** (rok je potekel / na vrsti / kmalu)
+- En klik: **WhatsApp vabilo** s pripravljenim sporočilom ali **naročitev** termina
+- Stranke, ki so že naročene, so ločeno označene
+
+### 💾 Samodejne varnostne kopije
+- Ob vsakem zagonu (največ 1× dnevno) se naredi **konsistenten snapshot** baze (`VACUUM INTO`)
+- Zadnjih 14 kopij v mapi `db/backups` — brez ročnega dela
+- Kartica "Varnostne kopije": seznam, ročna kopija, **prenos na USB** prek brskalnika
+
 ### 🔒 Zasebnost in offline način
 - SQLite zbirka v **enki datoteki** → enostavna rezervacija (USB)
 - Ni odvisnosti od oblaka, naročnin ali interneta
@@ -106,16 +117,22 @@ Baza (`db/custom.db`) je prenosljiva datoteka — rezervacija na USB in prenos n
 prisma/schema.prisma        # Business, Service, Client, Appointment, Message, WorkingHours
 src/app/api/                # REST API
 ├── appointments/           # CRUD termini + prekrivanja
+│   └── recurrence/         # "kdo je na vrsti" (ponavljajoči obiski)
 ├── availability/           # prosti termini
 ├── services/               # cenik (CRUD)
 ├── clients/                # baza strank
 ├── messages/               # SMS/WhatsApp sporočila + razčlenjevanje
 ├── stats/                  # statistika
 ├── hours/                  # delovni čas
+├── backup/                 # varnostne kopije (seznam, ustvari, prenos)
 ├── setup/                  # inicializacija demo podatki
 └── pin/                    # zaščita lastniškega območja
-src/components/terminai/    # 15 UI komponent (hero, koledar, cenik, inbox …)
+src/components/terminai/    # 17 UI komponent (hero, koledar, cenik, inbox …)
+src/lib/recurrence.ts       # logika ponavljajočih obiskov
+src/lib/backup.ts           # samodejni backup (VACUUM INTO)
+src/instrumentation.ts      # vzdrževalne naloge ob zagonu strežnika
 db/custom.db                # SQLite baza (prenosljiva)
+db/backups/                 # samodejne varnostne kopije (zadnjih 14)
 usb-template/               # predloga za USB prodajo
 ```
 

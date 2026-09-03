@@ -25,6 +25,7 @@ import {
   Printer,
   Lock,
   CalendarClock,
+  Repeat,
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ServicesManager } from './services-manager'
@@ -32,6 +33,9 @@ import { ManualBookingDialog, type ManualPrefill } from './manual-booking-dialog
 import { MessageInbox } from './message-inbox'
 import { ClientsTab } from './clients-tab'
 import { RemindersDialog } from './reminders-dialog'
+import { RecurrenceCard } from './recurrence-card'
+import { BackupCard } from './backup-card'
+import { recurrenceLabel } from '@/lib/labels'
 import { QRCodeSVG } from 'qrcode.react'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid } from 'recharts'
 import type { AppointmentDto, StatsDto } from './types'
@@ -99,6 +103,8 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
 
   // Spomniki za jutri
   const [remindersOpen, setRemindersOpen] = useState(false)
+  // Osvežitev kartice ponavljanj (nov termin lahko pokrije "na vrsti" stranko)
+  const [recurrenceKey, setRecurrenceKey] = useState(0)
   const { toast } = useToast()
 
   // Ali je PIN nastavljen? (javni podatek)
@@ -216,6 +222,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
     void a
     loadStats()
     if (selectedDate) loadAppointments(selectedDate)
+    setRecurrenceKey((k) => k + 1)
   }
 
   const openManual = (prefill: ManualPrefill | null) => {
@@ -386,6 +393,14 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                             {a.client.name}
                           </span>
                           <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${meta.className}`}>{meta.label}</span>
+                          {a.recurWeeks != null && (
+                            <span
+                              className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary"
+                              title={`Ponavljajoči obisk — ${recurrenceLabel(a.recurWeeks)}`}
+                            >
+                              <Repeat className="h-3 w-3" /> {recurrenceLabel(a.recurWeeks)}
+                            </span>
+                          )}
                         </div>
                         <div className="mt-0.5 truncate text-xs text-muted-foreground">
                           {a.service.name} · {a.client.phone}
@@ -509,6 +524,8 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
             </CardContent>
           </Card>
 
+          <RecurrenceCard refreshKey={recurrenceKey + onRefreshKey} onBookForCustomer={openManual} businessName={businessName} />
+
           <ShareQrCard />
         </div>
       </div>
@@ -525,6 +542,9 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
 
         <TabsContent value="storitve" className="mt-4">
           <ServicesManager refreshKey={onRefreshKey} onServicesChanged={onServicesChanged} />
+          <div className="mt-4">
+            <BackupCard />
+          </div>
         </TabsContent>
       </Tabs>
       )}
