@@ -143,3 +143,23 @@ Stage Summary:
 - Delovni čas popolnoma nastavljiv (vsak salon svoj urnik) — vpliva na termine, sporočila, statistiko
 - Baza strank z zgodovino + tiskanje dnevenga reda + WhatsApp spomniki = popolna dnevna rutina frizerke offline
 - Kasneje (online faza): več storitev v terminu, več izvajalcev, SMS API, odpoved stranke prek povezave
+
+---
+Task ID: github-push
+Agent: main
+Task: Push projekta TerminAI na GitHub + ustvarjanje README.md
+
+Work Log:
+- Pregledal stanje repozitorija (382 sledenih datotek, ~180M, brez remote)
+- Preveril občutljive/velike datoteke: .env sleden → odstranjena iz gita; največji datoteki (bun runtime 88M/85M) pod GitHub omejitvijo 100M
+- Ustvaril README.md v slovenščini: funkcije, tehnični sklad, namestitev, USB predloga, struktura projekta, podatkovni model, slike, poslovni model (199 € osnovni paket)
+- Dodal .env in *.log v .gitignore
+- Commit "docs: dodan README.md, odstranjen .env iz sledenja" (2bce829)
+- Dodal remote origin (github.com/markec12345678/TerminAI) z žetonom, pushal main vejo
+- Preveril: remote HEAD == local HEAD (2bce829) — push potrjen
+
+Stage Summary:
+- Projekt je javno dostopen na https://github.com/markec12345678/TerminAI (veja main)
+- README.md vsebuje popolno dokumentacijo izdelka v slovenščini, vključno s screenshots/ referencami
+- .env ni več v repotu (lokalno še vedno obstaja za delovanje)
+- Opozorilo GitHub-a o velikih datotekah (bun binarne) — pod mejo, sprejeto; po želji se lahko kasneje prestavi v Git LFS
