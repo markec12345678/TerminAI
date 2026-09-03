@@ -163,3 +163,30 @@ Stage Summary:
 - README.md vsebuje popolno dokumentacijo izdelka v slovenščini, vključno s screenshots/ referencami
 - .env ni več v repotu (lokalno še vedno obstaja za delovanje)
 - Opozorilo GitHub-a o velikih datotekah (bun binarne) — pod mejo, sprejeto; po želji se lahko kasneje prestavi v Git LFS
+
+---
+Task ID: 8
+Agent: Z.ai Code (glavni agent)
+Task: Ponavljajoči termini ("kdo je na vrsti") + samodejne varnostne kopije
+
+Work Log:
+- Prisma: Appointment.recurWeeks Int? (2–8 tednov) + db:push
+- src/lib/labels.ts: RECURRENCE_OPTIONS + recurrenceLabel (slovenske oblike: "vsaka 2 tedna", "vsake 4 tedne", "vsakih 6 tednov") — skupno strežniku in odjemalcu
+- src/lib/recurrence.ts: getRecurrenceOverview — zadnji termin vsakega (stranka, storitev) para z recurWeeks; rolanje ciklov nazaj; pokritost = novejši termin za isto storitev; statusi overdue/due/upcoming; obzorje 21 dni; razvrstitev po nujnosti
+- API: POST /api/appointments sprejme recurWeeks — PIN zaščiten (pinAllows: javni obrazec in napačen PIN → vrednost se tiho odstrani); GET vrne recurWeeks; GET /api/appointments/recurrence (PIN 401)
+- src/lib/backup.ts: createBackup (VACUUM INTO — atomaren snapshot), listBackups, ageLabel, startBackupScheduler (ob zagonu po 5 s, če zadnja > 24 h; interval 6 h, unref), MAX_BACKUPS 14
+- src/instrumentation.ts: register() → startBackupScheduler (Next.js 16 stabilno, brez configa)
+- API: GET /api/backup (seznam + ?file= prenos z Content-Disposition), POST /api/backup (ročna kopija) — vse PIN
+- UI: recurrence-card.tsx (kartica v desnem stolpcu koledarja: statusni badgeji, WhatsApp vabilo z besedilom "prišel je čas za vaš X", gumb Naroči → predizpolnjen dialog, pokrite stranke zadaj, max-h-72 scroll); backup-card.tsx (v zavihku Storitve & salon: samodejno-varovanje obvestilo, seznam, Naredi kopijo zdaj, Prenesi prek blob → datoteka)
+- ManualBookingDialog: Select "Ponavljajoči obisk" (Brez/2/3/4/6/8), badge v povzetku, prefill.recurWeeks, ownerFetch (PIN glava), toast z oznako
+- Dashboard: RecurrenceCard + recurrenceKey refresh po vnosu, BackupCard, Repeat badge na terminih, recurrenceLabel import
+- Seed: demo zgodovina (Petra Zupan barvanje −28 dni @4 tedne, Marko Kovač striženje −21 dni @3 tedne) + enaki vrstici vstavljeni v trenutno demo bazo (node skripta)
+- Git higiena: db/custom.db odstranjen iz sledenja (runtime), .gitignore + db/backups/, tool-results/
+- Restart dev: rm .next, start-dev.sh (port TIME_WAIT zamik), instrumentation potrdjen v logu ("Vzdrževalne naloge zagnane"), samodeja kopija 2026-09-03_2206.db ustvarjena ob zagonu
+- E2E (agent-browser): kartica prikazuje Petra "na vrsti" + Marko "že naročena" (pravilno — Marko ima novejši termin); WhatsApp href wa.me/38651333256 z vabilom; Naroči → dialog predizpolnjen (Petra/telefon/Barvanje/vsake 4 tedne/danes) → vnos PET 10:00 → toast "· vsake 4 tedne" → badge na koledarju; Petra po vnosu izgine iz "na vrsti" (rok +4 tedne) ✓; PIN test: brez glave recurWeeks=None, napačen PIN=None, pravilen 9999=4; recurrence/backup API 401 brez PIN; ročna kopija + toast; prenos = HTTP 200, veljavna SQLite datoteka (odc "SQLite format 3"); testni termini/stranke/PIN počiščeni; mobilni 375px OK; 0 konzolnih napak; lint čist; screenshoti (recurrence-card, recurrence-mobile, backup-card)
+- Push: commit f1c893a na github.com/markec12345678/TerminAI (remote == local)
+
+Stage Summary:
+- Dve novi prodajni funkciji: "kdo je na vrsti" (ponavljajoči obiski) in samodejno varovanje baze
+- Upsell zgodba: papirni koledar ne zna "vsake 4 tedne" — sistem pokliče stranke namesto lastnice; samodejni backup zmanjša podporo
+- Naslednji možni koraki: no-show sledenje, iCal izvoz, odpoved prek povezave, pilot namestitev pri pravem salonu
