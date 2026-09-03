@@ -62,3 +62,17 @@ Stage Summary:
 - Celotna stran zdaj prodaja enako zgodbo kot USB paket: offline zmogljivost, lastništvo kode, 199 € enkrat + neobvezna 19 €/39 €
 - AI (Ana) povsde označena kot dodatek — skladno z AI_ENABLED=false v USB buildu
 - Naslednji možni koraki: online faza (prenos na strežnik), SMS integracija, avtentikacija lastnika
+
+---
+Task ID: 4
+Agent: Z.ai Code (glavni agent)
+Task: Odprava "frontend se ni spremenil" — čist restart dev serverja
+
+Work Log:
+- Diagnoza: strežnik je že postregel novo vsebino (curl potrdil "Deluje tudi brez interneta", "Enkrat plačate"), vzrok stale vsebine = predpomnilnik (turbopack/brskalnik)
+- Ustavil dev procese, pobrisal .next (turbopack cache), zagnal start-dev.sh daemon (2 neuspelna poskusa — port 3000 je bil še v odmiranju, tretji uspešen: HTTP 200)
+- Verifikacija: HTML vsebuje novo vsebino, agent-browser (sveža seja) potrdi badge "Deluje tudi brez interneta · podatki ostanejo pri vas" in ceno "Enkrat plačate. Sistem je vaš.", 0 napak
+- API sanity: /api/services 200 (Studio Aura, 5 storitev), dev.log čist
+
+Stage Summary:
+- Dev server teče sveže (clean cache) na portu 3000 z novo vsebino; uporabnik mora osvežiti predogled (reload / Open in New Tab)
