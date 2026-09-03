@@ -8,7 +8,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,12 +22,23 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
-import { Plus, Phone, CalendarPlus, Sparkles, Flame } from 'lucide-react'
+import { Plus, Phone, CalendarPlus, Sparkles, Flame, MessageSquare } from 'lucide-react'
 import type { AppointmentDto, AvailabilityDto, ServiceDto, SlotDto } from './types'
 import { dateParts, formatPrice } from './types'
 
+export interface ManualPrefill {
+  name?: string
+  phone?: string
+  serviceId?: string
+  date?: string
+  note?: string
+}
+
 interface Props {
+  open: boolean
+  onOpenChange: (open: boolean) => void
   date?: string | null
+  prefill?: ManualPrefill | null
   onCreated: (appointment: AppointmentDto) => void
 }
 
@@ -46,9 +56,9 @@ function nextDates(days: number): string[] {
 /**
  * Ročni vnos termina — za rezervacije, ki so prišle po telefonu ali WhatsAppu.
  * Uporablja isti API kot javni rezervacijski widget (prekrivanja se preverijo).
+ * Podprt tudi kot nadzorovan dialog s predizpolnjenimi podatki (iz modula Sporočila).
  */
-export function ManualBookingDialog({ date, onCreated }: Props) {
-  const [open, setOpen] = useState(false)
+export function ManualBookingDialog({ open, onOpenChange, date, prefill, onCreated }: Props) {
   const [services, setServices] = useState<ServiceDto[]>([])
   const [servicesLoading, setServicesLoading] = useState(false)
   const [serviceId, setServiceId] = useState<string | null>(null)
@@ -63,19 +73,24 @@ export function ManualBookingDialog({ date, onCreated }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const { toast } = useToast()
 
-  // Ob odprtju dialoga: naloži storitve in pripravi datume
+  // Ob odprtju dialoga: naloži storitve, pripravi datume in predizpolni podatke
   useEffect(() => {
     if (!open) return
     const ds = nextDates(14)
     setDates(ds)
-    setPickedDate(date && ds.includes(date) ? date : ds[0])
+    const wanted = prefill?.date ?? date
+    setPickedDate(wanted && ds.includes(wanted) ? wanted : ds[0])
+    setServiceId(prefill?.serviceId ?? null)
+    setName(prefill?.name ?? '')
+    setPhone(prefill?.phone ?? '')
+    setNotes(prefill?.note ?? '')
     setServicesLoading(true)
     fetch('/api/services')
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((d) => setServices(d.services))
       .catch(() => toast({ title: 'Napaka', description: 'Storitev ni bilo mogoče naložiti.', variant: 'destructive' }))
       .finally(() => setServicesLoading(false))
-  }, [open, date, toast])
+  }, [open, date, prefill, toast])
 
   const loadSlots = useCallback(async (sid: string, dateStr: string) => {
     setSlotsLoading(true)
@@ -94,7 +109,6 @@ export function ManualBookingDialog({ date, onCreated }: Props) {
   useEffect(() => {
     if (open && serviceId && pickedDate) loadSlots(serviceId, pickedDate)
   }, [open, serviceId, pickedDate, loadSlots])
-
   const service = useMemo(() => services.find((s) => s.id === serviceId) ?? null, [services, serviceId])
   const slot = useMemo(() => slots.find((s) => s.time === time) ?? null, [slots, time])
 
@@ -126,7 +140,7 @@ export function ManualBookingDialog({ date, onCreated }: Props) {
         title: 'Termin vnešen ✓',
         description: `${name} — ${service?.name}, ${dateParts(pickedDate).dayName} ob ${time}`,
       })
-      setOpen(false)
+      onOpenChange(false)
       reset()
       onCreated(data.appointment)
     } catch {
@@ -139,19 +153,15 @@ export function ManualBookingDialog({ date, onCreated }: Props) {
   const valid = !!serviceId && !!pickedDate && !!time && name.trim().length >= 2 && phone.trim().length >= 6
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset() }}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="gap-1.5">
-          <Plus className="h-4 w-4" /> Dodaj termin
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) reset() }}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-display">
             <CalendarPlus className="h-5 w-5 text-primary" /> Dodaj termin
           </DialogTitle>
-          <DialogDescription>
-            Za rezervacije, ki so prišle po telefonu ali WhatsAppu — vnos traja nekaj sekund.
+          <DialogDescription className="flex items-center gap-1.5">
+            <MessageSquare className="h-3.5 w-3.5 shrink-0" />
+            Za rezervacije po telefonu, WhatsAppu ali SMS — vnos traja nekaj sekund.
           </DialogDescription>
         </DialogHeader>
 
@@ -295,7 +305,7 @@ export function ManualBookingDialog({ date, onCreated }: Props) {
         </div>
 
         <DialogFooter className="mt-2 gap-2">
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             Prekliči
           </Button>
           <Button className="gap-1.5" disabled={!valid || submitting} onClick={submit}>

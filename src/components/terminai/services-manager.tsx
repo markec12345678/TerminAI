@@ -34,8 +34,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
-import { Plus, Pencil, Trash2, Scissors, RefreshCcw, Store, Clock, Flame } from 'lucide-react'
-import type { ServiceDto } from './types'
+import { Plus, Pencil, Trash2, Scissors, RefreshCcw, Store, Clock, Flame, MapPin, Phone, Mail, Save, Building2 } from 'lucide-react'
+import type { ServiceDto, BusinessDto } from './types'
 import { durationLabel, formatPrice } from './types'
 
 const DURATIONS = [15, 30, 45, 60, 90, 120, 150, 180]
@@ -75,6 +75,11 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
   const [busyId, setBusyId] = useState<string | null>(null)
   const { toast } = useToast()
 
+  // Podatki salona (ime, telefon, naslov, e-pošta) — urejanje BREZ brisanja
+  const [biz, setBiz] = useState<BusinessDto | null>(null)
+  const [bizForm, setBizForm] = useState({ name: '', phone: '', address: '', email: '' })
+  const [bizSaving, setBizSaving] = useState(false)
+
   // Reset na čist salon
   const [resetOpen, setResetOpen] = useState(false)
   const [newName, setNewName] = useState('')
@@ -89,6 +94,15 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
         const data = await res.json()
         setServices(data.services)
         if (data.business?.name) setBusinessName(data.business.name)
+        if (data.business) {
+          setBiz(data.business)
+          setBizForm({
+            name: data.business.name ?? '',
+            phone: data.business.phone ?? '',
+            address: data.business.address ?? '',
+            email: data.business.email ?? '',
+          })
+        }
       }
     } finally {
       setLoading(false)
@@ -219,8 +233,82 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
     }
   }
 
+  const saveBiz = async () => {
+    if (bizForm.name.trim().length < 2 || bizForm.phone.trim().length < 6) {
+      toast({ title: 'Manjkajo podatki', description: 'Ime in telefon sta obvezna.', variant: 'destructive' })
+      return
+    }
+    setBizSaving(true)
+    try {
+      const res = await fetch('/api/setup', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'edit',
+          businessName: bizForm.name.trim(),
+          phone: bizForm.phone.trim(),
+          address: bizForm.address.trim(),
+          city: biz?.city ?? '',
+          email: bizForm.email.trim(),
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast({ title: 'Napaka', description: data.error ?? 'Shranjevanje ni uspelo.', variant: 'destructive' })
+        return
+      }
+      toast({ title: 'Podatki salona shranjeni ✓', description: 'Izpisujejo se strankam na strani in v odgovorih.' })
+      setBusinessName(bizForm.name)
+      onServicesChanged?.()
+    } catch {
+      toast({ title: 'Napaka', description: 'Povezava ni uspela.', variant: 'destructive' })
+    } finally {
+      setBizSaving(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
+      {/* Podatki salona */}
+      <Card className="border-border/60">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-4">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-primary" />
+            <h3 className="font-semibold">Podatki salona</h3>
+          </div>
+          <span className="text-xs text-muted-foreground">vidni strankam</span>
+        </CardHeader>
+        <CardContent className="p-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="biz-name">Ime salona *</Label>
+              <Input id="biz-name" value={bizForm.name} onChange={(e) => setBizForm({ ...bizForm, name: e.target.value })} maxLength={60} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="biz-phone" className="flex items-center gap-1">
+                <Phone className="h-3 w-3" /> Telefon * <span className="font-normal text-muted-foreground">(WhatsApp)</span>
+              </Label>
+              <Input id="biz-phone" value={bizForm.phone} onChange={(e) => setBizForm({ ...bizForm, phone: e.target.value })} inputMode="tel" maxLength={24} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="biz-address" className="flex items-center gap-1">
+                <MapPin className="h-3 w-3" /> Naslov
+              </Label>
+              <Input id="biz-address" value={bizForm.address} onChange={(e) => setBizForm({ ...bizForm, address: e.target.value })} maxLength={120} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="biz-email" className="flex items-center gap-1">
+                <Mail className="h-3 w-3" /> E-pošta
+              </Label>
+              <Input id="biz-email" value={bizForm.email} onChange={(e) => setBizForm({ ...bizForm, email: e.target.value })} inputMode="email" maxLength={80} />
+            </div>
+          </div>
+          <Button className="mt-3 gap-1.5" size="sm" disabled={bizSaving} onClick={saveBiz}>
+            {bizSaving ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Shrani podatke
+          </Button>
+        </CardContent>
+      </Card>
+
       <Card className="border-border/60">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-4">
           <div className="flex items-center gap-2">

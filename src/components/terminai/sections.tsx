@@ -258,7 +258,7 @@ export function Pricing() {
 const FAQS = [
   {
     q: 'Kako stranka rezervira, kadar ni v salonu?',
-    a: 'Stranka vam piše po WhatsAppu ali pokliče — na rezervacijski strani je gumb WhatsApp, ki odpre pogovor z vnaprej izpolnjenim sporočilom (brezplačno, brez dodatnih aplikacij). Termin nato vpišete v nadzorno ploščo v nekaj sekundah z gumbom "Dodaj termin". Ko sistem kasneje povežemo na splet, bo samodejna rezervacija na voljo od povsod, 24/7.',
+    a: 'Stranka vam piše po WhatsAppu (gumb na rezervacijski strani odpre pogovor z pripravljenim sporočilom). Njen odgovor prilepite v modul "Sporočila": program ga razume, preveri proste termine in sestavi odgovor s cenami — s klikom ga pošljete nazaj in vpišete termin. Ko sistem kasneje povežemo na splet, bo odgovarjal sam, 24/7.',
   },
   {
     q: 'Ali sistem deluje brez interneta?',

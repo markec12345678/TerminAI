@@ -97,3 +97,26 @@ Stage Summary:
 - Stranka v salonu: QR koda (natisnjena na ogledalu) → WiFi → samostojna rezervacija
 - qrcode.react@4.2.0 nameščen (offlne komponenta)
 - Naslednji možni koraki: online faza (Strežnik + domena + Ana + SMS), WhatsApp Business API avtomatizacija kot del Ane
+
+---
+Task ID: 6
+Agent: Z.ai Code (glavni agent)
+Task: Pametni modul "Sporočila" — stranka piše (SMS/WhatsApp/e-pošta), program razume, odgovori in vpiše termin
+
+Work Log:
+- Prisma: nov model Message (name, phone, email, body, intent, reply, createdAt) + db:push
+- src/lib/message-parser.ts: normalizacija brez šumnikov; prepoznavanje namena (booking/price/cenik/availability/unknown); ujemanje storitev po ključnih besedah iz imen v bazi z dedupliciranjem različic (ženski/moški striženje); slovenski datumi (danes/jutri/v soboto — vključno s sklanjatvami sobot-, sred-, cetrt-, ponedelje-) in ure (ob 10, 10:30, 14h); composeReply sestavi WhatsApp-prijazen odgovor (cene posamično + skupaj, prosti termini iz prave baze, "termin ob 10 je prost/zaseden", alternativni dnevi če zasedeno, cel cenik na zahtevo, podpis salona)
+- POST /api/messages: validacija Zod → parse → generateSlots (najdaljša storitev za naročila, najkrajša za povpraševanja) → requestedFree check → altDays (2 dneva naprej) → composeReply → shrani; GET: zadnjih 50
+- PATCH /api/setup (mode:edit): urejanje podatkov salona brez brisanja (ime, telefon, naslov, mesto, e-pošta, tagline)
+- message-inbox.tsx: obrazec (ime/telefon/e-pošta/sporočilo) + 3 primeri za hitri demo; pogovorne balončke (stranka + programov odgovor); badge namena + čipi razčlenjenih storitev/datuuma/ure; status zahtevane ure (PROST/ZASEDEN); akcije: Pošlji po WhatsAppu (wa.me na STRANKIN telefon z odgovorom), Pošlji po e-pošti (mailto) oz. Kopiraj; "Vpiši termin za to stranko" → predizpolnjen dialog; zgodovina z max-h-96 scroll
+- ManualBookingDialog: refaktor v nadzorovan dialog (open/onOpenChange) + prefill (name, phone, serviceId, date, note) — odprt s koledarja ALI iz Sporočil
+- Dashboard: 3. zavihek "Sporočila"; ManualBookingDialog dvignjen na nivo plošče (deluje iz vseh zavihkov)
+- ServicesManager: nova kartica "Podatki salona" (ime, telefon, naslov, e-pošta) → PATCH, takoj viden strankam
+- FAQ posodobljen (modul Sporočila); USB predloga (NAVODILA + ZA-TEBE) dopolnjena
+- POPRAVKI TUDI ČESE: turbopack corrupted cache po db:push (dev restart + rm .next — znana težava); Prisma client reload zahteva restart dev serverja
+- E2E: 4 scenariji parserja (naročilo s 2 storitvami + sobota → 120 € seštevek; koliko stane barvanje → 85 €; cenik → celoten; jutri ob 10h → PROST/zaseden status) vsi pravilni; UI: primer → razčleni → odgovor → WhatsApp href (wa.me/38640555111 z odgovorom) → Vpiši termin (predizpolnjeno: Ana Novak/040 555 111/Striženje ženske/SOB 5.9) → vnos v bazo ✓ (testni termin izbrisan); urejanje naslova salona ✓ (povrnjen demo); 0 konzolnih napak; lint čist; mobilni layout OK
+
+Stage Summary:
+- Celoten workflow "stranka piše → program razume → odgovor s cenami in termini → WhatsApp/e-pošta/kopija → termin vnešen" deluje 100% offline in brez AI stroškov
+- Zgodovina sporočil v bazi (dolg sled) — online faza: isti modul + WhatsApp Business API = avtomatska recepcija (39 € dodatek)
+- Upsell zgodba za prodajo: danes človek pritisne "pošlji", jutri stroj

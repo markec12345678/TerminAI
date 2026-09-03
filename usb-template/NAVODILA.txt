@@ -42,3 +42,17 @@ QR KODA ZA STRANKE:
 CE ŽELITE TUDI SPOMNIKE IN ANO (AI):
   - To je dodatek, ki zahteva povezavo na internet.
   - Pokliite namestitelja — sistem se nadgradi brez izgube podatkov.
+
+MODUL "SPOROCILA" (najvecji casovni prihranek!):
+  - Stranka vam pise na WhatsApp (gumb na rezervacijski strani).
+  - Odprete "Sporocila" v nadzorni ploi, prilepite njeno sporoilo.
+  - Program ga RAZUME: prepozna storitve, dan in uro, preveri
+    zasedenost in sestavi odgovor s cenami in prostimi termini.
+  - Klik "Poslji po WhatsAppu" odpre pogovor z odgovorom — samo
+    posljete. Klik "Vpisi termin" vpie termin z vsemi podatki.
+  - Vsako sporoilo in odgovor ostane shranjen (zgodovina).
+
+PODATKI SALONA:
+  - Zavihek "Storitve & salon" > kartica "Podatki salona":
+    ime, telefon (za WhatsApp gumb!), naslov, e-posta.
+  - Spremembe takoj vidne strankam — brez brisanja podatkov.

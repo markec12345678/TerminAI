@@ -58,3 +58,14 @@ model Appointment {
   notes     String?
   createdAt DateTime @default(now())
 }
+
+model Message {
+  id        String   @id @default(cuid())
+  name      String?  // ime stranke (če znano)
+  phone     String
+  email     String?
+  body      String   // kar je stranka napisala
+  intent    String   @default("unknown") // booking | price | cenik | availability | unknown
+  reply     String?  // osnutek odgovora, ki ga program sestavi
+  createdAt DateTime @default(now())
+}

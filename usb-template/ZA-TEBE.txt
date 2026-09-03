@@ -49,3 +49,13 @@ NOVOSTI (namestitelj):
     pritele po telefonu/WhatsAppu. Enak API kot javni widget.
   - QR koda v nadzorni ploi (qrcode.react, offline, trenutni naslov).
   - Pri prodaji: pokaite QR kodo stranki v salonu — takoj demo ucinek.
+
+NOVOST 2 (namestitelj):
+  - Modul "Sporocila": parser slovenskih sporoil (namen: naroilo/
+    cena/cenik/zasedenost; storitve iz baze; "jutri", "v soboto",
+    "ob 10h"). Deluje 100% lokalno, brez AI strokov.
+  - POST /api/messages razcleni + sestavi odgovor + shrani zgodovino
+    (nova tabela Message). GET vrne zadnjih 50.
+  - PATCH /api/setup (mode:edit): urejanje podatkov salona brez reset.
+  - Pri prodaji: demo potek "stranka pie -> program odgovori ->
+    termin vpie" naredi najvecji ucinek. Pokazite s primeri na zaciku.

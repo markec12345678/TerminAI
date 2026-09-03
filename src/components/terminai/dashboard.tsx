@@ -18,10 +18,13 @@ import {
   RefreshCw,
   UserRound,
   Store,
+  MessageSquare,
+  Plus,
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ServicesManager } from './services-manager'
-import { ManualBookingDialog } from './manual-booking-dialog'
+import { ManualBookingDialog, type ManualPrefill } from './manual-booking-dialog'
+import { MessageInbox } from './message-inbox'
 import { QRCodeSVG } from 'qrcode.react'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid } from 'recharts'
 import type { AppointmentDto, StatsDto } from './types'
@@ -78,6 +81,8 @@ export function Dashboard({ onRefreshKey, onServicesChanged }: { onRefreshKey: n
   const [loading, setLoading] = useState(true)
   const [listLoading, setListLoading] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [manualOpen, setManualOpen] = useState(false)
+  const [manualPrefill, setManualPrefill] = useState<ManualPrefill | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -161,12 +166,20 @@ export function Dashboard({ onRefreshKey, onServicesChanged }: { onRefreshKey: n
     if (selectedDate) loadAppointments(selectedDate)
   }
 
+  const openManual = (prefill: ManualPrefill | null) => {
+    setManualPrefill(prefill)
+    setManualOpen(true)
+  }
+
   return (
     <div className="space-y-4">
       <Tabs defaultValue="koledar">
         <TabsList className="h-auto rounded-full p-1">
           <TabsTrigger value="koledar" className="gap-2 rounded-full px-4 py-2">
             <CalendarDays className="h-4 w-4" /> Koledar & statistika
+          </TabsTrigger>
+          <TabsTrigger value="sporocila" className="gap-2 rounded-full px-4 py-2">
+            <MessageSquare className="h-4 w-4" /> Sporočila
           </TabsTrigger>
           <TabsTrigger value="storitve" className="gap-2 rounded-full px-4 py-2">
             <Store className="h-4 w-4" /> Storitve & salon
@@ -198,7 +211,9 @@ export function Dashboard({ onRefreshKey, onServicesChanged }: { onRefreshKey: n
               <h3 className="font-semibold">Koledar terminov</h3>
             </div>
             <div className="flex items-center gap-2">
-              <ManualBookingDialog date={selectedDate} onCreated={onManualCreated} />
+              <Button size="sm" className="gap-1.5" onClick={() => openManual(null)}>
+                <Plus className="h-4 w-4" /> Dodaj termin
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -391,10 +406,23 @@ export function Dashboard({ onRefreshKey, onServicesChanged }: { onRefreshKey: n
       </div>
         </TabsContent>
 
+        <TabsContent value="sporocila" className="mt-4">
+          <MessageInbox onBookForCustomer={openManual} />
+        </TabsContent>
+
         <TabsContent value="storitve" className="mt-4">
           <ServicesManager refreshKey={onRefreshKey} onServicesChanged={onServicesChanged} />
         </TabsContent>
       </Tabs>
+
+      {/* Skupni dialog za ročni vnos — odprt s koledarja ali iz Sporočil */}
+      <ManualBookingDialog
+        open={manualOpen}
+        onOpenChange={setManualOpen}
+        date={selectedDate}
+        prefill={manualPrefill}
+        onCreated={onManualCreated}
+      />
     </div>
   )
 }
