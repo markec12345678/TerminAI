@@ -1076,7 +1076,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
   )
 }
 
-/** QR koda s trenutnim naslovom sistema — stranka v salonu jo oslika in rezervira sama. */
+/** QR koda za telefone v istem omrežju — stranka oslika in rezervira sama. */
 function ShareQrCard() {
   // window.location.origin je na voljo samo v brskalniku (SSR varno)
   const origin = useSyncExternalStore(
@@ -1084,13 +1084,36 @@ function ShareQrCard() {
     () => window.location.origin,
     () => null
   )
+  // Na lastničinem računalniku "localhost" telefonu stranke ne koristi —
+  // rabi LAN naslov (npr. http://192.168.1.20:3000), ki ga vrne /api/network.
+  const [qrTarget, setQrTarget] = useState<string | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      try {
+        const res = await fetch('/api/network')
+        if (!res.ok) return
+        const data = (await res.json()) as { lanUrl: string | null }
+        if (!alive || !origin) return
+        setQrTarget(data.lanUrl ?? origin)
+      } catch {
+        if (alive && origin) setQrTarget(origin)
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [origin])
+
+  const local = qrTarget !== null && origin !== null && qrTarget !== origin
 
   return (
     <Card className="border-border/60">
       <CardContent className="flex flex-col items-center gap-4 p-4 sm:flex-row">
         <div className="flex h-32 w-32 shrink-0 items-center justify-center rounded-xl border bg-white p-2">
-          {origin ? (
-            <QRCodeSVG value={origin} size={112} bgColor="#ffffff" fgColor="#1a1412" />
+          {qrTarget ? (
+            <QRCodeSVG value={qrTarget} size={112} bgColor="#ffffff" fgColor="#1a1412" />
           ) : (
             <Skeleton className="h-28 w-28" />
           )}
@@ -1104,9 +1127,13 @@ function ShareQrCard() {
             Stranka s telefonom oslika kodo (telefon mora biti na vašem WiFi) in takoj rezervira —
             brez registracije, na vsakem telefonu. Kodo lahko natisnete in prilepite na ogledalo.
           </p>
-          {origin && (
-            <p className="truncate rounded-md bg-muted/60 px-2 py-1 font-mono text-[11px] text-muted-foreground" title={origin}>
-              {origin.replace(/^https?:\/\//, '')}
+          {qrTarget && (
+            <p
+              className="truncate rounded-md bg-muted/60 px-2 py-1 font-mono text-[11px] text-muted-foreground"
+              title={qrTarget}
+            >
+              {qrTarget.replace(/^https?:\/\//, '')}
+              {local && <span className="ml-1.5 font-sans">· WiFi naslov tega računalnika</span>}
             </p>
           )}
         </div>

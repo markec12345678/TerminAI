@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+<meta charset="UTF-8">
+<title>TerminAI — Demo vodik (interno)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+@page {
+  size: 720px 1020px;
+  margin: 0;
+}
+:root {
+  --c-deep: #3d0f22;
+  --c-primary: #9e2749;
+  --c-soft: #f9edf2;
+  --c-border: #ecd5df;
+  --c-text: #2a1a20;
+  --c-mut: #6f5a61;
+}
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 720px;
+  background: #fffdfc;
+  color: var(--c-text);
+  font-family: 'Inter', 'Liberation Sans', sans-serif;
+  font-size: 13px;
+  line-height: 1.6;
+}
+@media screen {
+  html { height: auto; display: flex; justify-content: center; background: #241018; }
+  body { transform-origin: top center; margin: 20px auto; box-shadow: 0 8px 40px rgba(0,0,0,.4); }
+}
+p, td, li, div { overflow-wrap: break-word; }
+img { max-width: 100%; height: auto; }
+
+/* ============ STRAN 1 — NASLOVNICA ============ */
+.cover {
+  width: 720px;
+  height: 1020px;
+  box-sizing: border-box;
+  break-after: page;
+  overflow: hidden;
+  position: relative;
+  background: linear-gradient(160deg, #471229 0%, var(--c-deep) 55%, #2a0a18 100%);
+  color: #fdf6f8;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 56px;
+}
+.cover .circle { position: absolute; border-radius: 50%; pointer-events: none; }
+.cover .c1 { width: 340px; height: 340px; top: 0; right: -120px; background: radial-gradient(circle, rgba(158,39,73,.35), rgba(158,39,73,0) 70%); }
+.cover .c2 { width: 220px; height: 220px; bottom: 0; left: -50px; background: radial-gradient(circle, rgba(158,39,73,.28), rgba(158,39,73,0) 70%); }
+.cover-badge {
+  display: inline-block;
+  align-self: flex-start;
+  border: 1px solid rgba(236,213,223,.45);
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #eccfd8;
+  margin-bottom: 28px;
+}
+.cover-title {
+  font-family: 'Playfair Display', 'Liberation Serif', serif;
+  font-size: 54px;
+  font-weight: 900;
+  line-height: 1.08;
+  margin: 0 0 16px;
+}
+.cover-title em { font-style: italic; color: #e9b9c8; }
+.cover-sub {
+  font-size: 14.5px;
+  color: #dcc0ca;
+  max-width: 480px;
+  margin: 0 0 34px;
+}
+.ravni { display: flex; flex-direction: column; gap: 12px; max-width: 560px; }
+.raven {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  background: rgba(253,246,248,.06);
+  border: 1px solid rgba(236,213,223,.22);
+  border-radius: 14px;
+  padding: 14px 18px;
+}
+.raven .st {
+  width: 34px; height: 34px; flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(158,39,73,.35);
+  border: 1px solid rgba(236,213,223,.4);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 15px; color: #fff;
+}
+.raven h4 { margin: 0 0 3px; font-size: 13.5px; font-weight: 700; color: #fff; }
+.raven p { margin: 0; font-size: 11.5px; color: #d3b6c0; line-height: 1.55; }
+.raven strong { color: #eccfd8; font-weight: 600; }
+.cover-qr {
+  margin-top: 34px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.cover-qr img {
+  width: 128px; height: 128px;
+  border-radius: 12px;
+  border: 6px solid #fff;
+  background: #fff;
+}
+.cover-qr p { margin: 0; font-size: 11.5px; color: #d3b6c0; line-height: 1.6; max-width: 300px; }
+.cover-qr strong { color: #fff; }
+.cover-url {
+  margin-top: auto;
+  padding-top: 24px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #b892a0;
+  text-transform: uppercase;
+}
+
+/* ============ SKUPNO ZA VSEBINSKE STRANI ============ */
+.stran {
+  width: 720px;
+  height: 1020px;
+  box-sizing: border-box;
+  padding: 42px 52px 34px;
+  break-after: page;
+  display: flex;
+  flex-direction: column;
+}
+.zglobovi { display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+.zglobovi h2 {
+  font-family: 'Playfair Display', 'Liberation Serif', serif;
+  font-size: 26px;
+  font-weight: 900;
+  margin: 0;
+  color: var(--c-deep);
+}
+.zglobovi .ozn { font-size: 10.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--c-primary); }
+.h-sec { margin: 0 0 18px; font-size: 13px; color: var(--c-mut); max-width: 560px; }
+
+.priprava {
+  background: var(--c-soft);
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+}
+.priprava h3 { margin: 0 0 6px; font-size: 11.5px; font-weight: 800; color: var(--c-primary); letter-spacing: .5px; text-transform: uppercase; }
+.priprava ul { margin: 0; padding-left: 18px; }
+.priprava li { font-size: 11.5px; margin-bottom: 3px; }
+.priprava li:last-child { margin-bottom: 0; }
+
+.koraki { display: flex; flex-direction: column; gap: 8px; }
+.korak {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  padding: 9px 14px;
+  background: #fff;
+}
+.korak .num {
+  width: 26px; height: 26px; flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--c-primary);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 12.5px;
+}
+.korak .bes { min-width: 0; }
+.korak .vrst {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+.korak .who {
+  font-size: 9px; font-weight: 800; letter-spacing: 1.5px;
+  padding: 3px 8px; border-radius: 999px;
+  text-transform: uppercase;
+}
+.who.ona { background: #e9f7ee; color: #17683a; border: 1px solid #bce3c8; }
+.who.vi { background: var(--c-soft); color: var(--c-primary); border: 1px solid var(--c-border); }
+.who.brez { background: #f1f0f0; color: #555; border: 1px solid #ddd; }
+.korak h4 { margin: 0; font-size: 12px; font-weight: 700; display: inline; }
+.korak p { margin: 2px 0 0; font-size: 11px; color: var(--c-mut); line-height: 1.5; }
+.korak p em { color: var(--c-primary); font-style: italic; }
+
+.tip {
+  margin-top: auto;
+  background: #3d0f22;
+  color: #f6e3e9;
+  border-radius: 14px;
+  padding: 13px 18px;
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+.tip strong { color: #fff; }
+.tip .crta { color: #d3a1b3; font-family: 'Playfair Display', 'Liberation Serif', serif; font-size: 26px; line-height: 0; vertical-align: -8px; margin-right: 6px; }
+
+.noga { margin-top: 14px; text-align: right; font-size: 10px; color: #a08892; }
+
+/* ============ STRAN 3 — PILOT ============ */
+.pilot {
+  background: var(--c-soft);
+  border: 1.5px solid var(--c-primary);
+  border-radius: 16px;
+  padding: 18px 22px;
+  margin-bottom: 16px;
+}
+.pilot h3 {
+  font-family: 'Playfair Display', 'Liberation Serif', serif;
+  font-size: 24px; font-weight: 900; margin: 0 0 4px; color: var(--c-deep);
+}
+.pilot .sub { margin: 0 0 16px; font-size: 12.5px; color: var(--c-mut); }
+.pilot .vrstice { display: flex; gap: 12px; }
+.pilot .kor {
+  flex: 1; background: #fff; border: 1px solid var(--c-border); border-radius: 12px;
+  padding: 12px 14px; text-align: center;
+}
+.pilot .kor .st { font-size: 20px; font-weight: 800; color: var(--c-primary); margin-bottom: 4px; }
+.pilot .kor h5 { margin: 0 0 4px; font-size: 12px; font-weight: 700; }
+.pilot .kor p { margin: 0; font-size: 10.5px; color: var(--c-mut); line-height: 1.5; }
+.pilot .placilo {
+  margin: 14px 0 0; text-align: center; font-size: 12.5px; font-weight: 700; color: var(--c-primary);
+}
+
+.ugovori { display: flex; flex-direction: column; gap: 10px; }
+.ugovor { border: 1px solid var(--c-border); border-radius: 12px; padding: 11px 16px; background: #fff; }
+.ugovor .q { display: flex; gap: 10px; align-items: flex-start; }
+.ugovor .q .z {
+  flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--c-soft); border: 1px solid var(--c-primary);
+  color: var(--c-primary); font-weight: 800; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+}
+.ugovor .q h4 { margin: 2px 0 0; font-size: 12.5px; font-weight: 700; }
+.ugovor .a { margin: 7px 0 0; font-size: 11.5px; color: var(--c-mut); line-height: 1.6; padding-left: 34px; }
+.ugovor .a strong { color: var(--c-text); }
+
+.cta {
+  margin-top: auto;
+  background: linear-gradient(160deg, #471229 0%, var(--c-deep) 60%, #2a0a18 100%);
+  border-radius: 16px;
+  color: #fdf6f8;
+  padding: 20px 26px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.cta h3 { font-family: 'Playfair Display', 'Liberation Serif', serif; font-size: 25px; font-weight: 900; margin: 0 0 10px; }
+.cta h3 em { color: #e9b9c8; }
+.cta p { margin: 0 auto; max-width: 480px; font-size: 12px; color: #d3b6c0; line-height: 1.65; }
+.cta p strong { color: #fff; }
+.cta .cena { margin-top: 14px; font-size: 12.5px; color: #eccfd8; }
+.cta .cena b { color: #fff; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<!-- ==================== STRAN 1: NASLOVNICA ==================== -->
+<div class="cover">
+  <div class="circle c1"></div>
+  <div class="circle c2"></div>
+  <div class="cover-badge">Interno · vodik za predstavitve</div>
+  <h1 class="cover-title">Predstavitev,<br>ki <em>prodaja.</em></h1>
+  <p class="cover-sub">Kazati, ne pripovedovati. Njen telefon, vaš laptop, 15 minut — in ona bo
+  razumela, da sistem deluje, še preden vam je uspelo reči "rezervacija".</p>
+
+  <div class="ravni">
+    <div class="raven">
+      <div class="st">1</div>
+      <div>
+        <h4>Povezava — za prvi stik</h4>
+        <p><strong>terminai-eight.vercel.app</strong> — vedno svež demo (Studio Aura). Za ogled:
+        pošljite po WhatsAppu, ko pokaže zanimanje. Spremembe se ne shranjujejo — to je
+        <strong>ogledna</strong> različica, ne testna.</p>
+      </div>
+    </div>
+    <div class="raven">
+      <div class="st">2</div>
+      <div>
+        <h4>Sestanek — pravi doživetje</h4>
+        <p><strong>Vaš laptop</strong> z namestitvijo (USB) + <strong>njen telefon</strong> prek WiFi.
+        Tu vse deluje produkcijsko: zvok ob rezervaciji, WhatsApp spominik v njen telefon,
+        odpovedi, formule. 15 minut — zlata pot na strani 2.</p>
+      </div>
+    </div>
+    <div class="raven">
+      <div class="st">3</div>
+      <div>
+        <h4>Pilot — odločitev</h4>
+        <p><strong>USB pri njej, 14 dni</strong>: njene prave stranke, njeni pravi termini.
+        Plača šele, ko je prepričana. (Ponudba v podrobnostih na strani 3.)</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="cover-qr">
+    <img src="qr-demo.png" alt="QR koda: TerminAI spletni demo">
+    <p><strong>Po sestanku ji pošljite povezavo.</strong><br>
+    "Doma še enkrat potrjajte in preklopite med stranko in lastnikom — isti naslov."
+    (QR vodi na spletni demo.)</p>
+  </div>
+
+  <div class="cover-url">TerminAI · demo vodik · stran 1 / 3</div>
+</div>
+
+<!-- ==================== STRAN 2: ZLATA POT ==================== -->
+<div class="stran">
+  <div class="zglobovi">
+    <span class="ozn">Zlata pot sestanka</span>
+    <h2>15 minut, 8 korakov</h2>
+  </div>
+  <p class="h-sec">Predstavitev vodite tako, da <strong style="color:var(--c-text)">ona drži telefon</strong>
+  in klikka — vi samo kažete.</p>
+
+  <div class="priprava">
+    <h3>Pred sestankom (10 minut)</h3>
+    <ul>
+      <li><strong>Zagon laptopa</strong> na salonov WiFi ali hotspot vašega telefona (njen telefon na isto omrežje).</li>
+      <li><strong>Nadzorna plošča odprta</strong> — spodaj desno je kartica z <strong>QR kodo</strong>: vstop za njen telefon.
+      </li>
+      <li>Demo "Studio Aura" ali čist start z <strong>njenim imenom salona</strong> —
+      lastno ime na zaslonu prodaja.</li>
+    </ul>
+  </div>
+
+  <div class="koraki">
+    <div class="korak">
+      <div class="num">1</div>
+      <div class="bes">
+        <div class="vrst"><span class="who ona">Ona</span><h4>Oslika QR kodo in rezervira termin</h4></div>
+        <p>Izbere storitev, dan, uro, vpiše <em>svoje ime in svojo telefonsko številko</em>.
+        Trije kliki — "Termin potrjen!" Videla je točno tisto, kar bodo videne njene stranke.</p>
+      </div>
+    </div>
+    <div class="korak">
+      <div class="num">2</div>
+      <div class="bes">
+        <div class="vrst"><span class="who vi">Vi</span><h4>Počakate na zvok</h4></div>
+        <p>Laptop zaigra mehek zvonec — nov termin je prispel sam. "Tega zvoka še niste slišali,
+        ker se je pravkar zgodil prvič."</p>
+      </div>
+    </div>
+    <div class="korak">
+      <div class="num">3</div>
+      <div class="bes">
+        <div class="vrst"><span class="who vi">Vi</span><h4>Pošljete ji WhatsApp spominik</h4></div>
+        <p>Kliknete zeleni gumb na terminu — sporočilo se odpre naslovljeno <em>na njen telefon</em>
+        (vpisala ga je v 1. koraku). Pošljite — in v naslednjem trenutku živi v njenem telefonu.</p>
+      </div>
+    </div>
+    <div class="korak">
+      <div class="num">4</div>
+      <div class="bes">
+        <div class="vrst"><span class="who ona">Ona</span><h4>Prekliče termin s povezavo</h4></div>
+        <p>V sporočilu klikne "Odpovej", potrdi — termin se takoj sprosti na plošči.
+        "Nobenega klicanja. Prazna ura je spet na voljo."</p>
+      </div>
+    </div>
+    <div class="korak">
+      <div class="num">5</div>
+      <div class="bes">
+        <div class="vrst"><span class="who vi">Vi</span><h4>Pokažete živ dan</h4></div>
+        <p>Prijava ob prihodu ("tu je"), opozorilo ob zamudi, prihodki dneva — vse na enem zaslonu.</p>
+      </div>
+    </div>
+    <div class="korak">
+      <div class="num">6</div>
+      <div class="bes">
+        <div class="vrst"><span class="who vi">Vi</span><h4>Zaključite obisk: formula + fotografija</h4></div>
+        <p>Vpišete formulo barve, dodate fotografijo pred/po, predlagate ponovni termin —
+        stranka odide z <em>naslednjim terminom že rezerviranim</em>.</p>
+      </div>
+    </div>
+    <div class="korak">
+      <div class="num">7</div>
+      <div class="bes">
+        <div class="vrst"><span class="who vi">Vi</span><h4>Statistika in rojstni dnevi</h4></div>
+        <p>Zasedenost, dobiček, stranke, ki se dolgo niso videle — in rojstni dnevi:
+        en klik za čestitko s popustom v rojstnem mesecu.</p>
+      </div>
+    </div>
+    <div class="korak">
+      <div class="num">8</div>
+      <div class="bes">
+        <div class="vrst"><span class="who brez">Zaključek</span><h4>"Vse ste pravkar naredile vi."</h4></div>
+        <p>"Ta isti sistem teče zdaj na tem laptopu — brez interneta, brez naročnine.
+        Preizkusite ga pri svojih strankah: <em>14 dni, USB ostane pri vas.</em>"</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip"><span class="crta">"</span><strong>Pravilo:</strong> vsak klik, ki ga lahko naredi ona,
+  naj naredi ona. Ko vpiše svojo telefonsko številko, sistem preneha biti demo in postane <strong>njen</strong>.</div>
+
+  <div class="noga">TerminAI · demo vodik · stran 2 / 3</div>
+</div>
+
+<!-- ==================== STRAN 3: PILOT + UGOVORI ==================== -->
+<div class="stran" style="break-after: auto;">
+  <div class="zglobovi">
+    <span class="ozn">Ko pokaže zanimanje</span>
+    <h2>Pilot &amp; odgovori</h2>
+  </div>
+  <p class="h-sec">Ona ne verjame obljubam, ampak lastnim strankam — ponudite 14-dnevni preizkus.</p>
+
+  <div class="pilot">
+    <h3>Pilot: 14 dni pri njej</h3>
+    <p class="sub">Isti USB, ki ste ga pravkar uporabili za predstavitev.</p>
+    <div class="vrstice">
+      <div class="kor">
+        <div class="st">1</div>
+        <h5>Prinesem USB</h5>
+        <p>Obisk 20 minut: namestitev na njen račalnik, zagon, skupaj nastavimo storitve.</p>
+      </div>
+      <div class="kor">
+        <div class="st">2</div>
+        <h5>14 dni dela</h5>
+        <p>Njene stranke rezervirajo prek QRja; ona vodi dan na zaslonu. Podpora po telefonu.</p>
+      </div>
+      <div class="kor">
+        <div class="st">3</div>
+        <h5>Odločitev</h5>
+        <p>Če je zadovoljna: licenca in ostat­ejo vsi podatki. Če ne: izvozim bazo, USB nazaj.</p>
+      </div>
+    </div>
+    <p class="placilo">Plačilo šele po odločitvi · 199 € enkratno · brez naročnine</p>
+  </div>
+
+  <div class="ugovori">
+    <div class="ugovor">
+      <div class="q"><span class="z">?</span><h4>"Sem prestara za take stvari."</h4></div>
+      <p class="a"><strong>Njeni trije kliki so vsa tehnologija, ki jo potrebuje</strong> — formule,
+      spominike in statistiko vodi sistem, telefon pa ima že ves dan v roki.</p>
+    </div>
+    <div class="ugovor">
+      <div class="q"><span class="z">?</span><h4>"Zvezek mi že dobro služi."</h4></div>
+      <p class="a">Zvezek ne zaigra zvoka ob rezervaciji in ne spomni na rojstne dneve.
+      <strong>Koliko terminov letno odpade, ker nihče ni poklical?</strong> En prihranjen termin na mesec pokrije sistem v letu dni.</p>
+    </div>
+    <div class="ugovor">
+      <div class="q"><span class="z">?</span><h4>"Kaj, če računalnik odpove?"</h4></div>
+      <p class="a"><strong>Varnostne kopije se delajo same vsak dan</strong>, obnova je dva klika,
+      podatki so v eni datoteki na USB. Oblak pade tudi — vaš salon z njim ne.</p>
+    </div>
+  </div>
+
+  <div class="cta">
+    <h3>Ona želi videti, da deluje.<br><em>Pokažite ji — na njenem telefonu.</em></h3>
+    <p><strong>"Manj praznih terminov, več zaslužka, spomini, ki jih zvezek pozabi — brez naročnine.
+    Preizkus je brezplačen, odločitev je vaša."</strong></p>
+    <p class="cena">TerminAI · <b>199 €</b> enkratno · vzdrževanje 19 €/mes (neobvezno) · Ana AI 39 €/mes (neobvezno) · interno gradivo</p>
+  </div>
+
+</div>
+
+</body>
+</html>

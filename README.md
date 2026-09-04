@@ -301,6 +301,19 @@ Repozitorij je povezan z Vercelom — vsak push na `main` samodejno objavi novo 
 
 *Namenjeno predstavitvam in pilotu — pravi izdelek ostaja offline namestitev.*
 
+### 🎯 3 ravni predstavitve stranki (prodajna strategija)
+
+| Raven | Kdaj | Orodje |
+|---|---|---|
+| **1. Povezava** | prvi stik, po WhatsAppu | `terminai-eight.vercel.app` — vedno svež demo (ogledna različica) |
+| **2. Sestanek** | 15-min vodena predstavitev | **laptop z namestitvijo** + njen telefon prek WiFi (QR na nadzorni plošči) — zvok, WhatsApp, odpovedi delujejo "produkcijsko" |
+| **3. Pilot** | odločitev | **USB 14 dni** pri njej — njene prave stranke, plača šele po odločitvi |
+
+**Zakaj ne "testna" spletna različica?** Vercel serverless instanca se lahko zamenja sredi obiska (razrezaljen demo) — spletni demo je za OGLED, pravi doživetje pa je lokalna namestitev (to je tudi prodajni argument: "vaši podatki pri vas").
+
+- **DEMO-VODIK.pdf** (3 strani, `public/demo-vodic.pdf` + USB): zlata pot sestanka v 8 korakih z oznakami [ONA]/[VI], priprava, pilot ponudba, ugovori z odgovori in 30-sekundni zaključek. Gumb za prenos je pod cenovno sekcijo spletne strani.
+- **QR koda na nadzorni plošči** (`ShareQrCard`): na laptopu pokaže **WiFi naslov računalnika** (`/api/network` → `http://192.168.x.x:3000`), na spletu pa javni naslov — stranka oslika in rezervira z lastnim telefonom (deluje tudi brez interneta, na salonskem omrežju).
+
 ---
 
 ## Licenca

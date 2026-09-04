@@ -456,3 +456,28 @@ Stage Summary:
 - Vsi Taski 1–17 zdaj živi tudi online (vključno Task 16 deljenje fotografij z WhatsApp in Task 17 prodajni letak PDF); vsak push na main = samodejna nova objava
 - Demo je ekvivalenten offline izdelku (isti podatki, fotografije, formule) — razlika: podatki niso trajni (cold start reset) in API varnostne kopije ne delujejo (samo za branje)
 - Naslednji možni koraki: pilot pri pravem salonu (letak + spletni demo povezava), prava online baza (Postgres/Turso) + WhatsApp Business API, custom domena (terminai.si)
+---
+Task ID: 19
+Agent: Z.ai Code (glavni agent)
+Task: Kako pokazati demo stranki, da deluje "produkcijsko" — 3 ravni strategija + orodja
+
+Work Log:
+- UPORABNIKOVO VPRAŠANJE: "kako naj demo prikazujem pri stranki, če želi dejansko videti da deluje — naročila, obvestila, vse? Če dam demo je isto kot da spletno stran gleda — večji interes če deluje produkcijsko"
+- E2E RAZISKAVA na live Vercelu: stranka rezervira prek BookingWidget (Marta Test, PET 4.9. 11:30, POST 201 "Termin potrjen!") → termin IZGINE iz nadzorne plošče in API-ja (ni na nobenem dnevu, ni med strankami); kontrolni test s curl (POST Test Konzistenca → takoj GET = viden, preživi 100 s mirovanja) → DIAGNOZA: MULTI-INSTANCA serverless (browser povezava dobila drug isolate za POST kot za GET) — spletni demo NI zanesljivo trajnosten niti med eno sejo; potrditev uporabnikovega občutka
+- ODLOČITEV (skladna s filozofijo izdelka): spletni demo = raven 1 (ogled/marketing, vedno svež); PRAVO "produkcijsko" doživetje = raven 2 (vodena predstavitev na lastničinem laptopu — zvok, WhatsApp, odpovedi, persistentna SQLite) + raven 3 (pilot USB 14 dni)
+- NAROČILO TEST po sestanku: live demo resetiran (POST /api/setup mode:demo — brez PIN-a, deluje)
+- NOV /api/network: vrne LAN naslov račalnika (os.networkInterfaces → 192.168/10/172.16-31 + PORT) — na Vercelu vrže lanUrl:null (VERCEL env) ; cache no-store
+- ShareQrCard (dashboard) NADGRAJEN: fetch /api/network → QR vsebuje WiFi naslov (http://192.168.x.x:3000) kadar sistem teče lokalno (localhost telefonu stranke ne koristi!), sicer fallback origin; monospace chip pokaže naslov + "· WiFi naslov tega račalnika" oznaka lokalno; Skeleton med nalaganjem
+- DEMO-VODIC.PDF (NOV, 3 strani, 340 KB, sales-flyer/demo-vodic.html → html2pdf-next.js --nopaged): naslovnica (temna burgundy, 3 ravni predstavitve z razlago "ogledna" vs "prava" + QR do spletnega dema) → zlata pot sestanka 15 min v 8 korakih (oznake [ONA] zelena / [VI] bordo: ona oslika QR + rezervira s svojim telefonom → zvok → WhatsApp spominik pošlje sebi → odpoved s povezavo → živ dan → formula+fotografija → statistika/rojstni dnevi → zaključek "teče na tem laptopu, brez interneta") + pravilo "vsak klik, ki ga lahko naredi ona, naredi ona" → pilot 14 dni (3 koraki, plačilo po odločitvi) + 3 ugovori z odgovori + temna CTA "Ona želi videti, da deluje. Pokažite ji — na njenem telefonu."
+- ITERACIJI PDF: prva izvozna 4 strani (stran 2 prelila korak 8 + tip; stran 3 prelila nogo/CTA) → 2 kroga skrčenja besedil + zgoščevanje paddingov (42px, koraki gap 8, manjši fonti) + odstranjena noga strani 3 → natanko 3 strani; metapodatki (author/creator TerminAI) prek pdf.py meta set
+- VLM ocene: naslovnica 9/10 (QR velik/jasen), zlata pot 10/10 (vsi koraki 1–8, oznake jasne), pilot+CTA 9/10 (nič odrezano); pdf_qa: fonti vgrajeni, brez preliva, full-bleed naslovnica (opozorilo o simetriji robov = namerna asimetrična naslovnica, enak vzorec kot pri letaku)
+- SPLETNA STRAN: nov gumb "Demo vodik za predstavitve (PDF)" poleg letaka (flex-wrap, isti outline-primary stil)
+- USB: DEMO-VODIK.pdf v korenu + ZA-TEBE.txt (NOVOSTI demo vodik: 3 ravni, QR WiFi); README.md (nova podsekcija "3 ravni predstavitve stranki" z tabelo + razlog zakaj ne testna spletna različica)
+- LOKALNA VERIFIKACIJA: /api/network 200 (sandbox: lanUrl null — pravilno, javni IP 21.x), /demo-vodic.pdf 200 (347 KB), QR kartica renderira + fallback origin ("localhost:3000" v chipu), lint čist
+- NAPOMBA (sandbox, ne izdelek): dev server je bil večkrat tiho ubit (OOM enkrat 2.5GB next-server; setsid/detached procesi ubijani po ~90 s; turbopack cache korupcija → rm .next) — vse končne preiskave preverjene z živim serverjem in na Vercelu
+
+Stage Summary:
+- ODGOVOR NA VPRAŠANJE: "produkcijski" občutek dosežete z 3-ravensko strategijo — spletno povezavo pošljete za OGLED, na sestanku pa ONA klikka S SVOJIM TELEFONOM (QR → WiFi naslov laptopa) medtem ko vi kažete nadzorno ploščo; prodajni trik: ko vpiše svojo telefonsko številko in dobi PRAVI WhatsApp spominik, sistem preneha biti demo in postane njen; pilot (USB 14 dni) je končna preizkušnja
+- Tehnično odkritje: Vercel multi-instanca dela spletni demo nezanesljiv za "testiranje" (izguba rezervacije med sejo) — dokumentirano v README kot argument ZA lokalno namestitev
+- Deliverables: DEMO-VODIK.pdf (3 strani, prodajni skript) + QR WiFi izboljšava + /api/network + gumb na strani + USB/README/ZA-TEBE dokumentacija
+- Naslednji možni koraki: pilot pri pravem salonu (vodik + letak natisnjena, USB), online faza (prava baza Postgres/Turso + WhatsApp Business API)

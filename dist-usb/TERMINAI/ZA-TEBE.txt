@@ -66,3 +66,17 @@ NOVOSTI (build 2026-09-04, spletni demo):
   - Opozorilo: demo je odprt (brez PIN-a) - namenjen predstavitvam.
     Za pravi online salon: Postgres/Turso + WhatsApp Business API.
 
+
+NOVOSTI (build 2026-09-04, demo vodik):
+  - DEMO-VODIK.pdf v korenu USB (3 strani): prodajni skript
+    za sestanek - zlata pot 15 min v 8 korakih (ONA telefonom /
+    VI z laptopom), pilot ponudba 14 dni, ugovori + odgovori.
+  - Strategija 3 ravni: (1) spletna povezava terminai-eight.vercel.app
+    = OGLED; (2) sestanek na laptopu + njen telefon = PRAVI
+    dozivetje (zvok, WhatsApp, odpovedi); (3) pilot USB 14 dni.
+  - QR koda na nadzorni plosci zdaj pokaze WiFi naslov
+    racunalnika (192.168.x.x:3000) - strankin telefon jo
+    oslika in takoj rezervira. Na spletu pokaze javni naslov.
+  - Stran ima nov gumb "Demo vodik za predstavitve (PDF)"
+    (poleg prodajnega letaka).
+

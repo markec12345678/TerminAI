@@ -264,10 +264,15 @@ export function Pricing() {
           preizkusijo, plačate šele po odločitvi.
         </p>
 
-        <div className="mt-4 flex justify-center">
+        <div className="mt-4 flex flex-wrap justify-center gap-3">
           <Button asChild variant="outline" className="gap-2 border-primary/40 hover:border-primary/60 hover:bg-primary/5">
             <a href="/terminai-letak.pdf" target="_blank" rel="noopener noreferrer">
               <FileDown className="h-4 w-4" /> Prenesi prodajni letak (PDF)
+            </a>
+          </Button>
+          <Button asChild variant="outline" className="gap-2 border-primary/40 hover:border-primary/60 hover:bg-primary/5">
+            <a href="/demo-vodic.pdf" target="_blank" rel="noopener noreferrer">
+              <FileDown className="h-4 w-4" /> Demo vodik za predstavitve (PDF)
             </a>
           </Button>
         </div>
