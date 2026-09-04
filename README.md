@@ -40,6 +40,16 @@
 - **Statistika**: prihodki, zasedenost, najbolj donosne storitve
 - **Izvoz iCal (.ics)** — koledar terminov uvozite v Google/Apple Koledar ali telefon
 
+### 📊 Mesečno poročilo + CSV za knjigovodstvo
+- Zavihek **„Poročila“**: izbrani mesec — realizirani/pričakovani prihodki, povprečni obisk, odpovedi/izostanki
+- **Graf prihodkov po dnevih** in top 5 storitev/strank meseca
+- **CSV izvoz** z obračunanimi obiski (samo zaključeni): UTF-8 BOM, podpičja, decimalna vejica — Excel ga odpre brez pretvorb
+- Navigacija po mesecih (samo meseci z podatki)
+
+### ✨ Demo način (za prodajne obiske)
+- Ena klik **„Obnovi demo podatke“** (vpis DEMO + PIN): Studio Aura z bogato zgodovino (~40 dni, ponavljanja, izostanki)
+- Po predstavitvi sledi „Nastavi pravi salon“ — prehod na prave podatke
+
 ### ⚠️ Sledenje izostankov (no-show)
 - En klik **„Ni prišla“** na pretekel termin (mesto klica odpovedi)
 - Izostanki se **samodejno štejejo pri stranki** — rdeča oznaka „2× ni prišla“ v bazi strank
@@ -137,9 +147,10 @@ src/app/api/                # REST API
 ├── clients/                # baza strank (+ števec izostankov)
 ├── messages/               # SMS/WhatsApp sporočila + razčlenjevanje
 ├── stats/                  # statistika
+├── reports/                # mesečno poročilo + CSV izvoz (?month=YYYY-MM&format=csv)
 ├── hours/                  # delovni čas
 ├── backup/                 # varnostne kopije (seznam, ustvari, prenos)
-├── setup/                  # inicializacija demo podatki
+├── setup/                  # inicializacija: mode=fresh (pravi salon) | mode=demo (obnova dema)
 └── pin/                    # zaščita lastniškega območja
 src/components/terminai/    # UI komponente (hero, koledar, cenik, inbox …)
 src/lib/recurrence.ts       # logika ponavljajočih obiskov

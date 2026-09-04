@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { BUSINESS_SLUG, nowWallClock } from '@/lib/booking'
+import { BUSINESS_SLUG, nowWallClock, seedDemo } from '@/lib/booking'
 import { pinAllows } from '@/lib/pin'
 
-const setupSchema = z.object({
+const freshSchema = z.object({
   mode: z.literal('fresh'),
   businessName: z.string().min(2, 'Ime salona je obvezno').max(60),
   phone: z.string().min(6, 'Telefon je obvezen').max(24),
   address: z.string().max(120).optional().or(z.literal('')),
   city: z.string().max(60).optional().or(z.literal('')),
 })
+
+const demoSchema = z.object({ mode: z.literal('demo') })
+
+const setupSchema = z.discriminatedUnion('mode', [freshSchema, demoSchema])
 
 const editSchema = z.object({
   mode: z.literal('edit'),
@@ -61,8 +65,24 @@ export async function PATCH(req: NextRequest) {
 }
 
 /**
- * Čist start — izbriše VSE (termine, stranke, storitve, salon) in ustvari
- * prazen salon z danimi podatki. Uporabno pri prehodu demo → pravi salon.
+ * Reset baze — skupna osnova za čist start in demo obnovo.
+ * POPRAVEK: brišemo tudi WorkingHours (FK na Business) in sporočila,
+ * sicer bi brisanje salona padlo na tuji ključ.
+ */
+async function wipeAll(): Promise<void> {
+  await db.$transaction(async (tx) => {
+    await tx.appointment.deleteMany({})
+    await tx.client.deleteMany({})
+    await tx.service.deleteMany({})
+    await tx.workingHours.deleteMany({})
+    await tx.message.deleteMany({})
+    await tx.business.deleteMany({})
+  })
+}
+
+/**
+ * Čist start — izbriše VSE (termine, stranke, storitve, salon, sporočila)
+ * in ustvari prazen salon z danimi podatki. Uporabno pri prehodu demo → pravi salon.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -77,24 +97,29 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
+
+    // Demo obnova — za prodajne predstavitve: Studio Aura z bogato zgodovino
+    // (termini ~40 dni, ponavljanja, izostanki) in brez PIN-a.
+    if (parsed.data.mode === 'demo') {
+      await wipeAll()
+      await seedDemo()
+      const business = await db.business.findUnique({ where: { slug: BUSINESS_SLUG } })
+      return NextResponse.json({ ok: true, demo: true, business, resetAt: nowWallClock().toISOString() })
+    }
+
     const { businessName, phone, address, city } = parsed.data
 
-    await db.$transaction(async (tx) => {
-      await tx.appointment.deleteMany({})
-      await tx.client.deleteMany({})
-      await tx.service.deleteMany({})
-      await tx.business.deleteMany({})
+    await wipeAll()
 
-      await tx.business.create({
-        data: {
-          name: businessName,
-          slug: BUSINESS_SLUG,
-          tagline: 'Rezervirajte svoj termin',
-          phone,
-          address: address || '',
-          city: city || '',
-        },
-      })
+    await db.business.create({
+      data: {
+        name: businessName,
+        slug: BUSINESS_SLUG,
+        tagline: 'Rezervirajte svoj termin',
+        phone,
+        address: address || '',
+        city: city || '',
+      },
     })
 
     const business = await db.business.findUnique({ where: { slug: BUSINESS_SLUG } })

@@ -220,3 +220,31 @@ Stage Summary:
 - Tri nove prodajne funkcije: odpoved z enim klikom (stranka sama), no-show evidenca (kdo nastavlja), iCal izvoz (koledar v telefonu)
 - Varnostna zgoda: seznam terminov (telefoni!) zdaj za PIN-om, javna rezervacija pa ostaja odprta
 - Naslednji možni koraki: pilot namestitev pri pravem salonu, demo skript za prodajo, online faza (WhatsApp Business API = samodejna odpoved/spomniki)
+
+---
+Task ID: 10
+Agent: Z.ai Code (glavni agent)
+Task: Mesečno poročilo + CSV za knjigovodstvo + demo način (obnova dema za prodajne obiske) + popravki mobilnega prelivanja
+
+Work Log:
+- src/lib/booking.ts: seedDemo obogaten z določilno zgodovino ~40 dni (2–4 obiski/delovnik, odpovedi seq%17, izostanki seq%23, dnevi 28/21 nazaj pustijo čisti za zgodbo ponavljanj) — demo zdaj vsebuje ~100 terminov (avgust: 66 obiskov / 2.984 €)
+- src/lib/labels.ts: MONTHS_SLO + monthTitle("2026-09" → "september 2026") — skupno strežniku/odjemalcu
+- NOV API GET /api/reports?month=YYYY-MM (PIN 401): KPI-ji (realizirano/pričakovano/povprečni obisk/odpovedi/izostanki), dnevi za graf, top 5 storitev/strank, seznam mesecev z podatki; ?format=csv → datoteka TerminAI-porocilo-MES.csv (samo zaključeni obiski, UTF-8 BOM, podpičja, decimalna vejica, vrstica SKUPAJ — Excel brez pretvorb)
+- POST /api/setup: nov mode "demo" (discriminated union) → wipeAll() + seedDemo() → Studio Aura z bogato zgodovino, PIN ponastavljen
+- KRITIČNI POPRAVEK: wipeAll() briše tudi WorkingHours (FK na Business!) in Message — prejšnji "čist start" (mode=fresh) bi od taska 7 naprej padel na tuji ključ (nikoli re-testiran uspešni setup po uvedbi WorkingHours)
+- reports-tab.tsx (nov zavihek Poročila): mesec navigacija (nazaj/naprej, naprej onemogočen čez tekoči), 4 KPI kartice, recharts stolpični graf dnevnih prihodkov, top storitve/stranke, gumb CSV (blob prenos, toast), opomba za knjigovodstvo, prazno stanje
+- demo-reset-card.tsx (v zavihku Salon pod BackupCard):AlertDialog s vpisom "DEMO" (dvojna zaščita + PIN), jasno opozorilo o brisanju, clearStoredPin + reload po obnovi
+- dashboard.tsx: 5. zavihek Poročila; TabsList flex-wrap + kratke oznake pod md (Koledar/Salon); DemoResetCard
+- FAQ: novo vprašanje "Kako dobim podatke za knjigovodstvo?"
+- README (funkcije Poročila/Demo, pot /api/reports, mode=demo) + usb-template NAVODILA (razdelek za salon) + ZA-TEBE (NOVOST 5) posodobljeni
+- POPRAVEK MOBILNEGA PRELIVANJA (skrit hrošč, obstajal pred tem taskom — git stash dokaz): grid koledarja se razprla na 626 px pri 375 px → min-w-0 na obeh stolpcih + glava kartice flex-wrap (gumbi so se rezali) + vrstice Delovnega časa flex-wrap (časovna vnosa 2×104 px sta razpirala) — vseh 5 zavihkov zdaj scrollWidth = 375
+- Restart dev (padel med testiranjem — znan vzorec): rm .next + start-dev.sh (port TIME_WAIT zamik), instrumentacija OK
+- E2E (agent-browser): poročilo september (283 €/6 obiskov) → avgust (2.984 €/66, graf ~20 stolpcev) ✓; CSV gumb → toast "Poročilo preneseno" + omrežni 200 ✓; demo obnova: dialog gumb onemogočen → "narobe" ostane onemogočen → "DEMO" omogoči → obnova → reload → Studio Aura + 5 storitev ✓; PIN: brez/napačen 401 (JSON, CSV, demo), pravilen 200 ✓; mobilni 375 px: 0 preliva na vseh zavihkih, noga brez vrzeli ✓; FAQ odpiranje ✓; VLM ocena poročila 9/10; 0 konzolnih napak/opozoril; lint čist
+- Končno stanje: demo baza z bogato zgodovino, PIN odprt (za predstavitev), testni klici počiščeni
+
+Stage Summary:
+- Nov prodajni argument: "vsak mesec CSV za knjigovodjo v 10 sekundah — brez računanja iz papirja" + mesečni pregled za lastnico
+- Demo obnova v 10 sekundah: namestitelj pri vsakem obisku pokaže svež, poln demo
+- Dva tiča hrošča odpravljena: FK reset baze + horizontalni preliv na mobilnem (vsi zavihki)
+- Push: commit na github.com/markec12345678/TerminAI
+- Naslednji možni koraki: pilot pri pravem salonu, prodajni enostranski PDF, online faza (WhatsApp Business API)

@@ -410,7 +410,7 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
             <Skeleton className="h-10 w-full" />
           ) : (
             hoursRows.map((r) => (
-              <div key={r.dayOfWeek} className="flex items-center gap-3 rounded-xl border border-border/60 px-3 py-2">
+              <div key={r.dayOfWeek} className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-border/60 px-3 py-2">
                 <span className="w-24 shrink-0 text-sm font-medium">{r.dayName}</span>
                 <Switch
                   checked={!r.closed}

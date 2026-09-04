@@ -35,6 +35,8 @@ import { ServicesManager } from './services-manager'
 import { ManualBookingDialog, type ManualPrefill } from './manual-booking-dialog'
 import { MessageInbox } from './message-inbox'
 import { ClientsTab } from './clients-tab'
+import { ReportsTab } from './reports-tab'
+import { DemoResetCard } from './demo-reset-card'
 import { RemindersDialog } from './reminders-dialog'
 import { RecurrenceCard } from './recurrence-card'
 import { BackupCard } from './backup-card'
@@ -352,9 +354,11 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
         </Card>
       ) : (
       <Tabs defaultValue="koledar">
-        <TabsList className="h-auto rounded-full p-1">
+        <TabsList className="h-auto flex-wrap justify-center rounded-full p-1 sm:justify-start">
           <TabsTrigger value="koledar" className="gap-2 rounded-full px-4 py-2">
-            <CalendarDays className="h-4 w-4" /> Koledar & statistika
+            <CalendarDays className="h-4 w-4" />
+            <span className="hidden md:inline">Koledar &amp; statistika</span>
+            <span className="md:hidden">Koledar</span>
           </TabsTrigger>
           <TabsTrigger value="sporocila" className="gap-2 rounded-full px-4 py-2">
             <MessageSquare className="h-4 w-4" /> Sporočila
@@ -362,8 +366,13 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
           <TabsTrigger value="stranke" className="gap-2 rounded-full px-4 py-2">
             <Users className="h-4 w-4" /> Stranke
           </TabsTrigger>
+          <TabsTrigger value="porocila" className="gap-2 rounded-full px-4 py-2">
+            <BarChart3 className="h-4 w-4" /> Poročila
+          </TabsTrigger>
           <TabsTrigger value="storitve" className="gap-2 rounded-full px-4 py-2">
-            <Store className="h-4 w-4" /> Storitve & salon
+            <Store className="h-4 w-4" />
+            <span className="hidden md:inline">Storitve &amp; salon</span>
+            <span className="md:hidden">Salon</span>
           </TabsTrigger>
         </TabsList>
 
@@ -385,13 +394,13 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
 
       <div className="grid gap-4 lg:grid-cols-5">
         {/* Koledar dneva */}
-        <Card className="border-border/60 lg:col-span-3">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-4">
+        <Card className="min-w-0 border-border/60 lg:col-span-3">
+          <CardHeader className="flex flex-row flex-wrap items-center gap-2 space-y-0 border-b py-4">
             <div className="flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-primary" />
               <h3 className="font-semibold">Koledar terminov</h3>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-2">
               <Button size="sm" className="gap-1.5" onClick={() => openManual(null)}>
                 <Plus className="h-4 w-4" /> Dodaj termin
               </Button>
@@ -583,7 +592,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
         </Card>
 
         {/* Graf + info */}
-        <div className="space-y-4 lg:col-span-2">
+        <div className="min-w-0 space-y-4 lg:col-span-2">
           <Card className="border-border/60">
             <CardHeader className="border-b py-4">
               <div className="flex items-center gap-2">
@@ -662,10 +671,17 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
           <ClientsTab />
         </TabsContent>
 
+        <TabsContent value="porocila" className="mt-4">
+          <ReportsTab businessName={businessName} />
+        </TabsContent>
+
         <TabsContent value="storitve" className="mt-4">
           <ServicesManager refreshKey={onRefreshKey} onServicesChanged={onServicesChanged} />
           <div className="mt-4">
             <BackupCard />
+          </div>
+          <div className="mt-4">
+            <DemoResetCard />
           </div>
         </TabsContent>
       </Tabs>

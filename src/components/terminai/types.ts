@@ -84,6 +84,41 @@ export interface BackupListDto {
   auto: string
 }
 
+export interface ReportDayDto {
+  date: string
+  count: number
+  revenueCents: number
+}
+
+export interface ReportServiceRowDto {
+  name: string
+  count: number
+  revenueCents: number
+}
+
+export interface ReportClientRowDto {
+  name: string
+  visits: number
+  revenueCents: number
+  lastVisit: string
+}
+
+export interface ReportDto {
+  month: string
+  monthLabel: string
+  realizedRevenueCents: number
+  realizedVisits: number
+  expectedRevenueCents: number
+  expectedVisits: number
+  cancelled: number
+  noShow: number
+  avgVisitCents: number
+  days: ReportDayDto[]
+  topServices: ReportServiceRowDto[]
+  topClients: ReportClientRowDto[]
+  months: string[]
+}
+
 export function formatPrice(cents: number): string {
   return `${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)} €`
 }

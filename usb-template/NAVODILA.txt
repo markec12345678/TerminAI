@@ -88,6 +88,17 @@ KOLEDAR V TELEFONU (iCal):
   - To datoteko uvozite v Google Koledar ali telefon — vsi
     termini vidni tudi na mobilniku.
 
+MESENO POROOILO IN PODATKI ZA KNJIGOVOĐSTVO:
+  - Zavihek "Poročila" v nadzorni ploi: izberite mesec
+    (puščice levo/desno).
+  - Vidite: realizirane prihodke, priakovane, povpreeni obisk,
+    odpovedi in izostanke, graf po dnevih, najboljše storitve
+    in stranke meseca.
+  - Gumb "PRENESI CSV ZA KNJIGOVOĐSTVO" naredi datoteko
+    (TerminAI-porocilo-mesec.csv) SAMO z obraunanimi (zakljjuenimi)
+    obiski. Knjigovodja jo odpre v Excelu brez pretvorb — pošljite
+    mu jo ob koncu meseca.
+
 PODATKI SALONA:
   - Zavihek "Storitve & salon" > kartica "Podatki salona":
     ime, telefon (za WhatsApp gumb!), naslov, e-posta.

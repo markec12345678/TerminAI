@@ -248,8 +248,32 @@ export async function seedDemo(): Promise<void> {
   const monthAgoKey = dateKey(addMinutes(naiveDate(today, '00:00'), -28 * 1440))
   const threeWeeksAgoKey = dateKey(addMinutes(naiveDate(today, '00:00'), -21 * 1440))
 
+  // Bogata zgodovina za poročila (~40 dni nazaj, 2–4 obiski na delovnik).
+  // Določilen vzorec (ne naključnost), da demo vedno izgleda enako —
+  // vključene tudi redke odpovedi in izostanki za realne KPI-je.
+  const PATTERN: Array<[number, string]> = [
+    [0, '09:00'], [1, '10:30'], [2, '14:00'], [1, '16:30'],
+    [0, '11:00'], [3, '15:00'], [0, '09:30'], [2, '13:00'],
+  ]
+  const history: ReturnType<typeof mk>[] = []
+  let seq = 0
+  for (let back = 41; back >= 2; back--) {
+    const dayKey = dateKey(addMinutes(naiveDate(today, '00:00'), -back * 1440))
+    if (dayOfWeek(dayKey) === 0) continue // nedelja — zaprto
+    if (back === 28 || back === 21) continue // dneva zgodbe ponavljanj pustimo čista
+    const dayIdx = 41 - back
+    const count = 2 + (dayIdx % 3) // 2–4 obiski na dan
+    for (let i = 0; i < count; i++) {
+      const [svcIdx, time] = PATTERN[(dayIdx * 3 + i * 2) % PATTERN.length]
+      seq++
+      const status = seq % 17 === 5 ? 'cancelled' : seq % 23 === 7 ? 'no_show' : 'completed'
+      history.push(mk(svcIdx, (dayIdx + i) % clients.length, dayKey, time, status))
+    }
+  }
+
   await db.appointment.createMany({
     data: [
+      ...history,
       // Ponavljajoči stranki — "kdo je na vrsti" (zgodovina)
       mk(2, 2, monthAgoKey, '10:00', 'completed', 4), // Petra Zupan — barvanje vsake 4 tedne
       mk(1, 1, threeWeeksAgoKey, '11:00', 'completed', 3), // Marko Kovač — striženje vsaka 3 tedna

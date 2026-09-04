@@ -281,6 +281,10 @@ const FAQS = [
     a: 'Vsak termin ima svojo odpovedno povezavo: WhatsApp spominik, ki ga pošljete dan prej, jo vsebuje — stranka klikne in termin odpove sama, termin se takoj sprosti. Če ne pride in ne odpove, z enim klikom označite "ni prišla" in izostanki se samodejno štejejo pri stranki v bazi.',
   },
   {
+    q: 'Kako dobim podatke za knjigovodstvo?',
+    a: 'V zavihku „Poročila“ izberete mesec in s klikom prenesete CSV datoteko z obračunanimi obiski (datum, stranka, storitev, cena). Datoteka se odpre v Excelu brez pretvorb — pošljete jo knjigovodji ali prenesete na USB. Na istem mestu vidite tudi prihodke po dnevih in najboljše stranke meseca.',
+  },
+  {
     q: 'Kaj če stranka nima telefona s pametnim zaslonom?',
     a: 'Rezervacijska stran deluje na vsakem telefonu z brskalnikom — brez namestitve aplikacije. Starejše stranke lahko seveda pokličejo, vi pa termin vpišete v nadzorno ploščo.',
   },

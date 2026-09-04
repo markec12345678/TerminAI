@@ -91,3 +91,24 @@ NOVOST 4 (namestitelj):
   - Pri prodaji: odpovedna povezava = "stranka odpove sama, ti nic
     ne pocnes" + no-show stevec = "vidis, kdo te nastavlja" — dve
     zgodbri, ki papirni koledar ne zna povedati.
+
+NOVOST 5 (namestitelj):
+  - MESecNO POROOILO: zavihek "Poroila" — mesec (navigacija),
+    KPI-ji (realizirano/priakovano/povpreeni obisk/odpovedi),
+    graf prihodkov po dnevih, top 5 storitev/strank.
+  - CSV ZA KNJIGOVOĐSTVO: gumb prenese TerminAI-porocilo-YYYY-MM.csv
+    (samo zakljjueni obiski, podpiija, decimalna vejica, UTF-8 BOM
+    — Excel brez pretvorb). API: GET /api/reports?format=csv (PIN).
+  - DEMO NAIN: kartica "Demo podatki" v zavihku Salon — vpis DEMO
+    (+PIN) obnovi Studio Aura z bogato zgodovino (~40 dni, ~100
+    terminov, odpovedi, izostanki, ponavljanja). Za prodajne
+    obiske: obnova -> predstavitev -> "Nastavi pravi salon".
+    API: POST /api/setup {mode:"demo"} (PIN).
+  - POPRAVEK: reset baze (mode=fresh) zdaj briše tudi WorkingHours
+    (prej bi padlo na tuj klju) in sporoila.
+  - POPRAVEK mobilnega prelivanja: min-w-0 na mrei koledarja +
+    glava kartice se ovija + vrstice delovnega asa se ovijajo
+    (375 px zdaj brez horizontalnega scrolla na vseh zavihkih).
+  - Pri prodaji: CSV = "knjigovodi dobi isto datoteko kot od
+    papirnega koledarja, samo brez raunanja" + demo obnova v
+    10 sekundah pri vsakem obisku (vedno svee številke za predstavitev).

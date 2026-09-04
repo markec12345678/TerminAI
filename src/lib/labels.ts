@@ -12,3 +12,15 @@ export function recurrenceLabel(weeks: number | null | undefined): string {
   if (weeks >= 5) return `vsakih ${weeks} tednov`
   return `vsake ${weeks} tedne`
 }
+
+export const MONTHS_SLO = [
+  'januar', 'februar', 'marec', 'april', 'maj', 'junij',
+  'julij', 'avgust', 'september', 'oktober', 'november', 'december',
+]
+
+/** "2026-09" → "september 2026" (slovensko, malo začetnico). */
+export function monthTitle(month: string): string {
+  const [y, m] = month.split('-').map(Number)
+  if (!y || !m || m < 1 || m > 12) return month
+  return `${MONTHS_SLO[m - 1]} ${y}`
+}
