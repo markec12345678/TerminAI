@@ -34,6 +34,9 @@ import {
   Volume2,
   VolumeX,
   UserCheck,
+  Footprints,
+  Palette,
+  MessageSquareText,
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ServicesManager } from './services-manager'
@@ -45,6 +48,9 @@ import { DemoResetCard } from './demo-reset-card'
 import { RemindersDialog } from './reminders-dialog'
 import { RecurrenceCard } from './recurrence-card'
 import { BackupCard } from './backup-card'
+import { CompleteDialog } from './complete-dialog'
+import { WalkInDialog } from './walk-in-dialog'
+import { WaitlistCard } from './waitlist-card'
 import { recurrenceLabel } from '@/lib/labels'
 import { copyToClipboard } from '@/lib/clipboard'
 import { playSound, getSoundPref, setSoundPref, unlockAudio } from '@/lib/sounds'
@@ -123,6 +129,15 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
   const [search, setSearch] = useState('')
   // Zvočna opozorila (nova rezervacija / odpoved) — nastavitev se zapomni
   const [soundOn, setSoundOn] = useState(true)
+  // Zaključek obiska: dialog s formulo + predlogom naslednjega termina
+  const [completeTarget, setCompleteTarget] = useState<AppointmentDto | null>(null)
+  // Walk-in: stranka je tu brez termina
+  const [walkInOpen, setWalkInOpen] = useState(false)
+  // Čakalni seznam: števec za namig ob odpovedi (ref + stanje za prikaz)
+  const [waitlistCount, setWaitlistCount] = useState(0)
+  useEffect(() => {
+    waitlistCountRef.current = waitlistCount
+  }, [waitlistCount])
   const { toast } = useToast()
 
   // Živo zaznavanje sprememb (polling): zadnji čas preverjanja, videni statusi
@@ -131,6 +146,8 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
   const seenRef = useRef<Map<string, string>>(new Map())
   const ownerActionsRef = useRef<Set<string>>(new Set())
   const selectedDateRef = useRef<string | null>(null)
+  // Čakalni seznam v ref — da polling ne potrebuje ponovnega zagona ob spremembi
+  const waitlistCountRef = useRef(0)
 
   const searchQuery = search.trim().toLowerCase()
   const normPhone = (p: string) => p.replace(/[\s]/g, '')
@@ -331,9 +348,13 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
               ownerActionsRef.current.delete(key)
             } else if (a.status === 'cancelled') {
               playSound('cancel')
+              const wl = waitlistCountRef.current
               toast({
                 title: 'Odpovedan termin',
-                description: `${a.client.name} — ${a.service.name}, ${apptLabel(a)} je odpovedan. Termin se je sprostil.`,
+                description:
+                  wl > 0
+                    ? `${a.client.name} — ${a.service.name}, ${apptLabel(a)} je odpovedan. ${wl} ${wl === 1 ? 'stranka čaka' : wl === 2 ? 'stranki čakata' : 'strank čaka'} na termin — morda želi kdo ta čas (Čakalni seznam).`
+                    : `${a.client.name} — ${a.service.name}, ${apptLabel(a)} je odpovedan. Termin se je sprostil.`,
               })
               relevant = true
             } else {
@@ -353,7 +374,8 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
     return () => clearInterval(interval)
   }, [locked, loadStats, loadAppointments, apptLabel, toast])
 
-  const updateStatus = async (id: string, status: AppointmentDto['status']) => {
+  const updateStatus = async (id: string, status: Exclude<AppointmentDto['status'], 'completed'>) => {
+    // Zaključek obiska gre skozi CompleteDialog (formula + rebooking) — ne tu.
     setBusyId(id)
     ownerActionsRef.current.add(`${id}:${status}`)
     try {
@@ -366,7 +388,6 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
       setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)))
       loadStats()
       if (status === 'checked_in') playSound('arrival')
-      if (status === 'completed') playSound('complete')
       toast(
         status === 'no_show'
           ? {
@@ -379,15 +400,13 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                 description: 'Ko storitev končate, kliknite »Zaključi«.',
               }
             : {
-              title:
-                status === 'confirmed'
-                  ? 'Termin potrjen'
-                  : status === 'completed'
-                    ? 'Termin zaključen'
+                title:
+                  status === 'confirmed'
+                    ? 'Termin potrjen'
                     : 'Termin odpovedan',
-              description:
-                status === 'cancelled' ? 'Stranka je obveščena prek SMS.' : status === 'confirmed' ? 'Potrditveni SMS je poslan.' : undefined,
-            }
+                description:
+                  status === 'cancelled' ? 'Stranka je obveščena prek SMS.' : status === 'confirmed' ? 'Potrditveni SMS je poslan.' : undefined,
+              }
       )
     } catch {
       toast({ title: 'Napaka', description: 'Posodobitev ni uspela.', variant: 'destructive' })
@@ -536,7 +555,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
               <CalendarDays className="h-4 w-4 text-primary" />
               <h3 className="font-semibold">Koledar terminov</h3>
             </div>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
               <Button
                 variant={soundOn ? 'outline' : 'ghost'}
                 size="icon"
@@ -547,8 +566,20 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
               >
                 {soundOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => setWalkInOpen(true)}
+                title="Stranka je tu brez termina — vpiši jo takoj"
+                aria-label="Walk-in — stranka je tu brez termina"
+              >
+                <Footprints className="h-4 w-4" />
+                <span className="hidden md:inline">Walk-in</span>
+              </Button>
               <Button size="sm" className="gap-1.5" onClick={() => openManual(null)}>
-                <Plus className="h-4 w-4" /> Dodaj termin
+                <Plus className="h-4 w-4" /> <span className="hidden md:inline">Dodaj termin</span>
+                <span className="md:hidden">Termin</span>
               </Button>
               <Button
                 variant="outline"
@@ -702,6 +733,29 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                         <div className="mt-0.5 truncate text-xs text-muted-foreground">
                           {a.service.name} · {a.client.phone}
                         </div>
+                        {/* Opombi: strankina (ob rezervaciji) + frizerkina formula (zasebna) */}
+                        {(a.notes || a.ownerNote) && (
+                          <div className="mt-1.5 min-w-0 space-y-1">
+                            {a.ownerNote && (
+                              <div
+                                className="flex items-start gap-1.5 rounded-md bg-primary/5 px-2 py-1 text-[11px] leading-snug text-primary/90"
+                                title={a.ownerNote}
+                              >
+                                <Palette className="mt-0.5 h-3 w-3 shrink-0" />
+                                <span className="line-clamp-1">{a.ownerNote}</span>
+                              </div>
+                            )}
+                            {a.notes && (
+                              <div
+                                className="flex items-start gap-1.5 rounded-md bg-muted/60 px-2 py-1 text-[11px] leading-snug text-muted-foreground"
+                                title={a.notes}
+                              >
+                                <MessageSquareText className="mt-0.5 h-3 w-3 shrink-0" />
+                                <span className="line-clamp-1">{a.notes}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="w-14 text-right font-semibold text-primary">{formatPrice(a.priceCents)}</span>
@@ -763,10 +817,10 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                                 size="icon"
                                 variant="outline"
                                 className="h-8 w-8"
-                                onClick={() => updateStatus(a.id, 'completed')}
+                                onClick={() => setCompleteTarget(a)}
                                 disabled={busyId === a.id}
                                 aria-label="Zaključi termin"
-                                title="Zaključi"
+                                title="Zaključi — zapiši formulo in predlagaj naslednji termin"
                               >
                                 <TrendingUp className="h-4 w-4" />
                               </Button>
@@ -788,10 +842,10 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                               size="icon"
                               variant="outline"
                               className="h-8 w-8"
-                              onClick={() => updateStatus(a.id, 'completed')}
+                              onClick={() => setCompleteTarget(a)}
                               disabled={busyId === a.id}
                               aria-label="Zaključi termin"
-                              title="Zaključi — stranka je bila prijavljena"
+                              title="Zaključi — zapiši formulo in predlagaj naslednji termin"
                             >
                               <TrendingUp className="h-4 w-4" />
                             </Button>
@@ -872,6 +926,8 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
 
           <RecurrenceCard refreshKey={recurrenceKey + onRefreshKey} onBookForCustomer={openManual} businessName={businessName} />
 
+          <WaitlistCard businessName={businessName} onCountChange={setWaitlistCount} />
+
           <ShareQrCard />
         </div>
       </div>
@@ -883,7 +939,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
         </TabsContent>
 
         <TabsContent value="stranke" className="mt-4">
-          <ClientsTab />
+          <ClientsTab businessName={businessName} />
         </TabsContent>
 
         <TabsContent value="porocila" className="mt-4">
@@ -909,6 +965,40 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
         date={selectedDate}
         prefill={manualPrefill}
         onCreated={onManualCreated}
+      />
+
+      {/* Zaključek obiska: formula + predlog naslednjega termina */}
+      <CompleteDialog
+        open={completeTarget !== null}
+        onOpenChange={(o) => !o && setCompleteTarget(null)}
+        appointment={completeTarget}
+        onCompleted={() => {
+          if (completeTarget) {
+            setAppointments((prev) => prev.map((a) => (a.id === completeTarget.id ? { ...a, status: 'completed' as const } : a)))
+          }
+          loadStats()
+          // Naloži termine znova, da se formula (ownerNote) prikaže na kartici
+          if (selectedDate) loadAppointments(selectedDate)
+        }}
+        onBookNext={(a) => {
+          openManual({
+            name: a.client.name,
+            phone: a.client.phone,
+            serviceId: a.service.id,
+            recurWeeks: a.recurWeeks ?? null,
+          })
+        }}
+      />
+
+      {/* Walk-in: stranka je tu — vpiši in prijavi takoj */}
+      <WalkInDialog
+        open={walkInOpen}
+        onOpenChange={setWalkInOpen}
+        onCreated={(a) => {
+          loadStats()
+          if (selectedDate && a.startAt.slice(0, 10) === selectedDate) loadAppointments(selectedDate)
+          setRecurrenceKey((k) => k + 1)
+        }}
       />
 
       {/* Spomniki za jutri (WhatsApp osnutki) */}

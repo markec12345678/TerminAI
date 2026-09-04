@@ -161,3 +161,14 @@ obvestila, 15-min zamujanje; AZIJA: super-app sporočanja):
   - E2E: toast "Nova rezervacija" prisel v 5 s po POST (curl),
     odpovedni toast v 5 s, stikalo persistira (on/off), check-in
     badge preklopi, mobilni 375 px 0 preliva, VLM 10/10.
+
+NOVOST 8 — KOT DRAGI ZENOTI (po zenotijevskih receptih, brez naročnine)
+- Formule pri strankah: ob zaključku obiska zapišete, kaj je bilo narejeno —
+  Zenoti to šteje za svojo največjo prednost. Pri nas enako, 0 EUR/mesec.
+- Zgodovina obiskov stranke z enega zaslona (datum, storitev, formula, cena).
+- Naslednji termin dogovorite, še preden stranka odide (rebooking).
+- Čakalni seznam: ko kdo odpove, program opomni koga poklicati (WhatsApp
+  povabilo s klikom). Zenoti za to zaračunava premium paket.
+- »Dolgo jih ni bilo«: seznam strank po 8 tednih brez obiska + WhatsApp
+  sporočilo s klikom (Zenoti: AI Retention Manager, 450 $/mesec).
+- Walk-in: stranka brez termina je na stolu v 10 sekundah.

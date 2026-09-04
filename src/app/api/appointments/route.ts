@@ -13,6 +13,9 @@ const createSchema = z.object({
   phone: z.string().min(6, 'Telefon ni veljaven').max(20),
   notes: z.string().max(300).optional().or(z.literal('')),
   recurWeeks: z.number().int().min(2).max(8).optional().nullable(),
+  // Walk-in: stranka je TU — termin se vpiše takoj kot prijavljen (checked_in).
+  // Dovoljeno samo z PIN-om lastnice; javni obrazec tega ne more nastaviti.
+  status: z.enum(['confirmed', 'checked_in']).optional(),
 })
 
 export async function GET(req: NextRequest) {
@@ -67,7 +70,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-function toDto(a: { id: string; startAt: Date; endAt: Date; status: string; priceCents: number; recurWeeks: number | null; cancelToken: string | null; notes: string | null; createdAt: Date; updatedAt: Date; service: { id: string; name: string; durationMin: number }; client: { id: string; name: string; phone: string } }) {
+function toDto(a: { id: string; startAt: Date; endAt: Date; status: string; priceCents: number; recurWeeks: number | null; cancelToken: string | null; notes: string | null; ownerNote: string | null; createdAt: Date; updatedAt: Date; service: { id: string; name: string; durationMin: number }; client: { id: string; name: string; phone: string } }) {
   return {
     id: a.id,
     startAt: a.startAt.toISOString(),
@@ -77,6 +80,7 @@ function toDto(a: { id: string; startAt: Date; endAt: Date; status: string; pric
     recurWeeks: a.recurWeeks,
     cancelToken: a.cancelToken,
     notes: a.notes,
+    ownerNote: a.ownerNote,
     createdAt: a.createdAt.toISOString(),
     updatedAt: a.updatedAt.toISOString(),
     service: { id: a.service.id, name: a.service.name, durationMin: a.service.durationMin },
@@ -94,12 +98,18 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
-    const { serviceId, date, time, name, phone, notes, recurWeeks } = parsed.data
+    const { serviceId, date, time, name, phone, notes, recurWeeks, status } = parsed.data
 
     // Ponavljajoči termin je lastniška nastavitev — javni obrazec je ne sme nastaviti
     let saveRecurWeeks: number | null = recurWeeks ?? null
-    if (saveRecurWeeks !== null && !(await pinAllows(req))) {
+    let saveStatus = 'confirmed'
+    const isOwner = await pinAllows(req)
+    if (saveRecurWeeks !== null && !isOwner) {
       saveRecurWeeks = null
+    }
+    // Walk-in (checked_in) lahko nastavi samo lastnica s PIN-om
+    if (status && isOwner) {
+      saveStatus = status
     }
 
     const service = await db.service.findUnique({ where: { id: serviceId } })
@@ -140,7 +150,7 @@ export async function POST(req: NextRequest) {
         startAt: start,
         endAt: new Date(start.getTime() + service.durationMin * 60000),
         priceCents,
-        status: 'confirmed',
+        status: saveStatus,
         recurWeeks: saveRecurWeeks,
         cancelToken: randomUUID().replace(/-/g, '').slice(0, 12),
         notes: notes || undefined,
@@ -150,19 +160,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(
       {
-        appointment: {
-          id: appointment.id,
-          startAt: appointment.startAt.toISOString(),
-          endAt: appointment.endAt.toISOString(),
-          status: appointment.status,
-          priceCents: appointment.priceCents,
-          recurWeeks: appointment.recurWeeks,
-          cancelToken: appointment.cancelToken,
-          createdAt: appointment.createdAt.toISOString(),
-          updatedAt: appointment.updatedAt.toISOString(),
-          service: { id: appointment.service.id, name: appointment.service.name, durationMin: appointment.service.durationMin },
-          client: { id: appointment.client.id, name: appointment.client.name, phone: appointment.client.phone },
-        },
+        appointment: toDto(appointment),
         bookedAt: nowWallClock().toISOString(),
       },
       { status: 201 }

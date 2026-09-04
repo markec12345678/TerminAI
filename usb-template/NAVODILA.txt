@@ -150,3 +150,36 @@ CIST WORKFLOW TERMINA (od rezervacije do zakljjučka):
   Rezervacija -> POTRDI (rumena puščica ob "Caka") -> PRISLA JE
   (ob prihodu) -> ZAKLJUCI (ob odhodu). Odpoved ali izostanek
   lahko zabelezite kadar koli.
+
+NOVOST: FORMULE IN ZGODOVINA OBISKOV
+====================================
+Kliknite »Zaključi« pri terminu — preden se obisk zaključi, vas program vpraša
+»Kaj je bilo narejeno?«. Zapišite formulo (npr. 6-0 + 7-34, 30 g, 35 min) —
+shranjena je pri stranki in jo naslednjič vidite v 1 sekundi.
+Zgodovino vseh obiskov odprete v zavihku Stranke (ikona ure): vsi obiski,
+cene, statusi in formule na enem mestu.
+
+NOVOST: NASLEDNJI TERMIN ŽE PRI ODHAJU
+=====================================
+Po zaključku obiska program ponudi »Naroči naslednji obisk?« — stranka je še
+tu in to je trenutek, ko reče da. Vnos se samodejno izpolni z njenim imenom,
+telefonom in storitvijo. Manj praznih lukenj v koledarju.
+
+NOVOST: ČAKALNI SEZNAM
+======================
+Kdaj stranka reče »pokličite me, če se kaj sprosti«? Dodajte jo na čakalni
+seznam (kartica desno od koledarja). Ko kdo odpove, vas program opomni:
+»2 stranki čakata na termin«. Vsaka ima gumb WhatsApp s pripravljenim
+povabilom. Ko dobijo termin, jih zbrišete s seznama.
+
+NOVOST: »DOLGO JIH NI BLO« — POVABI NAZAJ
+=========================================
+V zavihku Stranke kliknite »Dolgo jih ni bilo« — pokaže stranke, ki jih je
+8+ tednov ne videli in nimajo novega termina. Vsaka ima gumb WhatsApp z
+osebnim sporočilom. Vrnjena stranka je najcenejši prihodek, ki ga obstaja.
+
+NOVOST: WALK-IN — STRANKA JE TU
+===============================
+Pride stranka brez termina? Gumb »Walk-in« v glavi koledarja: vpišite telefon
+(ime se samo dopolni), izberite storitev in prosti slot — vpisana je TAKOJ
+kot prijavljena. 10 sekund in je na stolu.

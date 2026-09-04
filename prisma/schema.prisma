@@ -58,6 +58,7 @@ model Service {
   active         Boolean  @default(true)
   sortOrder      Int      @default(0)
   appointments   Appointment[]
+  waitlist       WaitlistEntry[]
 }
 
 model Client {
@@ -68,6 +69,18 @@ model Client {
   notes       String?
   createdAt   DateTime @default(now())
   appointments Appointment[]
+}
+
+// Čakalni seznam — stranke, ki želijo termin, ko se kaj sprosti.
+// Ob odpovedi lastnica povabi prvo stranko s prostim časom (WhatsApp).
+model WaitlistEntry {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  serviceId String?  // za katero storitev čaka (neobvezno)
+  service   Service? @relation(fields: [serviceId], references: [id])
+  note      String?  // npr. "lahko samo dopoldne"
+  createdAt DateTime @default(now())
 }
 
 model Appointment {
@@ -82,7 +95,8 @@ model Appointment {
   status      String   @default("pending") // pending | confirmed | checked_in | completed | cancelled | no_show
   recurWeeks  Int?     // ponavljajoči termin: stranka prihaja vsake X tednov (npr. 4)
   cancelToken String?  @unique // enkratna koda za odpoved prek povezave (/?cancel=)
-  notes       String?
+  notes       String?  // strankina opomba ob rezervaciji (vidna tudi stranki)
+  ownerNote   String?  // zasebna opomba frizerke ob obisku: formula, kaj je narejeno, količine …
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt // samodejno ob vsaki spremembi — za zaznavanje novih rezervacij (polling)
 }

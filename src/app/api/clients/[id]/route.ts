@@ -12,8 +12,10 @@ const patchSchema = z.object({
 })
 
 /**
- * GET /api/clients/[id] (PIN) — izvoz vseh podatkov stranke (GDPR:
- * pravica dostopa do lastnih podatkov). Vrne JSON datoteko za prenos.
+ * GET /api/clients/[id] (PIN) — podatki stranke.
+ * Privzeto: GDPR izvoz (pravica dostopa) kot JSON datoteka za prenos.
+ * ?view=plain: enaki podatki brez prenosnika — za zgodovino obiskov v UI
+ * (vključno z zasebnimi opombami frizerke — formulami).
  */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!(await pinAllows(req))) {
@@ -21,11 +23,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   }
   try {
     const { id } = await params
+    const plain = req.nextUrl.searchParams.get('view') === 'plain'
     const client = await db.client.findUnique({
       where: { id },
       include: {
         appointments: {
-          orderBy: { startAt: 'asc' },
+          orderBy: { startAt: 'desc' },
           include: { service: { select: { name: true } } },
         },
       },
@@ -35,25 +38,39 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     const exportData = {
-      izvoz: new Date().toISOString(),
-      namen: 'GDPR — izpis vseh podatkov, ki jih hranimo o stranki',
       stranka: {
         ime: client.name,
         telefon: client.phone,
         ePosta: client.email ?? null,
         opombe: client.notes ?? null,
-        ustvarjena: client.createdAt.toISOString(),
       },
       termini: client.appointments.map((a) => ({
         datum: a.startAt.toISOString(),
         storitev: a.service.name,
         status: a.status,
-        cena: `${(a.priceCents / 100).toFixed(2)} €`,
+        cena: a.priceCents,
         opomba: a.notes ?? null,
+        formula: a.ownerNote ?? null,
       })),
     }
 
-    return new NextResponse(JSON.stringify(exportData, null, 2), {
+    // UI način: brez Content-Disposition, brez namena/datuma izvoza
+    if (plain) {
+      return NextResponse.json(exportData)
+    }
+
+    const gdprData = {
+      izvoz: new Date().toISOString(),
+      namen: 'GDPR — izpis vseh podatkov, ki jih hranimo o stranki',
+      ...exportData,
+      termini: exportData.termini.map((a) => ({
+        ...a,
+        formula: undefined, // zasebna opomba frizerke ni podatek stranke — v izvoz ne gre
+        cena: `${(a.cena / 100).toFixed(2)} €`,
+      })),
+    }
+
+    return new NextResponse(JSON.stringify(gdprData, null, 2), {
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
         'Content-Disposition': `attachment; filename="TerminAI-stranka-${client.name.replace(/[^\w\-čšžČŠŽ ]/g, '').replace(/\s+/g, '-')}.json"`,

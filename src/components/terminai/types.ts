@@ -41,6 +41,16 @@ export interface ClosedDayDto {
   reason: string | null
 }
 
+/** Vnos na čakalnem seznamu — stranka, ki želi termin, ko se kaj sprosti. */
+export interface WaitlistEntryDto {
+  id: string
+  name: string
+  phone: string
+  note: string | null
+  service: { id: string; name: string } | null
+  createdAt: string
+}
+
 export interface AppointmentDto {
   id: string
   startAt: string
@@ -50,6 +60,7 @@ export interface AppointmentDto {
   recurWeeks?: number | null
   cancelToken?: string | null
   notes?: string | null
+  ownerNote?: string | null
   createdAt?: string
   updatedAt?: string
   service: { id: string; name: string; durationMin: number }

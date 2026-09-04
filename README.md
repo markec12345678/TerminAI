@@ -111,6 +111,33 @@
 - **15-minutno pravilo zamujanja:** termin se je začel, stranke ni → rumen indikator »zamuja X min«, spomin, da pokličete ali zabeležite izostanek
 - Izkupnja: isti statusni potek kot Fresha/Booksy (»Arrived«), prirejen enoosebnemu salonu brez odvečnih korakov
 
+### 🎨 Formule in zgodovina obiskov (po zgledu Zenotija)
+- Ob zaključku obiska dialog **»Kaj je bilo narejeno?«** — frizerka zapiše formulo barvanja, količine, posebnosti (max 500 znakov)
+- Formula se shrani **pri terminu** (zasebna opomba — za PIN-om) in se prikaže na kartici termina ter v **zgodovini obiskov stranke**
+- Zgodovina obiskov (ura ikona v bazi strank): vsi obiski kronološko — datum, storitev, cena, status, formula, strankina opomba
+- Formula **ni podatek stranke** — v GDPR izvoz ne gre (samo lastnica jo vidi)
+
+### 🔄 Rebooking ob zaključku (kot Zenoti »rebooking nudges«)
+- Takoj po zaključku obiska dialog ponudi **»Naroči naslednji obisk?«** — stranka je še v salonu, to je trenutek, ko reče »ja«
+- Ročni vnos se **predizpolni** z imenom, telefonom in storitvijo stranke; pri ponavljajočih obiskih tudi z intervalom
+- Veliko frizerk takoj dogovori naslednji termin → manj praznih lukenj v koledarju
+
+### ⏳ Čakalni seznam (kot Zenoti »Automated Waitlist«)
+- Stranke, ki želijo termin »kdaj se kaj sprosti«, so na **čakalnem seznamu** (ime, telefon, za katero storitev, opomba)
+- Ko stranka **odpove**, obvestilo samodejno pove: *»2 stranki čakata na termin — morda želi kdo ta čas«*
+- Vsaka stranka na seznamu ima **gumb WhatsApp** z vnaprej izpolnjenim povabilom; »čaka X dni/tednov« pri vsaki
+- Ko dobijo termin, jih z enim klikom odstranite s seznama
+
+### 💚 »Dolgo jih ni bilo« — povabi nazaj (win-back)
+- Filter v bazi strank: **8+ tednov brez obiska in brez novega termina** → rumena oznaka »10 tednov ni bilo tu«
+- En klik **WhatsApp** z osebnim sporočilom (»Živjo Ana! Že dolgo te nismo videle pri Studio Aura …«)
+- Kot Zenoti »AI Retention Manager«, a brez naročnine in z osebnim pristopom — vračanje strank = najcenejši prihodek
+
+### 🏃 Walk-in — stranka je tu brez termina
+- Gumb **»Walk-in«** v glavi koledarja: izbor stranke (dopolni se po telefonu) + storitev + **prosti sloti od zdaj naprej**
+- Termin se vpiše **takoj kot prijavljen** (status »Prišla«) — brez koraka »potrdi«, ker stranka že stoji pred vami
+- Telefon samodejno poišče stranko v bazi in dopolni ime — vpis v 10 sekundah
+
 ---
 
 ## Tehnični sklad

@@ -3,9 +3,15 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { pinAllows } from '@/lib/pin'
 
-const patchSchema = z.object({
-  status: z.enum(['pending', 'confirmed', 'checked_in', 'completed', 'cancelled', 'no_show']),
-})
+const patchSchema = z
+  .object({
+    status: z.enum(['pending', 'confirmed', 'checked_in', 'completed', 'cancelled', 'no_show']).optional(),
+    // Zasebna opomba frizerke ob obisku — formula, kaj je narejeno (max 500 znakov)
+    ownerNote: z.string().max(500).optional().or(z.literal('')),
+  })
+  .refine((d) => d.status !== undefined || d.ownerNote !== undefined, {
+    message: 'Nič za posodobiti',
+  })
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -16,12 +22,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const body = await req.json()
     const parsed = patchSchema.safeParse(body)
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Napačen status' }, { status: 400 })
+      return NextResponse.json({ error: 'Napačni podatki' }, { status: 400 })
     }
+
+    const data: { status?: string; ownerNote?: string | null } = {}
+    if (parsed.data.status !== undefined) data.status = parsed.data.status
+    if (parsed.data.ownerNote !== undefined) data.ownerNote = parsed.data.ownerNote || null
 
     const appointment = await db.appointment.update({
       where: { id },
-      data: { status: parsed.data.status },
+      data,
       include: { service: true, client: true },
     })
 
@@ -32,6 +42,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         endAt: appointment.endAt.toISOString(),
         status: appointment.status,
         priceCents: appointment.priceCents,
+        ownerNote: appointment.ownerNote,
         service: { id: appointment.service.id, name: appointment.service.name, durationMin: appointment.service.durationMin },
         client: { id: appointment.client.id, name: appointment.client.name, phone: appointment.client.phone },
       },

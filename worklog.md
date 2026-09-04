@@ -331,3 +331,29 @@ Stage Summary:
 - Celoten workflow termina zdaj: Rezervacija → Potrdi → Prišla je → Zaključi (z zvoki ob vsakem koraku)
 - E2E: vsi scenariji potrjeni (toast v 5 s), VLM 10/10, lint čist, 0 napak
 - Naslednji možni koraki: pilot pri pravem salonu, prodajni PDF, online faza (WhatsApp Business API), več-izvajalci
+
+---
+Task ID: 14
+Agent: Z.ai Code (glavni agent)
+Task: Globoka analiza Zenoti (zenoti.com) + primerjava s TerminAI + implementacija funkcij, ki si jih frizerka želi ("v koži Mojce")
+
+Work Log:
+- SPLETNA RAZISKAVA (4 prebrani strani + 2 iskanji): zenoti.com (AI Workforce: Receptionist/Concierge/Lead Manager/Marketer/Scribe/Dispute/Advisor/Retention/Scheduler/Inventory), zenoti-review-2026 (Capterra 4.4★/1250 ocen; "lahek za uporabo" NAJNIŽJA ocena 4.3★; cene 225–500 $/mesec/lokacija, do 1.800 $, 12-mesečna pogodba; "ni za solo frizerke"; Excel-based onboarding!), Reddit/Trustpilot pritožbe ("interface is confusing, basic tasks require too many clicks", "glitchy mobile", "walk-in clients felt too complicated"), Zenotijev koledarski mockup (opombe tipa "prefers minimal conversation", kosilo v koledarju)
+- ANALIZA "V KOŽI FRIZERKE" (Mojca, solo salon): 4 ključne vrzeli po Zenoti benchmarku → formule ob obisku (#1 Zenoti differentiator za lase), rebooking ob zaključku, čakalni seznam ob odpovedih, win-back "dolgo je ni"
+- Prisma: Appointment.ownerNote (zasebna formula frizerke) + model WaitlistEntry (ime, telefon, storitev?, opomba) + Service.waitlist relacija; db:push + restart dev (rm .next + start-dev.sh, znani vzorec TIME_WAIT)
+- API: PATCH /api/appointments/[id] zdaj sprejema ownerNote (max 500, skupaj s statusom); GET/POST toDto vključujeta ownerNote; POST sprejema status checked_in SAMO z PIN-om (walk-in); NOV /api/waitlist (GET/POST/DELETE, PIN); GET /api/clients/[id] nov način ?view=plain za zgodovino v UI — GDPR izvoz NE vsebuje formule (zasebna opomba frizerke ni podatek stranke)
+- NOV complete-dialog.tsx: ob "Zaključi" → vpraša "Kaj je bilo narejeno?" (formula) → shrani + zvok → uspešno stanje z gumbom "Naroči naslednji obisk?" (predizpolni ročni vnos z imenom/telefonom/storitvijo/intervalom)
+- NOV walk-in-dialog.tsx: gumb Footprints v glavi koledarja; ime/telefon (dopolni se po bazi), storitev, PROSTI SLOTI OD ZDAJ (+5 min); POST s statusom checked_in → "Walk-in prijavljen 👋" + pozdravni ton
+- NOV waitlist-card.tsx (desni stolpec): seznam z "čaka X dni/tednov" (slov. dvojina), WhatsApp povabilo (pripravljeno sporočilo), brisanje, dodajanje (dialog); onCountChange dvigne števec v dashboard
+- dashboard.tsx: 3 gumbi "Zaključi" zdaj odpirajo CompleteDialog; odpovedni toast doda "N strank čaka na termin — morda želi kdo ta čas (Čakalni seznam)" ko waitlistCount > 0 (ref, da polling ostane stabilen); kartice terminov prikazujejo ownerNote (Palette ikona) + strankino opombo (MessageSquareText); gumb Walk-in;ClientsTab dobi businessName; WaitlistCard za RecurrenceCard
+- clients-tab.tsx: filter "Dolgo jih ni bilo (N)" (8+ tednov, brez naslednjega termina) z rumenim odznakam "X tednov ni bilo tu" + WhatsApp gumb z osebnim sporočilom (wa.me normalizacija 0→386); NOV dialog Zgodovina obiskov (ikona ure): kronologija vseh obiskov s formulami; prazno stanje win-back "Odlično — vse stranke so bile pri vas v zadnjih 8 tednih"
+- HROŠČI UJETI S TESTIRANJEM: (1) formula se ni prikazala na kartici — onCompleted ni ponovno naložil seznam → dodan loadAppointments; (2) direkten sqlite insert z python isoformat (mikrosekunde) je podrl Prisma ("Conversion failed: invalid characters") → Prisma format "YYYY-MM-DDTHH:MM:SS.sssZ"; (3) MOBILNI PRELIV 454px na 375px — 6 gumbov v glavi koledarja se ni prelomilo → flex-wrap + "Walk-in"/"Dodaj termin" besedilo skrito pod md (ikona/kratek "Termin") → 375 = 0 preliva na vseh 5 zavihkih
+- E2E (agent-browser): check-in → CompleteDialog → formula "6-34 + 7-43 (40g)..." → prikaz na kartici ✓ → "Naroči naslednji obisk" odpre ročni vnos PREDIZPOLNJEN (Ana Novak | +386 41 555 123 | Striženje ženske) ✓; zgodovina obiskov Anе s formulo ✓; walk-in: Test Walkin2 → status "Prišla" + toast ✓; čakalni seznam: dodaj (Nina Zver, Karmen Vidmar — demo), WhatsApp href wa.me/38641555444 s pravilnim sporočilom, brisanje ✓; win-back: Stara Stranka (obisk 70 dni nazaj prek sqlite) → "10 tednov ni bilo tu" + WhatsApp gumb ✓; odpoved (Toast Test 4, ustvarjen 15 s pred odpovedjo) → toast "…je odpovedan. 1 stranka čaka na termin — morda želi kdo ta čas (Čakalni seznam)" ujet z wait --text ✓; 0 konzolnih napak; VLM 8.5/10 (dashboard z novimi elementi); bun run lint čist
+- Testni podatki počiščeni (Ana/Petra/Luka povrnjeni v prvotne statuse + formula odstranjena, 5 Toast Test strank izbrisanih, Stara Stranka izbrisana); na čakalni seznam dodani 2 DEMO vnosa (Nina Zver, Karmen Vidmar) za predstavitve
+- README: 5 novih sekcij (Formule/Zgodovina, Rebooking, Čakalni seznam, Win-back, Walk-in); usb-template NAVODILA.txt (5 razdelkov za lastnico) + ZA-TEBE.txt (NOVOST 8 — primerjava Zenoti brez naročnine)
+
+Stage Summary:
+- Zenoti (225–500 $/mesec, 12-mes. pogodba, "ni za solo frizerke", Excel onboarding) vs TerminAI: 5 ključnih Zenoti funkcij prenesenih na enoosebni salon — 🎨 formule ob obisku, 🔄 rebooking nudge, ⏳ čakalni seznam z WhatsApp obvesščanjem, 💚 win-back (8 tednov), 🏃 walk-in (10 s)
+- Celoten življenjski cikel stranke zdaj pokrit: rezervacija → obisk (formula) → rebooking → win-back ob odhodu
+- Prodajni argument: "Zenoti zaračuna 5.400 $/leto za to. TerminAI ima enake recepte, brez naročnine, v slovenščini"
+- Naslednji možni koraki: pilot pri pravem salonu, prodajni PDF, rojstnodnevna sporočila, slike rezultatov (Zenoti Photo Manager)
