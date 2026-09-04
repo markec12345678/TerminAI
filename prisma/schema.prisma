@@ -29,8 +29,19 @@ model WorkingHours {
   dayOfWeek  Int      // 0 = nedelja ... 6 = sobota
   open       String   // "09:00"
   close      String   // "18:00"
+  breakStart String?  // premor od ("12:00") — neobvezno
+  breakEnd   String?  // premor do ("13:00") — neobvezno
 
   @@unique([businessId, dayOfWeek])
+}
+
+// Posebej zaprt dan: praznik, dopust, bolezen ...
+// Preglasi tedenski delovni čas za konkreten datum.
+model ClosedDay {
+  id        String   @id @default(cuid())
+  date      String   @unique // "YYYY-MM-DD"
+  reason    String?
+  createdAt DateTime @default(now())
 }
 
 model Service {
@@ -40,6 +51,7 @@ model Service {
   name           String
   description    String?
   durationMin    Int
+  bufferMin      Int      @default(0) // priprava/razkuževanje po storitvi (min)
   priceCents     Int
   peakPriceCents Int
   category       String?

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { BUSINESS_SLUG, generateSlots, nextDays, naiveDate, todayKey, getHoursForDayAsync } from '@/lib/booking'
+import { closedDayReason } from '@/lib/holidays'
 import { parseMessage, composeReply, dayLabel, type ReplyAvailability } from '@/lib/message-parser'
 import { pinAllows } from '@/lib/pin'
 
@@ -84,7 +85,10 @@ export async function POST(req: NextRequest) {
           where: { startAt: { gte: dayStart, lte: dayEnd }, status: { notIn: ['cancelled', 'no_show'] } },
           select: { startAt: true, endAt: true },
         })
-        const slots = generateSlots(svcRow, target, existing, await getHoursForDayAsync(target))
+        const hours = await getHoursForDayAsync(target)
+        // Zaprt dan (praznik, dopust ali tedensko zaprt) — razlog za odgovor
+        const closedReason = hours === null ? ((await closedDayReason(target)) ?? '') : null
+        const slots = generateSlots(svcRow, target, existing, hours)
         const free = slots.filter((s) => s.available)
 
         // Zahtevana ura — prost/zaseden?
@@ -117,6 +121,7 @@ export async function POST(req: NextRequest) {
           requestedTime: parsed.timeHint,
           requestedFree,
           altDays,
+          closedReason,
         }
       }
     }

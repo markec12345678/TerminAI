@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { BUSINESS_SLUG, nowWallClock, seedDemo } from '@/lib/booking'
+import { ensureHolidays } from '@/lib/holidays'
 import { pinAllows } from '@/lib/pin'
 
 const freshSchema = z.object({
@@ -76,6 +77,7 @@ async function wipeAll(): Promise<void> {
     await tx.service.deleteMany({})
     await tx.workingHours.deleteMany({})
     await tx.message.deleteMany({})
+    await tx.closedDay.deleteMany({})
     await tx.business.deleteMany({})
   })
 }
@@ -110,6 +112,10 @@ export async function POST(req: NextRequest) {
     const { businessName, phone, address, city } = parsed.data
 
     await wipeAll()
+
+    // Nov salon takoj dobi slovenske praznike (tekoče + naslednje leto)
+    const year = new Date().getUTCFullYear()
+    await ensureHolidays([year, year + 1])
 
     await db.business.create({
       data: {

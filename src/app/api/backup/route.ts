@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import fs from 'node:fs'
 import path from 'node:path'
+import { z } from 'zod'
 import { pinAllows } from '@/lib/pin'
-import { backupsDir, createBackup, listBackups } from '@/lib/backup'
+import { backupsDir, createBackup, listBackups, restoreBackup, BACKUP_NAME_RE } from '@/lib/backup'
 
 /**
  * GET /api/backup — seznam varnostnih kopij (PIN).
@@ -16,7 +17,7 @@ export async function GET(req: NextRequest) {
   const file = req.nextUrl.searchParams.get('file')
   if (file) {
     // Zagotovi veljavno, varno ime datoteke (brez poti)
-    if (!/^\d{4}-\d{2}-\d{2}_\d{4}\.db$/.test(file)) {
+    if (!BACKUP_NAME_RE.test(file)) {
       return NextResponse.json({ error: 'Napačno ime datoteke' }, { status: 400 })
     }
     const full = path.join(backupsDir(), file)
@@ -52,6 +53,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Zahtevan PIN lastnika' }, { status: 401 })
   }
   try {
+    const body = await req.json().catch(() => ({}))
+    const parsed = z
+      .union([z.object({ action: z.literal('restore'), file: z.string() }).strict(), z.object({}).strict()])
+      .safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Napačni podatki' }, { status: 400 })
+    }
+
+    // Obnova izbrane kopije (pred obnovo se naredi zaščitna kopija!)
+    if (parsed.success && parsed.data.action === 'restore') {
+      try {
+        const safety = await restoreBackup(parsed.data.file)
+        return NextResponse.json({ ok: true, restored: parsed.data.file, safetyBackup: safety })
+      } catch (err) {
+        return NextResponse.json(
+          { error: err instanceof Error ? err.message : 'Obnova ni uspela' },
+          { status: 400 }
+        )
+      }
+    }
+
     const backup = await createBackup()
     return NextResponse.json({ backup, backups: listBackups() }, { status: 201 })
   } catch (e) {

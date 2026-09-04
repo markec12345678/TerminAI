@@ -23,6 +23,7 @@ const createSchema = z.object({
   name: z.string().min(2, 'Ime storitve je prekratko').max(60),
   description: z.string().max(200).optional().or(z.literal('')),
   durationMin: z.number().int().min(10).max(300),
+  bufferMin: z.number().int().min(0).max(30).optional(),
   priceCents: z.number().int().min(0).max(100000),
   peakPriceCents: z.number().int().min(0).max(100000),
   category: z.string().max(40).optional().or(z.literal('')),
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
-    const { name, description, durationMin, priceCents, peakPriceCents, category } = parsed.data
+    const { name, description, durationMin, bufferMin, priceCents, peakPriceCents, category } = parsed.data
 
     const business = await db.business.findUnique({ where: { slug: BUSINESS_SLUG } })
     if (!business) {
@@ -59,6 +60,7 @@ export async function POST(req: NextRequest) {
         name,
         description: description || null,
         durationMin,
+        bufferMin: bufferMin ?? 0,
         priceCents,
         peakPriceCents: Math.max(peakPriceCents, priceCents),
         category: category || null,

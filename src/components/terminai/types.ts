@@ -3,6 +3,7 @@ export interface ServiceDto {
   name: string
   description: string | null
   durationMin: number
+  bufferMin?: number
   priceCents: number
   peakPriceCents: number
   category: string | null
@@ -29,8 +30,15 @@ export interface AvailabilityDto {
   date: string
   dayName: string
   open: boolean
+  closedReason?: string | null
   peakDay: boolean
   slots: SlotDto[]
+}
+
+/** Zaprt dan (praznik, dopust) — javni podatki za rezervacijski trak. */
+export interface ClosedDayDto {
+  date: string
+  reason: string | null
 }
 
 export interface AppointmentDto {

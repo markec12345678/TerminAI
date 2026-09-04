@@ -158,6 +158,7 @@ export interface ReplyAvailability {
   requestedTime: string | null
   requestedFree: boolean | null // null = ni bila zahtevana; true/false sicer
   altDays: { dayLabel: string; times: string[] }[] // ko je ciljni dan zaseden/zaprto
+  closedReason?: string | null // razlog, če je ciljni dan posebej zaprt (praznik/dopust)
 }
 
 interface BusinessInfo {
@@ -211,7 +212,15 @@ export function composeReply(
 
     if (avail.times.length > 0) {
       const times = avail.times.map((t) => `${t.time}${t.peak ? ' (vršni)' : ''}`).join(', ')
-      text += `Prosti termini — ${avail.dayLabel}:\n${times}\nKateri vam ustreza? Takoj potrdim. 💇`
+      text += `Prosti termini — ${avail.dayLabel}:
+${times}\nKateri vam ustreza? Takoj potrdim. 💇`
+    } else if (avail.closedReason != null) {
+      const reason = avail.closedReason.trim()
+      text += `${avail.dayLabel} smo žal ZAPRTI${reason ? ` (${reason})` : ''}.\n${
+        avail.altDays.length > 0
+          ? `Prosti smo še:\n${avail.altDays.map((d) => `• ${d.dayLabel}: ${d.times.join(', ')}`).join('\n')}\nKateri dan vam ustreza?`
+          : 'Pišite, kateri drug dan vam ustreza, takoj preverim. 🙏'
+      }`
     } else if (avail.altDays.length > 0) {
       text += `${avail.dayLabel} je žal vse zasedeno.\nProsti smo še:\n${avail.altDays.map((d) => `• ${d.dayLabel}: ${d.times.join(', ')}`).join('\n')}\nKateri dan vam ustreza?`
     } else {

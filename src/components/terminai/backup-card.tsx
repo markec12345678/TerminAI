@@ -6,7 +6,17 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useToast } from '@/hooks/use-toast'
 import { ownerFetch } from '@/lib/owner-fetch'
-import { ShieldCheck, HardDriveDownload, Plus, Download, RefreshCw, CheckCircle2 } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { ShieldCheck, HardDriveDownload, Plus, Download, RefreshCw, CheckCircle2, History, RotateCcw } from 'lucide-react'
 import type { BackupListDto } from './types'
 
 function sizeLabel(bytes: number): string {
@@ -21,6 +31,8 @@ export function BackupCard() {
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [downloading, setDownloading] = useState<string | null>(null)
+  const [restoreTarget, setRestoreTarget] = useState<string | null>(null)
+  const [restoring, setRestoring] = useState(false)
   const { toast } = useToast()
 
   const load = useCallback(async () => {
@@ -75,7 +87,38 @@ export function BackupCard() {
     }
   }
 
+  /** Obnova baze iz kopije — pred obnovo se naredi zaščitna kopija. */
+  const restore = async () => {
+    if (!restoreTarget) return
+    setRestoring(true)
+    try {
+      const res = await ownerFetch('/api/backup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'restore', file: restoreTarget }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      toast({
+        title: 'Baza obnovljena ✓',
+        description: `Stanje iz ${restoreTarget} — zaščitna kopija pred obnovo: ${data.safetyBackup}`,
+      })
+      setRestoreTarget(null)
+      // Osveži celotno stran — vsi podatki (termine, stranke) so iz obnovljene baze
+      setTimeout(() => window.location.reload(), 800)
+    } catch (e) {
+      toast({
+        title: 'Obnova ni uspela',
+        description: e instanceof Error ? e.message : 'Poskusite znova.',
+        variant: 'destructive',
+      })
+    } finally {
+      setRestoring(false)
+    }
+  }
+
   return (
+    <>
     <Card className="border-border/60">
       <CardContent className="space-y-3 p-4">
         <div className="flex items-center justify-between">
@@ -116,18 +159,30 @@ export function BackupCard() {
                         {b.ageLabel} · {sizeLabel(b.sizeBytes)}
                       </div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 gap-1 px-2 text-[11px]"
-                      onClick={() => void download(b.name)}
-                      disabled={downloading === b.name}
-                      aria-label={`Prenesi ${b.name}`}
-                      title="Prenesi na računalnik / USB"
-                    >
-                      {downloading === b.name ? <RefreshCw className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
-                      Prenesi
-                    </Button>
+                    <div className="flex shrink-0 gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 gap-1 px-2 text-[11px]"
+                        onClick={() => setRestoreTarget(b.name)}
+                        aria-label={`Obnovi iz ${b.name}`}
+                        title="Obnovi bazo iz te kopije"
+                      >
+                        <RotateCcw className="h-3 w-3" /> Obnovi
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 gap-1 px-2 text-[11px]"
+                        onClick={() => void download(b.name)}
+                        disabled={downloading === b.name}
+                        aria-label={`Prenesi ${b.name}`}
+                        title="Prenesi na računalnik / USB"
+                      >
+                        {downloading === b.name ? <RefreshCw className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
+                        Prenesi
+                      </Button>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -146,10 +201,41 @@ export function BackupCard() {
             </div>
             <p className="text-[10px] leading-snug text-muted-foreground">
               Kopija vsebuje vse termine, stranke in cenik. Prenesite jo na USB ključek za hrambo izven računalnika.
+              Gumb <strong className="text-foreground">Obnovi</strong> vrne bazo na stanje izbrane kopije (pred obnovo se vedno naredi zaščitna kopija).
             </p>
           </>
         )}
       </CardContent>
     </Card>
+
+    {/* AlertDialog: potrditev obnove */}
+    <AlertDialog open={restoreTarget !== null} onOpenChange={(o) => !o && setRestoreTarget(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <History className="h-5 w-5 text-primary" /> Obnovi iz varnostne kopije?
+          </AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>
+                Baza se vrne na stanje kopije <strong className="font-mono text-foreground">{restoreTarget}</strong> — termini,
+                stranke in spremembe po tej kopiji izginejo.
+              </p>
+              <p>
+                Pred obnovo se samodejno naredi <strong className="text-foreground">zaščitna kopija trenutnega stanja</strong>,
+                tako da nič ne more biti izgubljeno.
+              </p>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Prekliči</AlertDialogCancel>
+          <AlertDialogAction disabled={restoring} onClick={(e) => { e.preventDefault(); void restore() }}>
+            {restoring ? 'Obnavljam …' : 'Obnovi bazo'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   )
 }

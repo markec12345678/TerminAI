@@ -43,6 +43,28 @@ QR KODA ZA STRANKE:
   - Natisnite jo in prilepite na ogledalo: stranka oslika kodo
     s telefonom (na vaem WiFi) in takoj rezervira sama.
 
+PRAZNIKI, DOPUST IN KOSILO (novo):
+  - Zavihek "Storitve & salon" > kartica "Zaprti dnevi & prazniki".
+  - Gumb UVOZI PRAZNIKE doda vse slovenske drzavne praznike
+    (za to leto in naslednje) — stranke teh dni ne morejo rezervirati.
+  - DOPUST: vpisete od-do (npr. teden dni) in kliknete "Zapri dopust".
+  - Posamezen dan zaprete z datumom + razlogom (sola, bolezen ...).
+  - KOSILO/PREMOR: v kartici "Delovni cas" polje s soncno ikono
+    (npr. 12:00-13:00) — v tem oknu terminov ni.
+  - Program "ve", kdaj ste zaprti: modul Sporoila sam ponudi
+    prve proste dneve.
+
+OPOMBE O STRANKI (formule, alergije — novo):
+  - Zavihek "Stranke": svincknik ob stranki odpre opombe.
+  - Zapisite formulo barvanja (npr. 6-34 + 7-43), alergije,
+    zelje — opombe so vidne samo vam (za PIN-om).
+
+IZBRIS PODATKOV STRANKE (GDPR — novo):
+  - Zavihek "Stranke": gumb za prenos (izvoz VSEH njenih podatkov
+    v datoteko) in gumb za izbris (stranka + vsi njeni termini).
+  - Ce stranka zahteva izbris svojih podatkov (GDPR), to naredite
+    v 10 sekundah.
+
 CE ŽELITE TUDI SPOMNIKE IN ANO (AI):
   - To je dodatek, ki zahteva povezavo na internet.
   - Pokliite namestitelja — sistem se nadgradi brez izgube podatkov.

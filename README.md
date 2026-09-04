@@ -11,8 +11,15 @@
 ### 🗓️ Naročanje terminov
 - Interaktivni koledar s 30-minutnimi termini in samodejnim zaznavanjem **prekrivanja**
 - Delovni čas po dnevih (nedelja–sobota), samodejni predlogi prostih terminov
+- **Premor (kosilo)**: okno v delovnem času, v katerem terminov ni (npr. 12:00–13:00)
+- **Priprava po storitvi** (razkuževanje): dodaten čas po vsaki storitvi, da se termini ne stikajo
 - **Vrhovni doplaček**: sobote in delavniki po 15. uri se zaračunajo po višji ceni
 - Statusi terminov: `pending → confirmed → completed / cancelled / no_show`
+
+### 🎉 Zaprti dnevi — prazniki, dopust, kosilo
+- **Uvoz slovenskih državnih praznikov** z enim klikom (fiksni + velikonočni za tekoče in naslednje leto)
+- **Dopust z obsegom datumov** (od–do) in posamezni zaprti dnevi (šola, bolezen …)
+- Stranke teh dni **ne morejo izbrati** v rezervacijskem traku; modul Sporočila ponudi prve proste dneve
 
 ### ❌ Odpoved z enim klikom (enkratna povezava)
 - Vsak termin ima svojo **odpovedno povezavo** (`/?cancel=token`) — brez PIN-a, token je overitev
@@ -34,11 +41,16 @@
 - Predal "Sporočila" (inbox) z nameni (intent): `booking | price | cenik | availability`
 
 ### 🛠️ Lastnik vse ureja sam
-- **Cenik** (storitve, trajanje, redna/vrhovna cena) — poljen CRUD
-- **Podatki salona**: ime, naslov, telefon, delovni čas
-- **Baza strank** z zgodovino obiskov
+- **Cenik** (storitve, trajanje, priprava, redna/vrhovna cena) — poljen CRUD
+- **Podatki salona**: ime, naslov, telefon, delovni čas + premor
+- **Baza strank** z zgodovino obiskov in **opombami** (formule barvanja, alergije)
 - **Statistika**: prihodki, zasedenost, najbolj donosne storitve
 - **Izvoz iCal (.ics)** — koledar terminov uvozite v Google/Apple Koledar ali telefon
+
+### 🔒 GDPR — izvoz in izbris podatkov stranke
+- Vsaka stranka ima gumb za **izvoz** (vsi njeni podatki in zgodovina v JSON datoteki — pravica dostopa)
+- Gumb za **trajen izbris** izbriše stranko in vse njene termine (pravica do izbrisa) — s potrditvenim oknom
+- Celoten lastniški prostor (telefoni, opombe, zgodovina) je za PIN-om
 
 ### 📊 Mesečno poročilo + CSV za knjigovodstvo
 - Zavihek **„Poročila“**: izbrani mesec — realizirani/pričakovani prihodki, povprečni obisk, odpovedi/izostanki
@@ -61,10 +73,11 @@
 - En klik: **WhatsApp vabilo** s pripravljenim sporočilom ali **naročitev** termina
 - Stranke, ki so že naročene, so ločeno označene
 
-### 💾 Samodejne varnostne kopije
+### 💾 Samodejne varnostne kopije + obnova
 - Ob vsakem zagonu (največ 1× dnevno) se naredi **konsistenten snapshot** baze (`VACUUM INTO`)
 - Zadnjih 14 kopij v mapi `db/backups` — brez ročnega dela
-- Kartica "Varnostne kopije": seznam, ročna kopija, **prenos na USB** prek brskalnika
+- Kartica "Varnostne kopije": seznam, ročna kopija, **prenos na USB** in **obnova z enim klikom**
+- Obnova pred zamenjavo vedno naredi **zaščitno kopijo trenutnega stanja** — nič se ne more izgubiti
 
 ### 🔒 Zasebnost in offline način
 - SQLite zbirka v **enki datoteki** → enostavna rezervacija (USB)

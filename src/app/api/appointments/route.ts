@@ -89,11 +89,15 @@ export async function POST(req: NextRequest) {
     // Preveri razpoložljivost še enkrat na strežniku (race-safe)
     const dayStart = naiveDate(date, '00:00')
     const dayEnd = naiveDate(date, '23:59')
+    const hours = await getHoursForDayAsync(date)
+    if (hours === null) {
+      return NextResponse.json({ error: 'Na ta dan je salon zaprto (praznik ali dopust) — izberite drug dan.' }, { status: 400 })
+    }
     const existing = await db.appointment.findMany({
       where: { startAt: { gte: dayStart, lte: dayEnd }, status: { notIn: ['cancelled', 'no_show'] } },
       select: { startAt: true, endAt: true },
     })
-    const slots = generateSlots(service, date, existing, await getHoursForDayAsync(date))
+    const slots = generateSlots(service, date, existing, hours)
     const slot = slots.find((s) => s.time === time)
     if (!slot || !slot.available) {
       return NextResponse.json({ error: 'Ta termin ni več prost — izberite drugega.' }, { status: 409 })

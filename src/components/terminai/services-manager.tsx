@@ -35,17 +35,19 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { ownerFetch, setStoredPin } from '@/lib/owner-fetch'
-import { Plus, Pencil, Trash2, Scissors, RefreshCcw, Store, Clock, Flame, MapPin, Phone, Mail, Save, Building2, KeyRound, CalendarClock } from 'lucide-react'
-import type { ServiceDto, BusinessDto } from './types'
-import { durationLabel, formatPrice } from './types'
+import { Plus, Pencil, Trash2, Scissors, RefreshCcw, Store, Clock, Flame, MapPin, Phone, Mail, Save, Building2, KeyRound, CalendarClock, CalendarX, PartyPopper, Sun, X, Upload, History } from 'lucide-react'
+import type { ServiceDto, BusinessDto, ClosedDayDto } from './types'
+import { durationLabel, formatPrice, dateParts } from './types'
 import { Switch } from '@/components/ui/switch'
 
 const DURATIONS = [15, 30, 45, 60, 90, 120, 150, 180]
+const BUFFERS = [0, 5, 10, 15, 20, 30]
 
 interface FormState {
   name: string
   description: string
   durationMin: string
+  bufferMin: string
   price: string
   peakPrice: string
   category: string
@@ -55,6 +57,7 @@ const EMPTY_FORM: FormState = {
   name: '',
   description: '',
   durationMin: '30',
+  bufferMin: '0',
   price: '',
   peakPrice: '',
   category: '',
@@ -82,9 +85,23 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
   const [bizForm, setBizForm] = useState({ name: '', phone: '', address: '', email: '' })
   const [bizSaving, setBizSaving] = useState(false)
 
-  // Delovni čas (7 dni, iz baze)
-  const [hoursRows, setHoursRows] = useState<{ dayOfWeek: number; dayName: string; open: string; close: string; closed: boolean }[]>([])
+  // Delovni čas (7 dni, iz baze) + premor
+  const [hoursRows, setHoursRows] = useState<{
+    dayOfWeek: number
+    dayName: string
+    open: string
+    close: string
+    breakStart: string
+    breakEnd: string
+    closed: boolean
+  }[]>([])
   const [hoursSaving, setHoursSaving] = useState(false)
+
+  // Zaprti dnevi (prazniki, dopust)
+  const [closedDays, setClosedDays] = useState<ClosedDayDto[]>([])
+  const [cdForm, setCdForm] = useState({ date: '', reason: '' })
+  const [vacForm, setVacForm] = useState({ from: '', to: '', reason: 'dopust' })
+  const [cdBusy, setCdBusy] = useState<string | null>(null)
 
   // PIN zaščita
   const [pinSet, setPinSet] = useState(false)
@@ -125,17 +142,40 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
     load()
   }, [load, refreshKey])
 
-  // Delovni čas + stanje PIN-a (enkrat)
+  // Zaprti dnevi — javni seznam (trakovi dni + kartica)
+  const loadClosedDays = useCallback(() => {
+    fetch('/api/closed-days')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d: { days: ClosedDayDto[] }) => setClosedDays(d.days))
+      .catch(() => {
+        /* ne kritično */
+      })
+  }, [])
+
+  // Delovni čas + stanje PIN-a + zaprti dnevi (enkrat)
   useEffect(() => {
     fetch('/api/hours')
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((d) => setHoursRows(d.hours))
+      .then((d) =>
+        setHoursRows(
+          (d.hours as { dayOfWeek: number; dayName: string; open: string | null; close: string | null; breakStart: string | null; breakEnd: string | null; closed: boolean }[]).map((h) => ({
+            dayOfWeek: h.dayOfWeek,
+            dayName: h.dayName,
+            open: h.open ?? '09:00',
+            close: h.close ?? '18:00',
+            breakStart: h.breakStart ?? '',
+            breakEnd: h.breakEnd ?? '',
+            closed: h.closed,
+          }))
+        )
+      )
       .catch(() => setHoursRows([]))
     fetch('/api/pin')
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((d) => setPinSet(d.pinSet))
       .catch(() => setPinSet(false))
-  }, [])
+    loadClosedDays()
+  }, [loadClosedDays])
 
   const openAdd = () => {
     setEditing(null)
@@ -149,6 +189,7 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
       name: s.name,
       description: s.description ?? '',
       durationMin: String(s.durationMin),
+      bufferMin: String(s.bufferMin ?? 0),
       price: (s.priceCents / 100).toFixed(2).replace('.', ','),
       peakPrice: (s.peakPriceCents / 100).toFixed(2).replace('.', ','),
       category: s.category ?? '',
@@ -171,6 +212,7 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
         name: form.name,
         description: form.description,
         durationMin: Number(form.durationMin),
+        bufferMin: Number(form.bufferMin),
         priceCents,
         peakPriceCents: peakCents,
         category: form.category,
@@ -298,6 +340,14 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
         toast({ title: 'Napačen delovni čas', description: `${r.dayName}: konec mora biti pozneje od začetka.`, variant: 'destructive' })
         return
       }
+      if ((r.breakStart && !r.breakEnd) || (!r.breakStart && r.breakEnd)) {
+        toast({ title: 'Napačen premor', description: `${r.dayName}: vnesite začetek IN konec premora (ali pustite oba prazna).`, variant: 'destructive' })
+        return
+      }
+      if (r.breakStart && r.breakEnd && (r.breakStart >= r.breakEnd || r.breakStart <= r.open || r.breakEnd >= r.close)) {
+        toast({ title: 'Napačen premor', description: `${r.dayName}: premor mora biti znotraj delovnega časa.`, variant: 'destructive' })
+        return
+      }
     }
     setHoursSaving(true)
     try {
@@ -305,7 +355,13 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          hours: openDays.map((r) => ({ dayOfWeek: r.dayOfWeek, open: r.open, close: r.close })),
+          hours: openDays.map((r) => ({
+            dayOfWeek: r.dayOfWeek,
+            open: r.open,
+            close: r.close,
+            breakStart: r.breakStart || null,
+            breakEnd: r.breakEnd || null,
+          })),
         }),
       })
       const data = await res.json()
@@ -318,6 +374,96 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
       toast({ title: 'Napaka', description: 'Povezava ni uspela.', variant: 'destructive' })
     } finally {
       setHoursSaving(false)
+    }
+  }
+
+  // --- Zaprti dnevi (akcije) ---
+  const addClosedDay = async () => {
+    if (!cdForm.date) {
+      toast({ title: 'Manjka datum', description: 'Izberite datum, ki ga želite zapreti.', variant: 'destructive' })
+      return
+    }
+    setCdBusy('add')
+    try {
+      const res = await ownerFetch('/api/closed-days', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'add', date: cdForm.date, reason: cdForm.reason || undefined }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      toast({ title: 'Dan zaprt ✓', description: `${cdForm.date}${cdForm.reason ? ` — ${cdForm.reason}` : ''} — stranke ga ne morejo izbrati.` })
+      setCdForm({ date: '', reason: '' })
+      loadClosedDays()
+    } catch {
+      toast({ title: 'Napaka', description: 'Zaprti dan ni bil shranjen.', variant: 'destructive' })
+    } finally {
+      setCdBusy(null)
+    }
+  }
+
+  const addVacation = async () => {
+    if (!vacForm.from || !vacForm.to) {
+      toast({ title: 'Manjkajo datumi', description: 'Izberite od in do (npr. dopust teden dni).', variant: 'destructive' })
+      return
+    }
+    if (vacForm.from > vacForm.to) {
+      toast({ title: 'Napačen obseg', description: '"Od" mora biti pred "do".', variant: 'destructive' })
+      return
+    }
+    setCdBusy('vac')
+    try {
+      const res = await ownerFetch('/api/closed-days', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'add-range', from: vacForm.from, to: vacForm.to, reason: vacForm.reason || undefined }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      toast({ title: 'Dopust zaprt ✓', description: `Zaprtih dni: ${data.added} — spomniki in rezervacije se prilagodijo.` })
+      setVacForm({ from: '', to: '', reason: 'dopust' })
+      loadClosedDays()
+    } catch {
+      toast({ title: 'Napaka', description: 'Dopusta ni bilo mogoče zapreti.', variant: 'destructive' })
+    } finally {
+      setCdBusy(null)
+    }
+  }
+
+  const importHolidays = async () => {
+    setCdBusy('hol')
+    try {
+      const year = new Date().getFullYear()
+      const res = await ownerFetch('/api/closed-days', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'holidays', years: [year, year + 1] }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      toast({
+        title: data.added > 0 ? `Dodanih ${data.added} praznikov ✓` : 'Prazniki so že uvoženi',
+        description: `${year} in ${year + 1} — salon teh dni ne ponuja terminov.`,
+      })
+      loadClosedDays()
+    } catch {
+      toast({ title: 'Napaka', description: 'Uvoz praznikov ni uspel.', variant: 'destructive' })
+    } finally {
+      setCdBusy(null)
+    }
+  }
+
+  const removeClosedDay = async (date: string) => {
+    setCdBusy(date)
+    try {
+      const res = await ownerFetch(`/api/closed-days?date=${encodeURIComponent(date)}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error()
+      toast({ title: 'Dan spet odprt', description: `${date} — termini se takoj ponudijo.` })
+      loadClosedDays()
+    } catch {
+      toast({ title: 'Napaka', description: 'Brisanje ni uspelo.', variant: 'destructive' })
+    } finally {
+      setCdBusy(null)
     }
   }
 
@@ -417,7 +563,7 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
                   onCheckedChange={(open) => setHoursRows((rows) => rows.map((x) => (x.dayOfWeek === r.dayOfWeek ? { ...x, closed: !open } : x)))}
                   aria-label={`${r.dayName} odprto/zaprto`}
                 />
-                <div className="ml-auto flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Input
                     type="time"
                     value={r.open ?? ''}
@@ -435,13 +581,157 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
                     className="h-9 w-[104px]"
                     aria-label={`${r.dayName} zaprtje`}
                   />
+                  {/* Premor (npr. 12:00–13:00) */}
+                  <div className={`flex items-center gap-1.5 ${r.closed ? 'opacity-40' : ''}`}>
+                    <Sun className="h-3.5 w-3.5 text-amber-500" aria-hidden />
+                    <Input
+                      type="time"
+                      value={r.breakStart}
+                      disabled={r.closed}
+                      onChange={(e) => setHoursRows((rows) => rows.map((x) => (x.dayOfWeek === r.dayOfWeek ? { ...x, breakStart: e.target.value } : x)))}
+                      className="h-9 w-[96px]"
+                      aria-label={`${r.dayName} premor od`}
+                      title="Premor od (kosilo) — v tem oknu termini niso na voljo"
+                    />
+                    <span className="text-muted-foreground">–</span>
+                    <Input
+                      type="time"
+                      value={r.breakEnd}
+                      disabled={r.closed}
+                      onChange={(e) => setHoursRows((rows) => rows.map((x) => (x.dayOfWeek === r.dayOfWeek ? { ...x, breakEnd: e.target.value } : x)))}
+                      className="h-9 w-[96px]"
+                      aria-label={`${r.dayName} premor do`}
+                      title="Premor do (kosilo)"
+                    />
+                  </div>
                 </div>
               </div>
             ))
           )}
+          <p className="text-[10px] leading-snug text-muted-foreground">
+            Premor (sončna ikona) = kosilo ali počitek — v tem oknu stranke ne morejo rezervirati.
+          </p>
           <Button className="mt-2 gap-1.5" size="sm" disabled={hoursSaving} onClick={saveHours}>
             {hoursSaving ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Shrani delovni čas
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Zaprti dnevi & prazniki */}
+      <Card className="border-border/60">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-4">
+          <div className="flex items-center gap-2">
+            <CalendarX className="h-4 w-4 text-primary" />
+            <h3 className="font-semibold">Zaprti dnevi &amp; prazniki</h3>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => void importHolidays()}
+            disabled={cdBusy === 'hol'}
+          >
+            {cdBusy === 'hol' ? <RefreshCcw className="h-3.5 w-3.5 animate-spin" /> : <PartyPopper className="h-3.5 w-3.5" />}
+            Uvozi praznike
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-3 p-4">
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Ti dnevi so za stranke <strong>vidno zaprti</strong> — ne morejo rezervirati, modul Sporočila pa ponudi druge dneve.
+          </p>
+
+          {/* Dopust (obseg) */}
+          <div className="rounded-xl border border-amber-200/70 bg-amber-50/50 p-3 dark:bg-amber-950/20">
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="vac-from" className="text-xs">Dopust od</Label>
+                <Input
+                  id="vac-from"
+                  type="date"
+                  value={vacForm.from}
+                  onChange={(e) => setVacForm({ ...vacForm, from: e.target.value })}
+                  className="h-9 w-[150px]"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="vac-to" className="text-xs">do</Label>
+                <Input
+                  id="vac-to"
+                  type="date"
+                  value={vacForm.to}
+                  onChange={(e) => setVacForm({ ...vacForm, to: e.target.value })}
+                  className="h-9 w-[150px]"
+                />
+              </div>
+              <Button size="sm" className="gap-1.5" disabled={cdBusy === 'vac'} onClick={() => void addVacation()}>
+                {cdBusy === 'vac' ? <RefreshCcw className="h-3.5 w-3.5 animate-spin" /> : <Sun className="h-3.5 w-3.5" />}
+                Zapri dopust
+              </Button>
+            </div>
+          </div>
+
+          {/* Posamezen dan */}
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="space-y-1">
+              <Label htmlFor="cd-date" className="text-xs">Zapri dan</Label>
+              <Input
+                id="cd-date"
+                type="date"
+                value={cdForm.date}
+                onChange={(e) => setCdForm({ ...cdForm, date: e.target.value })}
+                className="h-9 w-[150px]"
+              />
+            </div>
+            <div className="min-w-[140px] flex-1 space-y-1">
+              <Label htmlFor="cd-reason" className="text-xs">Razlog (npr. šola, bolezen)</Label>
+              <Input
+                id="cd-reason"
+                value={cdForm.reason}
+                onChange={(e) => setCdForm({ ...cdForm, reason: e.target.value })}
+                maxLength={80}
+                placeholder="neobvezno"
+              />
+            </div>
+            <Button variant="outline" size="sm" className="gap-1.5" disabled={cdBusy === 'add'} onClick={() => void addClosedDay()}>
+              {cdBusy === 'add' ? <RefreshCcw className="h-3.5 w-3.5 animate-spin" /> : <CalendarX className="h-3.5 w-3.5" />}
+              Zapri
+            </Button>
+          </div>
+
+          {/* Seznam zaprtih dni */}
+          {closedDays.length > 0 ? (
+            <ul className="terminai-scroll max-h-44 space-y-1.5 overflow-y-auto pr-1">
+              {closedDays.map((c) => {
+                const p = dateParts(c.date)
+                return (
+                  <li key={c.date} className="flex items-center justify-between gap-2 rounded-lg border border-border/60 px-3 py-2">
+                    <div className="min-w-0">
+                      <span className="text-sm font-medium">
+                        {p.dayName}, {p.dayNum}. {p.month}
+                      </span>
+                      {c.reason && <span className="ml-2 text-xs text-muted-foreground">{c.reason}</span>}
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 shrink-0 text-red-500 hover:bg-red-50 hover:text-red-600"
+                      disabled={cdBusy === c.date}
+                      onClick={() => void removeClosedDay(c.date)}
+                      aria-label={`Odpri ${c.date}`}
+                      title="Odstrani — dan bo spet odprt"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </li>
+                )
+              })}
+            </ul>
+          ) : (
+            <p className="rounded-lg border border-dashed p-3 text-center text-xs text-muted-foreground">
+              <PartyPopper className="mx-auto mb-1 h-4 w-4 opacity-40" />
+              Ni zaprtih dni — uvozite praznike ali zaprite dopust.
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -537,6 +827,7 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
                     <div className="truncate font-medium">{s.name}</div>
                     <div className="mt-0.5 flex flex-wrap items-center gap-x-3 text-xs text-muted-foreground">
                       <span>{durationLabel(s.durationMin)}</span>
+                      {(s.bufferMin ?? 0) > 0 && <span title="Priprava/razkuževanje po storitvi">+{s.bufferMin} min priprava</span>}
                       <span className="font-semibold text-foreground">{formatPrice(s.priceCents)}</span>
                       <span className="inline-flex items-center gap-1">
                         <Flame className="h-3 w-3 text-amber-500" /> vršni {formatPrice(s.peakPriceCents)}
@@ -646,15 +937,35 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
                 </Select>
               </div>
               <div className="grid gap-1.5">
-                <Label htmlFor="svc-cat">Kategorija</Label>
-                <Input
-                  id="svc-cat"
-                  value={form.category}
-                  onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  placeholder="npr. Frizerske storitve"
-                  maxLength={40}
-                />
+                <Label htmlFor="svc-buffer">
+                  Priprava po storitvi <span className="font-normal text-muted-foreground">(razkuževanje)</span>
+                </Label>
+                <Select
+                  value={form.bufferMin}
+                  onValueChange={(v) => setForm({ ...form, bufferMin: v })}
+                >
+                  <SelectTrigger id="svc-buffer">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BUFFERS.map((b) => (
+                      <SelectItem key={b} value={String(b)}>
+                        {b === 0 ? 'brez' : `${b} min`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="svc-cat">Kategorija</Label>
+              <Input
+                id="svc-cat"
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                placeholder="npr. Frizerske storitve"
+                maxLength={40}
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">

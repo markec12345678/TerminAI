@@ -17,6 +17,7 @@ import {
   WifiOff,
   HardDrive,
   Wrench,
+  CalendarX2,
 } from 'lucide-react'
 
 const FEATURES = [
@@ -39,6 +40,11 @@ const FEATURES = [
     icon: <Flame className="h-5 w-5" />,
     title: 'Pametne vršne cene',
     text: 'Sobota in popoldnevi samodejno dražji, tihi termini cenejši. Zasedenost se izenači — več prometa.',
+  },
+  {
+    icon: <CalendarX2 className="h-5 w-5" />,
+    title: 'Prazniki, dopust, kosilo',
+    text: 'Slovenske praznike uvozite s klikom, dopust zaprete z obsegom datumov, kosilo kot premor — stranke vidijo, kdaj ste res odprti.',
   },
   {
     icon: <LayoutDashboard className="h-5 w-5" />,
@@ -283,6 +289,18 @@ const FAQS = [
   {
     q: 'Kako dobim podatke za knjigovodstvo?',
     a: 'V zavihku „Poročila“ izberete mesec in s klikom prenesete CSV datoteko z obračunanimi obiski (datum, stranka, storitev, cena). Datoteka se odpre v Excelu brez pretvorb — pošljete jo knjigovodji ali prenesete na USB. Na istem mestu vidite tudi prihodke po dnevih in najboljše stranke meseca.',
+  },
+  {
+    q: 'Kaj pa prazniki, dopust in kosilo?',
+    a: 'Praznike uvozite z enim klikom (vsak državni praznik za tekoče in naslednje leto), dopust zaprete z obsegom datumov, vsak dan pa lahko zaprete posebej. Stranke teh dni ne morejo rezervirati — modul Sporočila sam ponudi prve proste dneve. Kosilo ali počitek nastavite kot premor v delovnem času: v tem oknu terminov ni.',
+  },
+  {
+    q: 'Kaj če grem na dopust, nekdo pa že ima rezervacijo?',
+    a: 'Zaprite dan (ali obseg) v zavihku „Salon“ — novi termini se takoj nehajo ponujati. Obstoječe rezervacije za te dneve vidite v koledarju in jih odpovete ali prestavite posamično; odpovedna povezava naredi odpoved nebolečo.',
+  },
+  {
+    q: 'Kako izbrišem podatke stranke (GDPR)?',
+    a: 'V zavihku „Stranke“ ima vsaka stranka gumb za izvoz (vsi njeni podatki in zgodovina v eni datoteki) in gumb za trajen izbris — slednji izbriše stranko in vse njene termine. Prav tako se ob izbrisu ne pusti telefonskih številk v seznamih: vsi lastniški podatki so za PIN-om.',
   },
   {
     q: 'Kaj če stranka nima telefona s pametnim zaslonom?',

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { generateSlots, dayNameFull, getHoursForDayAsync, isPeak, naiveDate } from '@/lib/booking'
+import { closedDayReason } from '@/lib/holidays'
 
 export async function GET(req: NextRequest) {
   try {
@@ -26,6 +27,7 @@ export async function GET(req: NextRequest) {
     })
 
     const hours = await getHoursForDayAsync(date)
+    const closedReason = hours === null ? (await closedDayReason(date)) : null
     const slots = generateSlots(
       service,
       date,
@@ -37,6 +39,7 @@ export async function GET(req: NextRequest) {
       date,
       dayName: dayNameFull(date),
       open: hours !== null,
+      closedReason,
       peakDay: isPeak(date, '12:00') && dayNameFull(date) === 'Sobota',
       slots,
     })

@@ -1,19 +1,42 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Users, Search, Phone, CalendarDays, Wallet, Heart, AlertTriangle } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
 import { ownerFetch } from '@/lib/owner-fetch'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Users, Search, Phone, CalendarDays, Wallet, Heart, AlertTriangle, NotebookPen, Pencil, Download, Trash2, Sparkles, RefreshCw } from 'lucide-react'
 import { formatPrice } from './types'
 
 interface ClientRow {
   id: string
   name: string
   phone: string
+  email: string | null
+  notes: string | null
   visits: number
   noShows: number
   totalCents: number
@@ -22,14 +45,27 @@ interface ClientRow {
   favorite: string | null
 }
 
-/** Baza strank — obiski, prihodki, zadnji obisk, naslednji termin. */
+/** Baza strank — obiski, prihodki, opombe (formule) + GDPR izvoz/izbris. */
 export function ClientsTab() {
   const [clients, setClients] = useState<ClientRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
 
-  useEffect(() => {
+  // Urejanje stranke (opombe, e-pošta)
+  const [editOpen, setEditOpen] = useState(false)
+  const [editing, setEditing] = useState<ClientRow | null>(null)
+  const [editNotes, setEditNotes] = useState('')
+  const [editEmail, setEditEmail] = useState('')
+  const [editSaving, setEditSaving] = useState(false)
+
+  // GDPR izbris
+  const [deleteTarget, setDeleteTarget] = useState<ClientRow | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [exporting, setExporting] = useState<string | null>(null)
+  const { toast } = useToast()
+
+  const load = useCallback(() => {
     ownerFetch('/api/clients')
       .then(async (r) => {
         if (r.status === 401) {
@@ -40,11 +76,18 @@ export function ClientsTab() {
         return r.json()
       })
       .then((d) => {
-        if (d) setClients(d.clients)
+        if (d) {
+          setClients(d.clients)
+          setError(null)
+        }
       })
       .catch(() => setError('Napaka pri nalaganju strank.'))
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -59,6 +102,84 @@ export function ClientsTab() {
     }),
     [clients]
   )
+
+  const openEdit = (c: ClientRow) => {
+    setEditing(c)
+    setEditNotes(c.notes ?? '')
+    setEditEmail(c.email ?? '')
+    setEditOpen(true)
+  }
+
+  const saveClient = async () => {
+    if (!editing) return
+    setEditSaving(true)
+    try {
+      const res = await ownerFetch(`/api/clients/${editing.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: editNotes, email: editEmail }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast({ title: 'Napaka', description: data.error ?? 'Shranjevanje ni uspelo.', variant: 'destructive' })
+        return
+      }
+      toast({ title: 'Shranjeno ✓', description: `${editing.name} — opombe vidne pri naslednjem obisku.` })
+      setEditOpen(false)
+      load()
+    } catch {
+      toast({ title: 'Napaka', description: 'Povezava ni uspela.', variant: 'destructive' })
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
+  /** GDPR: izvoz vseh podatkov stranke kot JSON datoteko. */
+  const exportClient = async (c: ClientRow) => {
+    setExporting(c.id)
+    try {
+      const res = await ownerFetch(`/api/clients/${c.id}`)
+      if (!res.ok) throw new Error()
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `TerminAI-${c.name.replace(/\s+/g, '-')}.json`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      toast({ title: 'Izvoz prenesen ✓', description: 'Vsa zgodovina stranke v eni datoteki (GDPR).' })
+    } catch {
+      toast({ title: 'Napaka', description: 'Izvoz ni uspel.', variant: 'destructive' })
+    } finally {
+      setExporting(null)
+    }
+  }
+
+  /** GDPR: trajen izbris stranke in vseh njenih terminov. */
+  const deleteClient = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
+    try {
+      const res = await ownerFetch(`/api/clients/${deleteTarget.id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (!res.ok) {
+        toast({ title: 'Napaka', description: data.error ?? 'Izbris ni uspel.', variant: 'destructive' })
+        return
+      }
+      toast({
+        title: 'Stranka izbrisana',
+        description: `${deleteTarget.name} · odstranjenih terminov: ${data.removedAppointments}`,
+      })
+      setDeleteTarget(null)
+      load()
+    } catch {
+      toast({ title: 'Napaka', description: 'Povezava ni uspela.', variant: 'destructive' })
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -87,6 +208,10 @@ export function ClientsTab() {
               aria-label="Iskanje strank"
             />
           </div>
+          <p className="text-[11px] leading-snug text-muted-foreground">
+            <NotebookPen className="mr-1 inline h-3 w-3 align-[-2px]" />
+            Opombe (formule barvanja, alergije) se shranijo ob stranki — pri urejanju kliknite svinčnik.
+          </p>
 
           {loading ? (
             <div className="space-y-2">
@@ -138,21 +263,65 @@ export function ClientsTab() {
                         <Wallet className="h-3 w-3" /> {formatPrice(c.totalCents)}
                       </span>
                     </div>
-                  </div>
-                  <div className="text-right text-xs text-muted-foreground">
-                    {c.next ? (
-                      <div>
-                        <span className="text-[10px] uppercase tracking-wide">naslednji</span>
-                        <div className="font-medium text-foreground">
-                          {new Date(c.next.at).getUTCDate()}. ob{' '}
-                          {String(new Date(c.next.at).getUTCHours()).padStart(2, '0')}:
-                          {String(new Date(c.next.at).getUTCMinutes()).padStart(2, '0')}
-                        </div>
-                        <div className="truncate">{c.next.service}</div>
+                    {c.notes && (
+                      <div
+                        className="mt-1 flex items-start gap-1.5 rounded-lg bg-primary/5 px-2 py-1 text-[11px] leading-snug text-primary/90"
+                        title={c.notes}
+                      >
+                        <NotebookPen className="mt-0.5 h-3 w-3 shrink-0" />
+                        <span className="line-clamp-2">{c.notes}</span>
                       </div>
-                    ) : (
-                      <div>{c.favorite ? `največkrat: ${c.favorite}` : c.lastVisit ? `zadnji obisk ${c.lastVisit}` : 'še ni obiskala'}</div>
                     )}
+                  </div>
+                  <div className="flex items-center justify-between gap-2 sm:flex-col sm:items-end">
+                    <div className="text-right text-xs text-muted-foreground">
+                      {c.next ? (
+                        <div>
+                          <span className="text-[10px] uppercase tracking-wide">naslednji</span>
+                          <div className="font-medium text-foreground">
+                            {new Date(c.next.at).getUTCDate()}. ob{' '}
+                            {String(new Date(c.next.at).getUTCHours()).padStart(2, '0')}:
+                            {String(new Date(c.next.at).getUTCMinutes()).padStart(2, '0')}
+                          </div>
+                          <div className="truncate">{c.next.service}</div>
+                        </div>
+                      ) : (
+                        <div>{c.favorite ? `največkrat: ${c.favorite}` : c.lastVisit ? `zadnji obisk ${c.lastVisit}` : 'še ni obiskala'}</div>
+                      )}
+                    </div>
+                    <div className="flex shrink-0 gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        onClick={() => openEdit(c)}
+                        aria-label={`Opombe za ${c.name}`}
+                        title="Opombe (formule, alergije)"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        disabled={exporting === c.id}
+                        onClick={() => void exportClient(c)}
+                        aria-label={`Izvozi podatke ${c.name}`}
+                        title="GDPR izvoz — vsi podatki v JSON"
+                      >
+                        {exporting === c.id ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600"
+                        onClick={() => setDeleteTarget(c)}
+                        aria-label={`Izbriši ${c.name}`}
+                        title="GDPR izbris — stranka in vsi njeni termini"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -160,6 +329,86 @@ export function ClientsTab() {
           )}
         </CardContent>
       </Card>
+
+      {/* Dialog: opombe o stranki */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 font-display">
+              <NotebookPen className="h-5 w-5 text-primary" /> {editing?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Formule barvanja, alergije, želje — vidne samo vam (za PIN-om).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-1.5">
+              <Label htmlFor="cl-notes">Opombe o stranki</Label>
+              <Textarea
+                id="cl-notes"
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                placeholder="npr. 6-34 + 7-43, občutljiva lasišča; rada kratke šiške"
+                rows={4}
+                maxLength={1000}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="cl-email">E-pošta</Label>
+              <Input
+                id="cl-email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                placeholder="neobvezno"
+                inputMode="email"
+                maxLength={80}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>
+              Prekliči
+            </Button>
+            <Button className="gap-1.5" onClick={() => void saveClient()} disabled={editSaving}>
+              {editSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Shrani
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* AlertDialog: GDPR izbris */}
+      <AlertDialog open={deleteTarget !== null} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Izbrisati stranko?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>
+                  <strong className="text-foreground">{deleteTarget?.name}</strong> — GDPR izbris izbriše stranko in{' '}
+                  <strong className="text-foreground">vse njene termine</strong> (tudi zgodovino in statistiko).
+                  Dejanje je nepovratno.
+                </p>
+                <p className="text-xs">
+                  Če želite podatke obdržati za evidenco, raje uporabite izvoz (gumb za prenos) pred izbrisom.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Prekliči</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleting}
+              onClick={(e) => {
+                e.preventDefault()
+                void deleteClient()
+              }}
+            >
+              {deleting ? 'Brišem …' : 'Trajno izbriši'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

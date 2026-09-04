@@ -112,3 +112,30 @@ NOVOST 5 (namestitelj):
   - Pri prodaji: CSV = "knjigovodi dobi isto datoteko kot od
     papirnega koledarja, samo brez raunanja" + demo obnova v
     10 sekundah pri vsakem obisku (vedno svee številke za predstavitev).
+
+NOVOST 6 (namestitelj) — analiza vrzeli po konkurenci (Fresha/Booksy/Planity):
+  - ZAPRTI DNEVI: prazniki (uvoz s klikom, slovenski prazniki za 2
+    leti, velikonočni izračunani), dopust z obsegom, posamezni dnevi.
+    Strankam so dnevi vidno prečrtani v traku; parser Sporočil
+    odgovori "smo ZAPRTI (razlog)" + alternativni dnevi.
+    API: GET /api/closed-days (javno), POST {add|add-range|holidays},
+    DELETE ?date= (PIN). Model ClosedDay (date @unique, reason).
+  - PREMOR (kosilo): WorkingHours.breakStart/breakEnd — slotovi
+    preskočijo okno (npr. 12:00-13:00).
+  - BUFFER: Service.bufferMin (0-30 min) — priprava/razkuževanje
+    po storitvi, termin+priprava skupaj na vrtico.
+  - OPOMBE O STRANKI: Client.notes zdaj dostopen v UI (svinčnik pri
+    stranki; formule barvanja, alergije). PATCH /api/clients/[id].
+  - GDPR: GET /api/clients/[id] = izvoz JSON (pravica dostopa),
+    DELETE = stranka + termini (pravica izbrisa, s potrditvenim
+    oknom v UI). Prodajni argument za pravne zahteve.
+  - OBNOVA IZ KOPIJE: POST /api/backup {action:"restore", file} —
+    $disconnect -> rename (atomarno) -> $connect; pred obnovo se
+    vedno naredi zaščitna kopija (-2 priponka ob trku imen —
+    VACUUM INTO zavrne obstoječo datoteko, odpravljen hrošč).
+  - PWA: src/app/manifest.ts (ikona na domačem zaslonu).
+  - Wipe (mode=fresh/demo) briše tudi ClosedDay; fresh setup in
+    seedDemo samodejno uvozita praznike za tekoče+naslednje leto.
+  - Pri prodaji: "sistem ve, kdaj ste zaprti — nobena stranka več
+    ne rezervira na 1. maj" + "formule imate pri stranki, ne v
+    zvezku" + "izbris podatkov po GDPR v 10 sekundah".

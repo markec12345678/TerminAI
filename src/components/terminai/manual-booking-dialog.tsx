@@ -25,7 +25,7 @@ import { useToast } from '@/hooks/use-toast'
 import { ownerFetch } from '@/lib/owner-fetch'
 import { RECURRENCE_OPTIONS, recurrenceLabel } from '@/lib/labels'
 import { Plus, Phone, CalendarPlus, Sparkles, Flame, MessageSquare, Repeat } from 'lucide-react'
-import type { AppointmentDto, AvailabilityDto, ServiceDto, SlotDto } from './types'
+import type { AppointmentDto, AvailabilityDto, ClosedDayDto, ServiceDto, SlotDto } from './types'
 import { dateParts, formatPrice } from './types'
 
 export interface ManualPrefill {
@@ -67,6 +67,7 @@ export function ManualBookingDialog({ open, onOpenChange, date, prefill, onCreat
   const [serviceId, setServiceId] = useState<string | null>(null)
   const [dates, setDates] = useState<string[]>([])
   const [pickedDate, setPickedDate] = useState<string | null>(null)
+  const [closedDays, setClosedDays] = useState<Map<string, string>>(new Map())
   const [slots, setSlots] = useState<SlotDto[]>([])
   const [slotsLoading, setSlotsLoading] = useState(false)
   const [time, setTime] = useState<string | null>(null)
@@ -95,6 +96,13 @@ export function ManualBookingDialog({ open, onOpenChange, date, prefill, onCreat
       .then((d) => setServices(d.services))
       .catch(() => toast({ title: 'Napaka', description: 'Storitev ni bilo mogoče naložiti.', variant: 'destructive' }))
       .finally(() => setServicesLoading(false))
+    // Zaprti dnevi — da trak dni pokaže praznike/dopust
+    fetch('/api/closed-days')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d: { days: ClosedDayDto[] }) => setClosedDays(new Map(d.days.map((x) => [x.date, x.reason ?? '']))))
+      .catch(() => {
+        /* ne kritično */
+      })
   }, [open, date, prefill, toast])
 
   const loadSlots = useCallback(async (sid: string, dateStr: string) => {
@@ -226,21 +234,27 @@ export function ManualBookingDialog({ open, onOpenChange, date, prefill, onCreat
               {dates.map((d) => {
                 const p = dateParts(d)
                 const selected = d === pickedDate
+                const closed = closedDays.has(d)
+                const reason = closedDays.get(d)
                 return (
                   <button
                     key={d}
                     type="button"
                     role="radio"
                     aria-checked={selected}
+                    disabled={closed}
+                    title={closed ? `Zaprto${reason ? ` — ${reason}` : ''}` : undefined}
                     onClick={() => setPickedDate(d)}
                     className={`flex h-14 w-12 shrink-0 flex-col items-center justify-center rounded-lg border text-center transition-all focus-visible:outline-2 focus-visible:outline-primary ${
-                      selected
-                        ? 'border-primary bg-primary text-primary-foreground shadow'
-                        : 'border-border bg-card hover:border-primary/40'
+                      closed
+                        ? 'cursor-not-allowed border-border/40 bg-muted/60 text-muted-foreground/40'
+                        : selected
+                          ? 'border-primary bg-primary text-primary-foreground shadow'
+                          : 'border-border bg-card hover:border-primary/40'
                     }`}
                   >
                     <span className={`text-[10px] font-medium uppercase ${selected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>{p.dayName}</span>
-                    <span className="text-base font-semibold leading-none">{p.dayNum}</span>
+                    <span className={`text-base font-semibold leading-none ${closed ? 'line-through' : ''}`}>{p.dayNum}</span>
                     <span className={`text-[10px] ${selected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>{p.month}</span>
                   </button>
                 )
@@ -267,7 +281,9 @@ export function ManualBookingDialog({ open, onOpenChange, date, prefill, onCreat
                 </div>
               ) : slots.length === 0 ? (
                 <p className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
-                  Na ta dan ni prostih terminov — izberite drug dan.
+                  {closedDays.has(pickedDate)
+                    ? `Ta dan je salon zaprt${closedDays.get(pickedDate) ? ` (${closedDays.get(pickedDate)})` : ''} — izberite drug dan.`
+                    : 'Na ta dan ni prostih terminov — izberite drug dan.'}
                 </p>
               ) : (
                 <div className="terminai-scroll grid max-h-40 grid-cols-4 gap-2 overflow-y-auto pr-1 sm:grid-cols-6">

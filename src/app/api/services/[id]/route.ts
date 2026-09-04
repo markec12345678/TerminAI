@@ -7,6 +7,7 @@ const patchSchema = z.object({
   name: z.string().min(2).max(60).optional(),
   description: z.string().max(200).optional().or(z.literal('')),
   durationMin: z.number().int().min(10).max(300).optional(),
+  bufferMin: z.number().int().min(0).max(30).optional(),
   priceCents: z.number().int().min(0).max(100000).optional(),
   peakPriceCents: z.number().int().min(0).max(100000).optional(),
   category: z.string().max(40).optional().or(z.literal('')),
@@ -33,6 +34,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (d.name !== undefined) data.name = d.name
     if (d.description !== undefined) data.description = d.description || null
     if (d.durationMin !== undefined) data.durationMin = d.durationMin
+    if (d.bufferMin !== undefined) data.bufferMin = d.bufferMin
     if (d.priceCents !== undefined) data.priceCents = d.priceCents
     if (d.peakPriceCents !== undefined) data.peakPriceCents = Math.max(d.peakPriceCents, d.priceCents ?? 0)
     if (d.category !== undefined) data.category = d.category || null

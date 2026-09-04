@@ -26,7 +26,7 @@ import {
   Copy,
   Check,
 } from 'lucide-react'
-import type { AppointmentDto, AvailabilityDto, ServiceDto, SlotDto } from './types'
+import type { AppointmentDto, AvailabilityDto, ClosedDayDto, ServiceDto, SlotDto } from './types'
 import { dateParts, durationLabel, formatPrice, timeOfIso, cancelUrl } from './types'
 import { copyToClipboard } from '@/lib/clipboard'
 import { WhatsAppIcon, waLink, waBookingText } from './whatsapp'
@@ -48,6 +48,8 @@ export function BookingWidget({ services, businessName, businessTagline, busines
   const [service, setService] = useState<ServiceDto | null>(null)
   const [dates, setDates] = useState<string[]>([])
   const [date, setDate] = useState<string | null>(null)
+  const [closedDays, setClosedDays] = useState<Map<string, string>>(new Map())
+  const [closedReason, setClosedReason] = useState<string | null>(null)
   const [slots, setSlots] = useState<SlotDto[]>([])
   const [slotsLoading, setSlotsLoading] = useState(false)
   const [slot, setSlot] = useState<SlotDto | null>(null)
@@ -78,6 +80,18 @@ export function BookingWidget({ services, businessName, businessTagline, busines
     setDates(out)
   }, [])
 
+  // Zaprti dnevi (prazniki, dopust) — za trak dni (javni API)
+  useEffect(() => {
+    fetch('/api/closed-days')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d: { days: ClosedDayDto[] }) => {
+        setClosedDays(new Map(d.days.map((x) => [x.date, x.reason ?? ''])))
+      })
+      .catch(() => {
+        /* trak dni deluje tudi brez — dan je le izberljiv */
+      })
+  }, [])
+
   const loadSlots = useCallback(async (serviceId: string, dateStr: string) => {
     setSlotsLoading(true)
     setSlot(null)
@@ -85,6 +99,7 @@ export function BookingWidget({ services, businessName, businessTagline, busines
       const res = await fetch(`/api/availability?serviceId=${serviceId}&date=${dateStr}`)
       const data: AvailabilityDto = await res.json()
       setSlots(data.slots ?? [])
+      setClosedReason(data.closedReason ?? null)
     } catch {
       setSlots([])
       toast({ title: 'Napaka', description: 'Terminov ni bilo mogoče naložiti.', variant: 'destructive' })
@@ -261,22 +276,28 @@ export function BookingWidget({ services, businessName, businessTagline, busines
                   const p = dateParts(d)
                   const isToday = d === dates[0]
                   const selected = d === date
+                  const closed = closedDays.has(d)
+                  const reason = closedDays.get(d)
                   return (
                     <button
                       key={d}
                       role="radio"
                       aria-checked={selected}
+                      disabled={closed}
+                      title={closed ? `Zaprto${reason ? ` — ${reason}` : ''}` : undefined}
                       onClick={() => selectDate(d)}
                       className={`flex h-16 w-14 shrink-0 flex-col items-center justify-center rounded-xl border text-center transition-all focus-visible:outline-2 focus-visible:outline-primary ${
-                        selected
-                          ? 'border-primary bg-primary text-primary-foreground shadow-md'
-                          : 'border-border bg-card hover:border-primary/40 hover:shadow-sm'
+                        closed
+                          ? 'cursor-not-allowed border-border/40 bg-muted/60 text-muted-foreground/40'
+                          : selected
+                            ? 'border-primary bg-primary text-primary-foreground shadow-md'
+                            : 'border-border bg-card hover:border-primary/40 hover:shadow-sm'
                       }`}
                     >
                       <span className={`text-[10px] font-medium uppercase ${selected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
                         {p.dayName}
                       </span>
-                      <span className="text-lg font-semibold leading-none">{p.dayNum}</span>
+                      <span className={`text-lg font-semibold leading-none ${closed ? 'line-through' : ''}`}>{p.dayNum}</span>
                       <span className={`text-[10px] ${selected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>{p.month}</span>
                       {isToday && !selected && <span className="absolute" />}
                     </button>
@@ -304,7 +325,9 @@ export function BookingWidget({ services, businessName, businessTagline, busines
                 ) : slots.length === 0 ? (
                   <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
                     <CalendarIcon className="mx-auto mb-2 h-6 w-6 opacity-40" />
-                    Na ta dan je salon zaprt. Izberite drug dan.
+                    {closedReason
+                      ? <>Na ta dan je salon zaprt <span className="text-rose-600">({closedReason})</span>. Izberite drug dan.</>
+                      : <>Na ta dan je salon zaprt. Izberite drug dan.</>}
                   </div>
                 ) : (
                   <div className="terminai-scroll grid max-h-64 grid-cols-4 gap-2 overflow-y-auto pr-1 sm:grid-cols-6">

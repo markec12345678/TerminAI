@@ -43,6 +43,8 @@ export async function GET(req: NextRequest) {
         id: c.id,
         name: c.name,
         phone: c.phone,
+        email: c.email,
+        notes: c.notes,
         visits: c.appointments.length,
         noShows: noShowMap.get(c.id) ?? 0,
         totalCents,

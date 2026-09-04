@@ -60,13 +60,22 @@ function ageLabel(d: Date): string {
   return `pred ${days} dnevi`
 }
 
+/** Veljavno ime varnostne kopije (z možnim priponkom -2, -3 … ob trku imen). */
+export const BACKUP_NAME_RE = /^\d{4}-\d{2}-\d{2}_\d{4}(-\d+)?\.db$/
+
 /** Ustvari novo varnostno kopijo (konzistenten snapshot prek VACUUM INTO). */
 export async function createBackup(): Promise<BackupFileDto> {
   const dir = backupsDir()
   fs.mkdirSync(dir, { recursive: true })
   const now = new Date()
   const stamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`
-  const target = path.join(dir, `${stamp}.db`)
+  let target = path.join(dir, `${stamp}.db`)
+  // VACUUM INTO zavrne obstoječo datoteko — ob trku (ista minuta) dodamo priponko
+  let suffix = 2
+  while (fs.existsSync(target)) {
+    target = path.join(dir, `${stamp}-${suffix}.db`)
+    suffix++
+  }
 
   // VACUUM INTO naredi atomaren, samostojen snapshot tudi med pisanjem
   await db.$executeRawUnsafe(`VACUUM INTO '${target.replace(/'/g, "''")}'`)
@@ -90,6 +99,46 @@ function hoursSinceLast(): number | null {
   const last = listBackups()[0]
   if (!last) return null
   return (Date.now() - new Date(last.createdAt).getTime()) / 3600000
+}
+
+/** Absolutna pot do žive baze (iz DATABASE_URL). */
+function liveDbPath(): string {
+  const clean = DB_URL.replace(/^file:/, '').split('?')[0]
+  return path.isAbsolute(clean) ? clean : path.join(process.cwd(), clean)
+}
+
+/**
+ * Obnovi bazo iz varnostne kopije (PIN zaščiteno prek API-ja).
+ * 1. najprej naredi VARNOSTNO kopijo trenutnega stanja,
+ * 2. prekine povezave (Prisma), 3. atomarno zamenja datoteko baze,
+ * 4. znova vzpostavi povezavo. Vrne ime varnostne kopije "pred obnovo".
+ */
+export async function restoreBackup(fileName: string): Promise<string> {
+  if (!BACKUP_NAME_RE.test(fileName)) {
+    throw new Error('Napačno ime datoteke kopije')
+  }
+  const source = path.join(backupsDir(), fileName)
+  if (!fs.existsSync(source)) {
+    throw new Error('Kopija ne obstaja')
+  }
+
+  // 1. Zaščitna kopija trenutnega stanja ("pred obnovo")
+  const safety = await createBackup()
+
+  // 2. Prekini vse povezave do baze
+  await db.$disconnect()
+
+  // 3. Atomarna zamenjava: kopija → začasna datoteka → rename
+  const target = liveDbPath()
+  const tmp = `${target}.restore-tmp`
+  fs.copyFileSync(source, tmp)
+  fs.renameSync(tmp, target)
+
+  // 4. Znova vzpostavi povezavo (Prisma se sam poveže ob naslednji poizvedbi)
+  await db.$connect()
+
+  console.log(`[TerminAI] Baza obnovljena iz ${fileName} (zaščitna kopija: ${safety.name})`)
+  return safety.name
 }
 
 /**

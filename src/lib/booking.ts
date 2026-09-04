@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto'
 import { db } from '@/lib/db'
+import { closedDayReason, ensureHolidays } from '@/lib/holidays'
 import type { Service } from '@prisma/client'
 
 /**
@@ -72,8 +73,16 @@ export function isPeak(dateStr: string, time: string): boolean {
   return time >= '15:00' // delavnik popoldne
 }
 
-export function getHoursForDay(dateStr: string): { open: string; close: string } | null {
-  return DEFAULT_HOURS[dayOfWeek(dateStr)] ?? null
+export interface DayHours {
+  open: string
+  close: string
+  breakStart: string | null
+  breakEnd: string | null
+}
+
+export function getHoursForDay(dateStr: string): DayHours | null {
+  const h = DEFAULT_HOURS[dayOfWeek(dateStr)]
+  return h ? { ...h, breakStart: null, breakEnd: null } : null
 }
 
 /** Prenese privzete ure v bazo (idempotentno) — prvi zagon. */
@@ -89,7 +98,7 @@ async function seedDefaultHours(businessId: string): Promise<void> {
 }
 
 /** Delovni časi salona iz baze (z avtomatskim sejanjem privzetih). */
-export async function getBusinessHours(): Promise<Map<number, { open: string; close: string }>> {
+export async function getBusinessHours(): Promise<Map<number, DayHours>> {
   const business = await db.business.findUnique({ where: { slug: BUSINESS_SLUG }, select: { id: true } })
   if (!business) return new Map()
   let rows = await db.workingHours.findMany({ where: { businessId: business.id } })
@@ -97,11 +106,18 @@ export async function getBusinessHours(): Promise<Map<number, { open: string; cl
     await seedDefaultHours(business.id)
     rows = await db.workingHours.findMany({ where: { businessId: business.id } })
   }
-  return new Map(rows.map((r) => [r.dayOfWeek, { open: r.open, close: r.close }]))
+  return new Map(
+    rows.map((r) => [r.dayOfWeek, { open: r.open, close: r.close, breakStart: r.breakStart, breakEnd: r.breakEnd }])
+  )
 }
 
-/** Delovni čas za dan, kot ga je nastavil salon (async, iz baze). */
-export async function getHoursForDayAsync(dateStr: string): Promise<{ open: string; close: string } | null> {
+/**
+ * Delovni čas za konkretan datum — null, če je dan zaprt:
+ * tedensko zaprt (npr. nedelja) ALI posebej zaprt dan (praznik, dopust).
+ * Vsi klicoči (termini, sporočila, statistika) to enako upoštevajo.
+ */
+export async function getHoursForDayAsync(dateStr: string): Promise<DayHours | null> {
+  if (await closedDayReason(dateStr)) return null
   const hours = await getBusinessHours()
   return hours.get(dayOfWeek(dateStr)) ?? null
 }
@@ -119,25 +135,31 @@ export interface AppointmentBlock {
 }
 
 /** Zgenerira vse možne terminske lokacije za storitev na dan. Ure so lahko podane (iz baze). */
-export function generateSlots(service: Service, dateStr: string, blocks: AppointmentBlock[], hours?: { open: string; close: string } | null): Slot[] {
+export function generateSlots(service: Service, dateStr: string, blocks: AppointmentBlock[], hours?: DayHours | null): Slot[] {
   const dayHours = hours !== undefined ? hours : getHoursForDay(dateStr)
   if (!dayHours) return []
 
   const open = naiveDate(dateStr, dayHours.open)
   const close = naiveDate(dateStr, dayHours.close)
+  // Premor (npr. 12:00–13:00): v tem oknu termini ne smejo potekati
+  const breakStart = dayHours.breakStart ? naiveDate(dateStr, dayHours.breakStart) : null
+  const breakEnd = dayHours.breakEnd ? naiveDate(dateStr, dayHours.breakEnd) : null
+  // Priprava/razkuževanje po storitvi (buffer) — termin + priprava morata skupaj speti
+  const bufferMin = service.bufferMin ?? 0
   const now = nowWallClock()
   const slots: Slot[] = []
 
-  for (let t = open; addMinutes(t, service.durationMin) <= close; t = addMinutes(t, SLOT_STEP_MIN)) {
+  for (let t = open; addMinutes(t, service.durationMin + bufferMin) <= close; t = addMinutes(t, SLOT_STEP_MIN)) {
     const start = t
-    const end = addMinutes(t, service.durationMin)
+    const end = addMinutes(t, service.durationMin + bufferMin)
     const time = timeKey(start)
     const overlaps = blocks.some((b) => start < b.endAt && end > b.startAt)
+    const inBreak = breakStart !== null && breakEnd !== null && start < breakEnd && end > breakStart
     const past = start <= addMinutes(now, 0)
     const peak = isPeak(dateStr, time)
     slots.push({
       time,
-      available: !overlaps && !past,
+      available: !overlaps && !inBreak && !past,
       peak,
       priceCents: peak ? service.peakPriceCents : service.priceCents,
     })
@@ -194,6 +216,10 @@ export async function seedDemo(): Promise<void> {
     },
   })
   await seedDefaultHours(business.id)
+  // Slovenski prazniki za tekoče in naslednje leto (demo od prvega zagona "ve",
+  // kdaj je salon zaprt)
+  const year = new Date().getUTCFullYear()
+  await ensureHolidays([year, year + 1])
 
   const services = await Promise.all(
     [

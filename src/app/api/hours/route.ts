@@ -6,17 +6,23 @@ import { pinAllows } from '@/lib/pin'
 
 const DAY_NAMES = ['Nedelja', 'Ponedeljek', 'Torek', 'Sreda', 'Četrtek', 'Petek', 'Sobota']
 
-const putSchema = z.object({
-  hours: z
-    .array(
-      z.object({
-        dayOfWeek: z.number().int().min(0).max(6),
-        open: z.string().regex(/^\d{2}:\d{2}$/),
-        close: z.string().regex(/^\d{2}:\d{2}$/),
-      })
-    )
-    .max(7),
-})
+const timeStr = z.string().regex(/^\d{2}:\d{2}$/)
+
+const putSchema = z
+  .object({
+    hours: z
+      .array(
+        z.object({
+          dayOfWeek: z.number().int().min(0).max(6),
+          open: timeStr,
+          close: timeStr,
+          breakStart: timeStr.nullable().optional(),
+          breakEnd: timeStr.nullable().optional(),
+        })
+      )
+      .max(7),
+  })
+  .strict()
 
 /** Sedemdnevni delovni čas salona (0 = nedelja). */
 export async function GET() {
@@ -28,6 +34,8 @@ export async function GET() {
         dayName: DAY_NAMES[day],
         open: hours.get(day)?.open ?? null,
         close: hours.get(day)?.close ?? null,
+        breakStart: hours.get(day)?.breakStart ?? null,
+        breakEnd: hours.get(day)?.breakEnd ?? null,
         closed: !hours.has(day),
       })),
     })
@@ -50,13 +58,33 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Napačni podatki delovnega časa' }, { status: 400 })
     }
 
-    // Validacija: open < close
+    // Validacija: open < close; premor (če je podan) znotraj delovnega časa
     for (const h of parsed.data.hours) {
       if (h.open >= h.close) {
         return NextResponse.json(
           { error: `${DAY_NAMES[h.dayOfWeek]}: konec mora biti pozneje od začetka.` },
           { status: 400 }
         )
+      }
+      if ((h.breakStart && !h.breakEnd) || (!h.breakStart && h.breakEnd)) {
+        return NextResponse.json(
+          { error: `${DAY_NAMES[h.dayOfWeek]}: premor potrebuje tako začetek kot konec.` },
+          { status: 400 }
+        )
+      }
+      if (h.breakStart && h.breakEnd) {
+        if (h.breakStart >= h.breakEnd) {
+          return NextResponse.json(
+            { error: `${DAY_NAMES[h.dayOfWeek]}: konec premora mora biti pozneje od začetka.` },
+            { status: 400 }
+          )
+        }
+        if (h.breakStart <= h.open || h.breakEnd >= h.close) {
+          return NextResponse.json(
+            { error: `${DAY_NAMES[h.dayOfWeek]}: premor mora biti znotraj delovnega časa.` },
+            { status: 400 }
+          )
+        }
       }
     }
 
@@ -74,6 +102,8 @@ export async function PUT(req: NextRequest) {
             dayOfWeek: h.dayOfWeek,
             open: h.open,
             close: h.close,
+            breakStart: h.breakStart ?? null,
+            breakEnd: h.breakEnd ?? null,
           })),
         })
       }
