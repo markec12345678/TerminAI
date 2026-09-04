@@ -79,11 +79,12 @@ model Appointment {
   startAt     DateTime
   endAt       DateTime
   priceCents  Int
-  status      String   @default("pending") // pending | confirmed | completed | cancelled | no_show
+  status      String   @default("pending") // pending | confirmed | checked_in | completed | cancelled | no_show
   recurWeeks  Int?     // ponavljajoči termin: stranka prihaja vsake X tednov (npr. 4)
   cancelToken String?  @unique // enkratna koda za odpoved prek povezave (/?cancel=)
   notes       String?
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt // samodejno ob vsaki spremembi — za zaznavanje novih rezervacij (polling)
 }
 
 model Message {

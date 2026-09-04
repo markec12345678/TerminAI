@@ -24,6 +24,23 @@ export async function GET(req: NextRequest) {
     const from = req.nextUrl.searchParams.get('from')
     const to = req.nextUrl.searchParams.get('to')
     const date = req.nextUrl.searchParams.get('date')
+    const since = req.nextUrl.searchParams.get('since')
+
+    // "since" način: vsi termini (kateri koli dan), spremenjeni po ISO-časovnem žigu —
+    // za živo zaznavanje novih rezervacij/odpovedi v nadzorni plošči (polling).
+    if (since) {
+      const sinceDate = new Date(since)
+      if (isNaN(sinceDate.getTime())) {
+        return NextResponse.json({ error: 'Napačen parameter since' }, { status: 400 })
+      }
+      const changed = await db.appointment.findMany({
+        where: { updatedAt: { gte: sinceDate } },
+        include: { service: true, client: true },
+        orderBy: { startAt: 'asc' },
+        take: 200,
+      })
+      return NextResponse.json({ appointments: changed.map(toDto) })
+    }
 
     let start: Date
     let end: Date
@@ -43,23 +60,27 @@ export async function GET(req: NextRequest) {
       orderBy: { startAt: 'asc' },
     })
 
-    return NextResponse.json({
-      appointments: appointments.map((a) => ({
-        id: a.id,
-        startAt: a.startAt.toISOString(),
-        endAt: a.endAt.toISOString(),
-        status: a.status,
-        priceCents: a.priceCents,
-        recurWeeks: a.recurWeeks,
-        cancelToken: a.cancelToken,
-        notes: a.notes,
-        service: { id: a.service.id, name: a.service.name, durationMin: a.service.durationMin },
-        client: { id: a.client.id, name: a.client.name, phone: a.client.phone },
-      })),
-    })
+    return NextResponse.json({ appointments: appointments.map(toDto) })
   } catch (e) {
     console.error('GET /api/appointments error', e)
     return NextResponse.json({ error: 'Napaka pri nalaganju terminov' }, { status: 500 })
+  }
+}
+
+function toDto(a: { id: string; startAt: Date; endAt: Date; status: string; priceCents: number; recurWeeks: number | null; cancelToken: string | null; notes: string | null; createdAt: Date; updatedAt: Date; service: { id: string; name: string; durationMin: number }; client: { id: string; name: string; phone: string } }) {
+  return {
+    id: a.id,
+    startAt: a.startAt.toISOString(),
+    endAt: a.endAt.toISOString(),
+    status: a.status,
+    priceCents: a.priceCents,
+    recurWeeks: a.recurWeeks,
+    cancelToken: a.cancelToken,
+    notes: a.notes,
+    createdAt: a.createdAt.toISOString(),
+    updatedAt: a.updatedAt.toISOString(),
+    service: { id: a.service.id, name: a.service.name, durationMin: a.service.durationMin },
+    client: { id: a.client.id, name: a.client.name, phone: a.client.phone },
   }
 }
 
@@ -137,6 +158,8 @@ export async function POST(req: NextRequest) {
           priceCents: appointment.priceCents,
           recurWeeks: appointment.recurWeeks,
           cancelToken: appointment.cancelToken,
+          createdAt: appointment.createdAt.toISOString(),
+          updatedAt: appointment.updatedAt.toISOString(),
           service: { id: appointment.service.id, name: appointment.service.name, durationMin: appointment.service.durationMin },
           client: { id: appointment.client.id, name: appointment.client.name, phone: appointment.client.phone },
         },

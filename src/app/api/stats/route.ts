@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
         orderBy: { startAt: 'asc' },
       }),
       db.appointment.findMany({
-        where: { startAt: { gte: monthStart, lte: todayEnd }, status: { in: ['confirmed', 'completed'] } },
+        where: { startAt: { gte: monthStart, lte: todayEnd }, status: { in: ['confirmed', 'checked_in', 'completed'] } },
         select: { priceCents: true },
       }),
       db.appointment.count({ where: { status: 'pending' } }),

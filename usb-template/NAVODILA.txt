@@ -125,3 +125,28 @@ PODATKI SALONA:
   - Zavihek "Storitve & salon" > kartica "Podatki salona":
     ime, telefon (za WhatsApp gumb!), naslov, e-posta.
   - Spremembe takoj vidne strankam — brez brisanja podatkov.
+
+ZVOČNA OPOZORILA — ZAKO DELUJEJO?
+  - Ko odprto pustite nadzorno plosco (zavihek Lastnik), program
+    samodejno opazuje nove rezervacije:
+      * NOVA REZERVACIJA -> zvoncek "ding-dong" + obvestilo
+        (ime stranke, storitev, dan in ura)
+      * STRANKA ODPOVE TERMIN -> mehak ton + obvestilo
+  - Ugasnite jih lahko z gumbom z ikono zvocnika (zgoraj desno
+    v glavi koledara) — nastavitev se zapomni.
+  - Deluje tudi brez interneta (zvok se ustvari v brskalniku).
+
+KO STRANKA PRIDE V SALON — "PRISLA JE" GUMB:
+  1. Ob njenem terminu kliknite gumb z ikono osebe s kljukico.
+  2. Termin dobi zelen oznako "Prisla" (slišite kratek pozdravni
+     ton) — takoj vidite, kdo je ze tam.
+  3. Ko storitev dokoncate, kliknite ZAKLJUCI.
+  - Ce termin ze traja in stranke ni (vec kot 15 minut), se
+    samodejno pokaze rumen oznacnik "ZAMUJA X MIN" — spomnik,
+    da pokliete ali zabelezite izostanek (gumb "Ni prisla").
+  - Zamuja/Ni prisla: izostanki se stejejo pri stranki v bazi.
+
+CIST WORKFLOW TERMINA (od rezervacije do zakljjučka):
+  Rezervacija -> POTRDI (rumena puščica ob "Caka") -> PRISLA JE
+  (ob prihodu) -> ZAKLJUCI (ob odhodu). Odpoved ali izostanek
+  lahko zabelezite kadar koli.

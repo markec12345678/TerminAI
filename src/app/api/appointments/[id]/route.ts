@@ -4,7 +4,7 @@ import { db } from '@/lib/db'
 import { pinAllows } from '@/lib/pin'
 
 const patchSchema = z.object({
-  status: z.enum(['pending', 'confirmed', 'completed', 'cancelled', 'no_show']),
+  status: z.enum(['pending', 'confirmed', 'checked_in', 'completed', 'cancelled', 'no_show']),
 })
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

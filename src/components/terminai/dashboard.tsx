@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -31,6 +31,9 @@ import {
   CalendarArrowDown,
   Search,
   X,
+  Volume2,
+  VolumeX,
+  UserCheck,
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ServicesManager } from './services-manager'
@@ -44,6 +47,7 @@ import { RecurrenceCard } from './recurrence-card'
 import { BackupCard } from './backup-card'
 import { recurrenceLabel } from '@/lib/labels'
 import { copyToClipboard } from '@/lib/clipboard'
+import { playSound, getSoundPref, setSoundPref, unlockAudio } from '@/lib/sounds'
 import { QRCodeSVG } from 'qrcode.react'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid } from 'recharts'
 import type { AppointmentDto, StatsDto } from './types'
@@ -53,6 +57,7 @@ import { QrCode } from 'lucide-react'
 const STATUS_META: Record<AppointmentDto['status'], { label: string; className: string }> = {
   pending: { label: 'Čaka', className: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800' },
   confirmed: { label: 'Potrjen', className: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800' },
+  checked_in: { label: 'Prišla', className: 'bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-800' },
   completed: { label: 'Zaključen', className: 'bg-secondary text-secondary-foreground border-border' },
   cancelled: { label: 'Odpovedan', className: 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800' },
   no_show: { label: 'Ni prišla', className: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800' },
@@ -116,7 +121,16 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
   const [recurrenceKey, setRecurrenceKey] = useState(0)
   // Hitro iskanje po imenu/telefonu v koledarju dneva
   const [search, setSearch] = useState('')
+  // Zvočna opozorila (nova rezervacija / odpoved) — nastavitev se zapomni
+  const [soundOn, setSoundOn] = useState(true)
   const { toast } = useToast()
+
+  // Živo zaznavanje sprememb (polling): zadnji čas preverjanja, videni statusi
+  // in statusi, ki jih je ravno spremenil lastnik (za te zvoka ni).
+  const lastCheckRef = useRef<string | null>(null)
+  const seenRef = useRef<Map<string, string>>(new Map())
+  const ownerActionsRef = useRef<Set<string>>(new Set())
+  const selectedDateRef = useRef<string | null>(null)
 
   const searchQuery = search.trim().toLowerCase()
   const normPhone = (p: string) => p.replace(/[\s]/g, '')
@@ -127,6 +141,40 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
           normPhone(a.client.phone).includes(normPhone(search.trim()))
       )
     : appointments
+
+  // Zvok lahko brskalnik predvaja šele po prvem gestu uporabnika — odklenimo ob prvem kliku.
+  useEffect(() => {
+    const unlock = () => {
+      unlockAudio()
+      window.removeEventListener('pointerdown', unlock)
+    }
+    window.addEventListener('pointerdown', unlock, { once: true } as AddEventListenerOptions)
+    return () => window.removeEventListener('pointerdown', unlock)
+  }, [])
+
+  // Nastavitev zvoka iz shrambe ob zagonu
+  useEffect(() => {
+    setSoundOn(getSoundPref())
+  }, [])
+
+  const toggleSound = () => {
+    const next = !soundOn
+    setSoundOn(next)
+    setSoundPref(next)
+    if (next) {
+      unlockAudio()
+      playSound('message') // vzorčni ton, da lastnica sliši, kaj je vklopila
+    }
+  }
+
+  // Tiho sinhroniziraj "videne" statuse — ob vsaki zamenjavi seznama terminov
+  useEffect(() => {
+    for (const a of appointments) seenRef.current.set(a.id, a.status)
+  }, [appointments])
+
+  useEffect(() => {
+    selectedDateRef.current = selectedDate
+  }, [selectedDate])
 
   // Ali je PIN nastavljen? (javni podatek) — shranjeni PIN iz seje samodejno
   // odklene ploščo tudi po osvežitvi strani.
@@ -239,8 +287,75 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
     if (!locked && selectedDate) loadAppointments(selectedDate)
   }, [locked, selectedDate, loadAppointments, onRefreshKey])
 
+  /** Berljiva slovenska oznaka termina za toast: "danes ob 09:30" / "pet 14. mar ob 10:00". */
+  const apptLabel = useCallback((a: AppointmentDto): string => {
+    const dateKey = a.startAt.slice(0, 10)
+    const todayKey = new Date().toISOString().slice(0, 10)
+    const tomorrowKey = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
+    const p = dateParts(dateKey)
+    const dan = dateKey === todayKey ? 'danes' : dateKey === tomorrowKey ? 'jutri' : `${p.dayName} ${p.dayNum}. ${p.month}`
+    return `${dan} ob ${timeOfIso(a.startAt)}`
+  }, [])
+
+  // Živo zaznavanje novih rezervacij in odpovedi (polling vsakih 12 s, samo odklenjeno).
+  // Zvok in toast samo za spremembe, ki jih NI naredil lastnik (lastniških ne zvonimo).
+  useEffect(() => {
+    if (locked) return
+    if (!lastCheckRef.current) lastCheckRef.current = new Date().toISOString()
+    const POLL_MS = 12000
+    const interval = setInterval(async () => {
+      if (typeof document !== 'undefined' && document.hidden) return
+      const since = lastCheckRef.current
+      if (!since) return
+      lastCheckRef.current = new Date().toISOString()
+      try {
+        const res = await ownerFetch(`/api/appointments?since=${encodeURIComponent(since)}`)
+        if (!res.ok) return
+        const data = (await res.json()) as { appointments: AppointmentDto[] }
+        let relevant = false
+        for (const a of data.appointments) {
+          const prev = seenRef.current.get(a.id)
+          const key = `${a.id}:${a.status}`
+          if (prev === undefined) {
+            // Termin, ki ga še nismo videli — zvok samo, če je bil ravno ustvarjen
+            if (a.createdAt && new Date(a.createdAt).getTime() > new Date(since).getTime() - 5000) {
+              playSound('booking')
+              toast({
+                title: '🔔 Nova rezervacija',
+                description: `${a.client.name} — ${a.service.name}, ${apptLabel(a)}`,
+              })
+              relevant = true
+            }
+          } else if (prev !== a.status) {
+            if (ownerActionsRef.current.has(key)) {
+              ownerActionsRef.current.delete(key)
+            } else if (a.status === 'cancelled') {
+              playSound('cancel')
+              toast({
+                title: 'Odpovedan termin',
+                description: `${a.client.name} — ${a.service.name}, ${apptLabel(a)} je odpovedan. Termin se je sprostil.`,
+              })
+              relevant = true
+            } else {
+              relevant = true
+            }
+          }
+          seenRef.current.set(a.id, a.status)
+        }
+        if (relevant) {
+          loadStats()
+          if (selectedDateRef.current) loadAppointments(selectedDateRef.current)
+        }
+      } catch {
+        /* tiho — naslednji poskus čez 12 s */
+      }
+    }, POLL_MS)
+    return () => clearInterval(interval)
+  }, [locked, loadStats, loadAppointments, apptLabel, toast])
+
   const updateStatus = async (id: string, status: AppointmentDto['status']) => {
     setBusyId(id)
+    ownerActionsRef.current.add(`${id}:${status}`)
     try {
       const res = await ownerFetch(`/api/appointments/${id}`, {
         method: 'PATCH',
@@ -250,13 +365,20 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
       if (!res.ok) throw new Error()
       setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)))
       loadStats()
+      if (status === 'checked_in') playSound('arrival')
+      if (status === 'completed') playSound('complete')
       toast(
         status === 'no_show'
           ? {
               title: 'Zabeleženo: stranka ni prišla',
               description: 'Izostanek se vidi pri stranki v zavihku Stranke.',
             }
-          : {
+          : status === 'checked_in'
+            ? {
+                title: 'Stranka prijavljena 👋',
+                description: 'Ko storitev končate, kliknite »Zaključi«.',
+              }
+            : {
               title:
                 status === 'confirmed'
                   ? 'Termin potrjen'
@@ -415,6 +537,16 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
               <h3 className="font-semibold">Koledar terminov</h3>
             </div>
             <div className="ml-auto flex items-center gap-2">
+              <Button
+                variant={soundOn ? 'outline' : 'ghost'}
+                size="icon"
+                onClick={toggleSound}
+                aria-label={soundOn ? 'Izklopi zvočna opozorila' : 'Vklopi zvočna opozorila'}
+                title={soundOn ? 'Zvočna opozorila so vklopljena (nova rezervacija / odpoved)' : 'Zvočna opozorila so izklopljena'}
+                className={soundOn ? 'text-primary' : 'text-muted-foreground'}
+              >
+                {soundOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+              </Button>
               <Button size="sm" className="gap-1.5" onClick={() => openManual(null)}>
                 <Plus className="h-4 w-4" /> Dodaj termin
               </Button>
@@ -549,6 +681,15 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                             {a.client.name}
                           </span>
                           <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${meta.className}`}>{meta.label}</span>
+                          {(a.status === 'confirmed' || a.status === 'pending') &&
+                            new Date().getTime() - new Date(a.startAt).getTime() > 15 * 60000 && (
+                              <span
+                                className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:border-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
+                                title="Termin se je začel pred več kot 15 minutami, stranka ni prijavljena"
+                              >
+                                <CalendarClock className="h-3 w-3" /> zamuja {Math.floor((new Date().getTime() - new Date(a.startAt).getTime()) / 60000)} min
+                              </span>
+                            )}
                           {a.recurWeeks != null && (
                             <span
                               className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary"
@@ -578,61 +719,82 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                               <CheckCircle2 className="h-4 w-4" />
                             </Button>
                           )}
-                          {(a.status === 'confirmed' || a.status === 'pending') && (
+                          {a.status === 'confirmed' && !past && (
                             <>
-                              {past ? (
-                                <>
-                                  <Button
-                                    size="icon"
-                                    variant="outline"
-                                    className="h-8 w-8"
-                                    onClick={() => updateStatus(a.id, 'completed')}
-                                    disabled={busyId === a.id}
-                                    aria-label="Zaključi termin"
-                                    title="Zaključi"
-                                  >
-                                    <TrendingUp className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="icon"
-                                    variant="outline"
-                                    className="h-8 w-8 border-rose-200 text-rose-500 hover:bg-rose-50 hover:text-rose-600 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-950/60 dark:hover:text-rose-300"
-                                    onClick={() => updateStatus(a.id, 'no_show')}
-                                    disabled={busyId === a.id}
-                                    aria-label="Stranka ni prišla"
-                                    title="Ni prišla — zabeleži izostanek"
-                                  >
-                                    <UserX className="h-4 w-4" />
-                                  </Button>
-                                </>
-                              ) : (
-                                <>
-                                  {a.cancelToken && (
-                                    <Button
-                                      size="icon"
-                                      variant="outline"
-                                      className="h-8 w-8"
-                                      onClick={() => copyCancelLink(a)}
-                                      aria-label="Kopiraj odpovedno povezavo"
-                                      title="Kopiraj odpovedno povezavo — pošlji stranki"
-                                    >
-                                      <Link2 className="h-4 w-4" />
-                                    </Button>
-                                  )}
-                                  <Button
-                                    size="icon"
-                                    variant="outline"
-                                    className="h-8 w-8 border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600"
-                                    onClick={() => updateStatus(a.id, 'cancelled')}
-                                    disabled={busyId === a.id}
-                                    aria-label="Odpovej termin"
-                                    title="Odpovej"
-                                  >
-                                    <XCircle className="h-4 w-4" />
-                                  </Button>
-                                </>
+                              <Button
+                                size="icon"
+                                variant="outline"
+                                className="h-8 w-8 border-teal-200 text-teal-600 hover:bg-teal-50 hover:text-teal-700 dark:border-teal-800 dark:text-teal-400 dark:hover:bg-teal-950/60 dark:hover:text-teal-300"
+                                onClick={() => updateStatus(a.id, 'checked_in')}
+                                disabled={busyId === a.id}
+                                aria-label="Stranka je prišla — prijavi"
+                                title="Prišla je — prijavi prihod"
+                              >
+                                <UserCheck className="h-4 w-4" />
+                              </Button>
+                              {a.cancelToken && (
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-8 w-8"
+                                  onClick={() => copyCancelLink(a)}
+                                  aria-label="Kopiraj odpovedno povezavo"
+                                  title="Kopiraj odpovedno povezavo — pošlji stranki"
+                                >
+                                  <Link2 className="h-4 w-4" />
+                                </Button>
                               )}
+                              <Button
+                                size="icon"
+                                variant="outline"
+                                className="h-8 w-8 border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/60 dark:hover:text-red-300"
+                                onClick={() => updateStatus(a.id, 'cancelled')}
+                                disabled={busyId === a.id}
+                                aria-label="Odpovej termin"
+                                title="Odpovej"
+                              >
+                                <XCircle className="h-4 w-4" />
+                              </Button>
                             </>
+                          )}
+                          {(a.status === 'pending' || a.status === 'confirmed') && past && (
+                            <>
+                              <Button
+                                size="icon"
+                                variant="outline"
+                                className="h-8 w-8"
+                                onClick={() => updateStatus(a.id, 'completed')}
+                                disabled={busyId === a.id}
+                                aria-label="Zaključi termin"
+                                title="Zaključi"
+                              >
+                                <TrendingUp className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="outline"
+                                className="h-8 w-8 border-rose-200 text-rose-500 hover:bg-rose-50 hover:text-rose-600 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-950/60 dark:hover:text-rose-300"
+                                onClick={() => updateStatus(a.id, 'no_show')}
+                                disabled={busyId === a.id}
+                                aria-label="Stranka ni prišla"
+                                title="Ni prišla — zabeleži izostanek"
+                              >
+                                <UserX className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                          {a.status === 'checked_in' && (
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-8 w-8"
+                              onClick={() => updateStatus(a.id, 'completed')}
+                              disabled={busyId === a.id}
+                              aria-label="Zaključi termin"
+                              title="Zaključi — stranka je bila prijavljena"
+                            >
+                              <TrendingUp className="h-4 w-4" />
+                            </Button>
                           )}
                         </div>
                       </div>

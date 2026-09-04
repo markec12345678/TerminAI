@@ -139,3 +139,25 @@ NOVOST 6 (namestitelj) — analiza vrzeli po konkurenci (Fresha/Booksy/Planity):
   - Pri prodaji: "sistem ve, kdaj ste zaprti — nobena stranka več
     ne rezervira na 1. maj" + "formule imate pri stranki, ne v
     zvezku" + "izbris podatkov po GDPR v 10 sekundah".
+
+NOVOST 7 (namestitelj) — UX/workflow analiza po svetovnih vzorcih
+(Fresha/Booksy/Meevo/Square; EU+USA: check-in statusi, zvocna
+obvestila, 15-min zamujanje; AZIJA: super-app sporočanja):
+  - ZVOCNA OPOZORILA: Web Audio API (brez datotek, 100% offline!)
+    — src/lib/sounds.ts. Nova rezervacija = ding-dong, odpoved =
+    mehak padajoc ton, prihod = pozdravni, zakljjuček = kratek.
+    Vklop/izklop z gumbom (persistenca v localStorage).
+  - POLLING (12 s): GET /api/appointments?since=<ISO> — Appointment
+    dobl @updatedAt (db:push). Dashboard sam zazna rezervacije
+    strank z vseh datumov + odpovedi prek povezav + tujih sprememb;
+    lastnikove akcije se ne zvonejo (ownerActionsRef filter).
+  - CHECK-IN "PRISLA JE": nov status checked_in (teal badge
+    "Prisla") — workflow zdaj Rezervacija → Potrdi → Prisla je →
+    Zakljjuči (kot Fresha "Arrived"). PATCH sprejema checked_in;
+    stats/reports/porocila upostevajo nov status.
+  - 15-MIN PRAVILO: rumen badge "ZAMUJA X MIN" na terminih, ki so
+    se zaceli in stranka ni prijavljena (US standard politika).
+  - STRANKI: mehek zvoncek potrditve po rezervaciji (delight).
+  - E2E: toast "Nova rezervacija" prisel v 5 s po POST (curl),
+    odpovedni toast v 5 s, stikalo persistira (on/off), check-in
+    badge preklopi, mobilni 375 px 0 preliva, VLM 10/10.

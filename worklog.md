@@ -305,3 +305,29 @@ Stage Summary:
 - Oba neuporabljena paketa (next-themes, framer-motion) zdaj v polni uporabi
 - VLM povprečna ocena 9/10, E2E vse zeleno, lint čist
 - Naslednji možni koraki: pilot pri pravem salonu, prodajni PDF, online faza (WhatsApp Business API), morebitni več-izvajalci
+
+---
+Task ID: 13
+Agent: Z.ai Code (glavni agent)
+Task: Zvočna opozorila + UX workflow izboljšave na podlagi svetovne raziskave (EU/USA/AZIJA)
+
+Work Log:
+- SPLETNA RAZISKAVA (5 iskanj): Meevo (mobile check-in on arrival), softalon (workflow triggers: booked/completed/cancelled/no-show), Fresha (statusi "Arrived", real-time calendar), Bookeo/OptiMantra (15-min zamujanje politika, spomniki -29 % izostankov), Vagaro/Square/GlossGenius primerjave
+- Ugotovljene 4 vrzeli: zvočna opozorila, samodejno zaznavanje (polling), check-in status, 15-min indikator zamujanja
+- Prisma: Appointment.updatedAt @default(now()) @updatedAt (db:push — prvi poskus padel zaradi required brez defaulta pri 103 vrsticah, rešeno z @default(now())); statusdokumentacija posodobljena za checked_in
+- GET /api/appointments: nov način ?since=<ISO> (vsi termini spremenjeni po žigu, take 200) + createdAt/updatedAt v DTO; skupna toDto funkcija
+- PATCH /api/appointments/[id]: z.enum + checked_in; stats (prihodki meseca in checked_in), reports (STATUS_LABELS 'Prišla', upcoming filter)
+- NOV src/lib/sounds.ts: Web Audio API (100 % offline, brez datotek — ključnega pomena za offline izdelek): booking (ding-dong C6→G5), cancel (padajoči E5→C5), arrival (pozdrav G5→C6), complete, message; get/setSoundPref (localStorage), unlockAudio (autoplay policy)
+- DASHBOARD: polling vsakih 12 s (?since način) — zazna nove rezervacije (zvok + toast '🔔 Nova rezervacija: ime — storitev, dan ob ura'), odpovedi strank prek povezav (mehak ton + toast), tuje spremembe stanj (tiha osvežitev); lastnikove akcije se ne zvonejo (ownerActionsRef); document.hidden zamik; zvok stikalo v glavi koledarja (Volume2/VolumeX, persistenca, vzorčni ton ob vklopu); unlockAudio ob prvem pointerdown
+- CHECK-IN FLOW: nov status checked_in (turkizna oznaka 'Prišla') + gumb 'Prišla je' (UserCheck) na potrjenih terminih → Zaključi; toast 'Stranka prijavljena 👋' + pozdravni ton; 15-MIN ZAMUJA badge (rumen, CalendarClock, samodejni 'zamuja X min') na začetih neprijavljenih terminih; gumbi prestrukturirani (pending!past=potrdi; confirmed!past=checkin+odpoved; confirmed/pending past=zaključi+ni prišla; checked_in=zaključi)
+- booking-widget: mehek zvonec potrditve stranki po uspešni rezervaciji (playSound('booking'))
+- HROŠČ UJET: polling 500 (PrismaClientValidationError) — dev server je imel v pomnilniku stari Prisma client po db:push → restart (rm .next + start-dev.sh, drugi poskus po TIME_WAIT, znani vzorec)
+- E2E (agent-browser): zvok stikalo on/off + persistenca (localStorage 'terminai-sound' off/on ✓); check-in klik → badge 'Prišla' ✓ + zaključi gumb se prikaže ✓; polling: POST (curl kot 'strankin telefon') → toast 'Nova rezervacija' ujet v 5 s (najprej lažni pozitiv zaradi hero besedila 'Nova rezervacija' — rešeno z edinstvenim imenom + sekundnim preverjanjem); odpoved prek povezave (POST /api/appointments/cancel) → toast 'Odpovedan termin' v 5 s ✓; zunanja sprememba stanja (Ana nazaj na confirmed) se osveži samodejno v naslednjem ciklu ✓; testni podatki (3 termini + 3 stranke) počiščeni; mobilni 375 px: 0 preliva; 0 konzolnih napak; dev.log čist; lint čist
+- VLM ocena dashboarda: 10/10 (stikalo, badge-i, iskanje, check-in gumb, brez prekrivanj)
+- README (2 novi sekciji) + usb-template NAVODILA.txt (zvočna opozorila + check-in + workflow za lastnico) + ZA-TEBE.txt (NOVOST 7) posodobljeni
+
+Stage Summary:
+- 4 vrzeli po svetovnem benchmarku odpravljene: 🔔 zvok (Web Audio, offline), 📡 polling (12 s, since parameter), 🚶 check-in status (kot Fresha 'Arrived'), ⏰ 15-min zamujanje
+- Celoten workflow termina zdaj: Rezervacija → Potrdi → Prišla je → Zaključi (z zvoki ob vsakem koraku)
+- E2E: vsi scenariji potrjeni (toast v 5 s), VLM 10/10, lint čist, 0 napak
+- Naslednji možni koraki: pilot pri pravem salonu, prodajni PDF, online faza (WhatsApp Business API), več-izvajalci

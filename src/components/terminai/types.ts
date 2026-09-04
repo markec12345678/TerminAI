@@ -45,11 +45,13 @@ export interface AppointmentDto {
   id: string
   startAt: string
   endAt: string
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
+  status: 'pending' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled' | 'no_show'
   priceCents: number
   recurWeeks?: number | null
   cancelToken?: string | null
   notes?: string | null
+  createdAt?: string
+  updatedAt?: string
   service: { id: string; name: string; durationMin: number }
   client: { id: string; name: string; phone: string }
 }

@@ -18,6 +18,7 @@ const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/
 const STATUS_LABELS: Record<string, string> = {
   pending: 'Čaka',
   confirmed: 'Potrjen',
+  checked_in: 'Prišla',
   completed: 'Zaključen',
   cancelled: 'Odpovedan',
   no_show: 'Ni prišla',
@@ -100,7 +101,7 @@ export async function GET(req: NextRequest) {
 
     // ---------- JSON poročilo ----------
     const completed = appointments.filter((a) => a.status === 'completed')
-    const upcoming = appointments.filter((a) => a.status === 'pending' || a.status === 'confirmed')
+    const upcoming = appointments.filter((a) => a.status === 'pending' || a.status === 'confirmed' || a.status === 'checked_in')
     const realizedRevenueCents = completed.reduce((s, a) => s + a.priceCents, 0)
     const expectedRevenueCents = upcoming.reduce((s, a) => s + a.priceCents, 0)
 

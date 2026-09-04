@@ -29,6 +29,7 @@ import {
 import type { AppointmentDto, AvailabilityDto, ClosedDayDto, ServiceDto, SlotDto } from './types'
 import { dateParts, durationLabel, formatPrice, timeOfIso, cancelUrl } from './types'
 import { copyToClipboard } from '@/lib/clipboard'
+import { playSound } from '@/lib/sounds'
 import { WhatsAppIcon, waLink, waBookingText } from './whatsapp'
 
 type Step = 'service' | 'datetime' | 'details' | 'done'
@@ -142,6 +143,7 @@ export function BookingWidget({ services, businessName, businessTagline, busines
       }
       setConfirmed(data.appointment)
       setStep('done')
+      playSound('booking') // mehek zvonček potrditve (uporabnica je ravnokar kliknila → zvok dovoljen)
       onBooked(data.appointment)
       toast({
         title: 'Termin rezerviran! 🎉',

@@ -99,6 +99,18 @@
 - Slovenski števec zadetkov (1 zadetek / 2 zadetka / 5 zadetkov) in gumb za počiščenje
 - Prazno stanje z jasnim sporočilom, ko ni zadetkov
 
+### 🔔 Zvočna opozorila v živo (Web Audio, 100 % offline)
+- Ko je nadzorna plošča odprta, sistem **samodejno zazna** novo rezervacijo ali odpoved (polling na 12 s)
+- Nova rezervacija → prijeten zvonec »ding-dong« + obvestilo z imenom, storitvijo, dnevom in uro; odpoved → mehek padajoči ton
+- Zvoki so **generirani v brskalniku** (Web Audio API) — brez datotek, delujejo popolnoma brez interneta
+- Stikalo za vklop/izklop v glavi koledarja — nastavitev se zapomni; stranka ob rezervaciji sliši mehek potrditveni zvonec
+- Lastnikove lastne spremembe se **ne** oglšajo — zvoki samo za dogodke strank
+
+### 🚶 Celoten workflow termina (kot vodilni svetovni sistemi)
+- **Rezervacija → Potrdi → Prišla je → Zaključi** — nov status *checked_in* (»Prišla«, turkizna oznaka) ob prihodu stranke v salon
+- **15-minutno pravilo zamujanja:** termin se je začel, stranke ni → rumen indikator »zamuja X min«, spomin, da pokličete ali zabeležite izostanek
+- Izkupnja: isti statusni potek kot Fresha/Booksy (»Arrived«), prirejen enoosebnemu salonu brez odvečnih korakov
+
 ---
 
 ## Tehnični sklad
