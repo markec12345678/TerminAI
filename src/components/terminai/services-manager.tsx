@@ -743,9 +743,9 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
             <h3 className="font-semibold">Zaščita lastnika (PIN)</h3>
           </div>
           {pinSet ? (
-            <span className="text-xs font-medium text-emerald-600">vklopljena</span>
+            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">vklopljena</span>
           ) : (
-            <span className="text-xs text-amber-600">ni nastavljena</span>
+            <span className="text-xs text-amber-600 dark:text-amber-400">ni nastavljena</span>
           )}
         </CardHeader>
         <CardContent className="space-y-3 p-4">
@@ -864,10 +864,10 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
       </Card>
 
       {/* Čist start */}
-      <Card className="border-amber-200 bg-amber-50/50">
+      <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/40">
         <CardHeader className="border-b py-4">
           <div className="flex items-center gap-2">
-            <RefreshCcw className="h-4 w-4 text-amber-600" />
+            <RefreshCcw className="h-4 w-4 text-amber-600 dark:text-amber-400" />
             <h3 className="font-semibold">Začetek s pravim salonom (čist start)</h3>
           </div>
         </CardHeader>
@@ -878,7 +878,7 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
           </p>
           <Button
             variant="outline"
-            className="mt-3 gap-1.5 border-amber-300 text-amber-700 hover:bg-amber-100 hover:text-amber-800"
+            className="mt-3 gap-1.5 border-amber-300 text-amber-700 hover:bg-amber-100 hover:text-amber-800 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-950/60 dark:hover:text-amber-200"
             onClick={() => setResetOpen(true)}
           >
             <Store className="h-4 w-4" /> Nastavi pravi salon

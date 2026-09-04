@@ -29,6 +29,8 @@ import {
   UserX,
   Link2,
   CalendarArrowDown,
+  Search,
+  X,
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ServicesManager } from './services-manager'
@@ -49,11 +51,11 @@ import { dateParts, durationLabel, formatPrice, timeOfIso, cancelUrl } from './t
 import { QrCode } from 'lucide-react'
 
 const STATUS_META: Record<AppointmentDto['status'], { label: string; className: string }> = {
-  pending: { label: 'Čaka', className: 'bg-amber-100 text-amber-700 border-amber-200' },
-  confirmed: { label: 'Potrjen', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+  pending: { label: 'Čaka', className: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800' },
+  confirmed: { label: 'Potrjen', className: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800' },
   completed: { label: 'Zaključen', className: 'bg-secondary text-secondary-foreground border-border' },
-  cancelled: { label: 'Odpovedan', className: 'bg-red-50 text-red-600 border-red-200' },
-  no_show: { label: 'Ni prišla', className: 'bg-rose-100 text-rose-700 border-rose-200' },
+  cancelled: { label: 'Odpovedan', className: 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800' },
+  no_show: { label: 'Ni prišla', className: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800' },
 }
 
 function StatCard({
@@ -73,9 +75,9 @@ function StatCard({
     accent === 'primary'
       ? 'bg-primary/10 text-primary'
       : accent === 'emerald'
-        ? 'bg-emerald-100 text-emerald-600'
+        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
         : accent === 'amber'
-          ? 'bg-amber-100 text-amber-600'
+          ? 'bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400'
           : 'bg-secondary text-secondary-foreground'
   return (
     <Card className="border-border/60">
@@ -112,7 +114,19 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
   const [remindersOpen, setRemindersOpen] = useState(false)
   // Osvežitev kartice ponavljanj (nov termin lahko pokrije "na vrsti" stranko)
   const [recurrenceKey, setRecurrenceKey] = useState(0)
+  // Hitro iskanje po imenu/telefonu v koledarju dneva
+  const [search, setSearch] = useState('')
   const { toast } = useToast()
+
+  const searchQuery = search.trim().toLowerCase()
+  const normPhone = (p: string) => p.replace(/[\s]/g, '')
+  const filteredAppointments = searchQuery
+    ? appointments.filter(
+        (a) =>
+          a.client.name.toLowerCase().includes(searchQuery) ||
+          normPhone(a.client.phone).includes(normPhone(search.trim()))
+      )
+    : appointments
 
   // Ali je PIN nastavljen? (javni podatek) — shranjeni PIN iz seje samodejno
   // odklene ploščo tudi po osvežitvi strani.
@@ -437,6 +451,40 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
             </div>
           </CardHeader>
           <CardContent className="space-y-4 p-4">
+            {/* Hitro iskanje po stranki/telefonu */}
+            <div className="flex items-center gap-2">
+              <div className="relative min-w-0 flex-1">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Išči po imenu ali telefonu …"
+                  className="pl-8"
+                  aria-label="Išči med termini dneva"
+                  inputMode="search"
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch('')}
+                    className="absolute right-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    aria-label="Počisti iskanje"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+              {searchQuery && (
+                <span className="shrink-0 text-xs text-muted-foreground" role="status">
+                  {filteredAppointments.length}{' '}
+                  {filteredAppointments.length === 1
+                    ? 'zadetek'
+                    : [2, 3, 4].includes(filteredAppointments.length)
+                      ? 'zadetki'
+                      : 'zadetkov'}
+                </span>
+              )}
+            </div>
+
             <div className="terminai-scroll flex gap-2 overflow-x-auto pb-1" role="radiogroup" aria-label="Izberite dan">
               {dates.map((d) => {
                 const p = dateParts(d)
@@ -466,14 +514,19 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                   <Skeleton key={i} className="h-20" />
                 ))}
               </div>
-            ) : appointments.length === 0 ? (
+            ) : searchQuery && filteredAppointments.length === 0 ? (
+              <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+                <Search className="mx-auto mb-2 h-8 w-8 opacity-30" />
+                Ni terminov, ki bi ustrezali iskanju „{search.trim()}“.
+              </div>
+            ) : filteredAppointments.length === 0 ? (
               <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
                 <CalendarDays className="mx-auto mb-2 h-8 w-8 opacity-30" />
                 Na ta dan ni terminov.
               </div>
             ) : (
               <div className="terminai-scroll max-h-[420px] space-y-2 overflow-y-auto pr-1">
-                {appointments.map((a) => {
+                {filteredAppointments.map((a) => {
                   const meta = STATUS_META[a.status]
                   const past = new Date(a.startAt) < new Date()
                   return (
@@ -516,7 +569,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                             <Button
                               size="icon"
                               variant="outline"
-                              className="h-8 w-8 border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                              className="h-8 w-8 border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-300"
                               onClick={() => updateStatus(a.id, 'confirmed')}
                               disabled={busyId === a.id}
                               aria-label="Potrdi termin"
@@ -543,7 +596,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                                   <Button
                                     size="icon"
                                     variant="outline"
-                                    className="h-8 w-8 border-rose-200 text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+                                    className="h-8 w-8 border-rose-200 text-rose-500 hover:bg-rose-50 hover:text-rose-600 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-950/60 dark:hover:text-rose-300"
                                     onClick={() => updateStatus(a.id, 'no_show')}
                                     disabled={busyId === a.id}
                                     aria-label="Stranka ni prišla"
@@ -631,7 +684,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
               </div>
               <ul className="space-y-2 text-xs text-muted-foreground">
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                   <strong className="text-foreground">{stats?.remindersTomorrow ?? 0}</strong> terminov jutri
                 </li>
                 <li className="flex items-center gap-2">
@@ -639,7 +692,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                   Spomniki za <strong className="text-foreground">{stats?.remindersTomorrow ?? 0}</strong> strank pripravljeni — s klikom jih pošljete po WhatsAppu
                 </li>
                 <li className="flex items-center gap-2">
-                  <Users className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+                  <Users className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
                   <strong className="text-foreground">{stats?.clients ?? 0}</strong> strank v bazi — baza je vaša
                 </li>
               </ul>

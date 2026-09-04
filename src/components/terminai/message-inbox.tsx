@@ -62,9 +62,9 @@ interface AnalyzeResponse {
 }
 
 const INTENT_META: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
-  booking: { label: 'Naročilo', icon: <CalendarDays className="h-3 w-3" />, className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-  price: { label: 'Cena', icon: <Tag className="h-3 w-3" />, className: 'bg-amber-100 text-amber-700 border-amber-200' },
-  cenik: { label: 'Cenik', icon: <Tag className="h-3 w-3" />, className: 'bg-amber-100 text-amber-700 border-amber-200' },
+  booking: { label: 'Naročilo', icon: <CalendarDays className="h-3 w-3" />, className: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800' },
+  price: { label: 'Cena', icon: <Tag className="h-3 w-3" />, className: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800' },
+  cenik: { label: 'Cenik', icon: <Tag className="h-3 w-3" />, className: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800' },
   availability: { label: 'Zasedenost', icon: <Clock className="h-3 w-3" />, className: 'bg-primary/10 text-primary border-primary/20' },
   unknown: { label: 'Neznano', icon: <MessageSquare className="h-3 w-3" />, className: 'bg-muted text-muted-foreground border-border' },
 }
@@ -304,8 +304,8 @@ export function MessageInbox({ onBookForCustomer }: Props) {
                 <div
                   className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${
                     result.availability.requestedFree
-                      ? 'bg-emerald-50 text-emerald-700'
-                      : 'bg-red-50 text-red-600'
+                      ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                      : 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400'
                   }`}
                 >
                   {result.availability.requestedFree ? (

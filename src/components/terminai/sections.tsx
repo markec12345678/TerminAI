@@ -3,6 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
+import { Reveal } from './reveal'
 import {
   Clock,
   Bot,
@@ -83,54 +84,58 @@ export function Features() {
   return (
     <section id="funkcije" className="scroll-mt-16 py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="mx-auto max-w-2xl text-center">
+        <Reveal className="mx-auto max-w-2xl text-center">
           <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
             Vse, kar salon potrebuje. <span className="italic text-primary">Nič, česar ne.</span>
           </h2>
           <p className="mt-3 text-muted-foreground">
             Zasnovano za frizerje, kozmetike, masažerje, trenerje in vse, ki živijo od terminov.
           </p>
-        </div>
+        </Reveal>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map((f) => (
-            <Card key={f.title} className="group border-border/60 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
-              <CardContent className="p-6">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                  {f.icon}
-                </div>
-                <h3 className="mt-4 font-semibold">{f.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{f.text}</p>
-              </CardContent>
-            </Card>
+          {FEATURES.map((f, i) => (
+            <Reveal key={f.title} delay={0.05 * i}>
+              <Card className="group h-full border-border/60 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+                <CardContent className="p-6">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                    {f.icon}
+                  </div>
+                  <h3 className="mt-4 font-semibold">{f.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{f.text}</p>
+                </CardContent>
+              </Card>
+            </Reveal>
           ))}
         </div>
 
         {/* Kako deluje */}
-        <div className="mt-16 rounded-3xl border bg-gradient-to-br from-secondary/60 to-background p-6 sm:p-10">
+        <Reveal className="mt-16 rounded-3xl border bg-gradient-to-br from-secondary/60 to-background p-6 sm:p-10">
           <h3 className="text-center font-display text-2xl font-semibold sm:text-3xl">Kako deluje — trije koraki</h3>
           <div className="mt-8 grid gap-6 md:grid-cols-3">
             {STEPS.map((s, i) => (
-              <div key={s.step} className="relative">
-                {i < STEPS.length - 1 && (
-                  <div className="absolute left-14 top-7 hidden h-px w-[calc(100%-3rem)] border-t border-dashed border-primary/30 md:block" aria-hidden="true" />
-                )}
-                <div className="relative flex items-start gap-4">
-                  <div className="relative z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/25">
-                    {s.icon}
-                    <span className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-background text-xs font-bold text-primary shadow">
-                      {s.step}
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold">{s.title}</h4>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{s.text}</p>
+              <Reveal key={s.step} delay={0.12 * i}>
+                <div className="relative">
+                  {i < STEPS.length - 1 && (
+                    <div className="absolute left-14 top-7 hidden h-px w-[calc(100%-3rem)] border-t border-dashed border-primary/30 md:block" aria-hidden="true" />
+                  )}
+                  <div className="relative flex items-start gap-4">
+                    <div className="relative z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/25">
+                      {s.icon}
+                      <span className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-background text-xs font-bold text-primary shadow">
+                        {s.step}
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">{s.title}</h4>
+                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{s.text}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Reveal>
             ))}
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   )
@@ -192,7 +197,7 @@ export function Pricing() {
   return (
     <section id="cene" className="scroll-mt-16 bg-muted/40 py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="mx-auto max-w-2xl text-center">
+        <Reveal className="mx-auto max-w-2xl text-center">
           <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
             Enkrat plačate. <span className="italic text-primary">Sistem je vaš.</span>
           </h2>
@@ -200,18 +205,18 @@ export function Pricing() {
             Brez naročnine za osnovni sistem, brez skritega, brez tveganja: namestitev pri vas, preizkus na vaših
             strankah, plačilo šele ko ste zadovoljni. Vzdrževanje in Ana AI sta neobvezna.
           </p>
-        </div>
+        </Reveal>
 
         <div className="mt-10 grid items-start gap-6 md:grid-cols-3">
-          {PLANS.map((p) => (
-            <Card
-              key={p.name}
-              className={`relative border-border/60 ${
-                p.highlight
-                  ? 'border-primary/50 shadow-xl shadow-primary/15 md:-mt-4 md:scale-[1.02]'
-                  : 'hover:border-primary/30'
-              }`}
-            >
+          {PLANS.map((p, i) => (
+            <Reveal key={p.name} delay={0.08 * i} className="h-full">
+              <Card
+                className={`relative h-full border-border/60 ${
+                  p.highlight
+                    ? 'border-primary/50 shadow-xl shadow-primary/15 md:-mt-4 md:scale-[1.02]'
+                    : 'hover:border-primary/30'
+                }`}
+              >
               {p.highlight && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground shadow">
                   Najbolj priljubljen
@@ -249,6 +254,7 @@ export function Pricing() {
                 </Button>
               </CardContent>
             </Card>
+            </Reveal>
           ))}
         </div>
 
@@ -316,12 +322,13 @@ export function Faq() {
   return (
     <section id="faq" className="scroll-mt-16 py-16 sm:py-20">
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
-        <div className="text-center">
+        <Reveal className="text-center">
           <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Pogosta vprašanja</h2>
           <p className="mt-3 text-muted-foreground">Odgovori, ki jih lastniki salonov največkrat sprašujejo.</p>
-        </div>
+        </Reveal>
 
-        <Accordion type="single" collapsible className="mt-8">
+        <Reveal delay={0.1}>
+          <Accordion type="single" collapsible className="mt-8">
           {FAQS.map((f, i) => (
             <AccordionItem key={i} value={`faq-${i}`}>
               <AccordionTrigger className="text-left text-base font-medium hover:text-primary hover:no-underline">
@@ -330,7 +337,8 @@ export function Faq() {
               <AccordionContent className="text-sm leading-relaxed text-muted-foreground">{f.a}</AccordionContent>
             </AccordionItem>
           ))}
-        </Accordion>
+          </Accordion>
+        </Reveal>
       </div>
     </section>
   )
@@ -339,7 +347,8 @@ export function Faq() {
 export function FinalCta() {
   return (
     <section className="px-4 pb-16 sm:px-6 sm:pb-20">
-      <div className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-primary/80 p-8 text-center text-primary-foreground shadow-2xl shadow-primary/30 sm:p-14">
+      <Reveal>
+        <div className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-primary/80 p-8 text-center text-primary-foreground shadow-2xl shadow-primary/30 sm:p-14">
         <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
         <div className="pointer-events-none absolute -bottom-20 -left-16 h-56 w-56 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
         <h2 className="relative font-display text-3xl font-semibold sm:text-4xl">
@@ -356,7 +365,8 @@ export function FinalCta() {
             </a>
           </Button>
         </div>
-      </div>
+        </div>
+      </Reveal>
     </section>
   )
 }

@@ -13,9 +13,9 @@ import type { ManualPrefill } from './manual-booking-dialog'
 import type { RecurrenceDto } from './types'
 
 const STATUS_META: Record<RecurrenceDto['status'], { label: string; className: string }> = {
-  overdue: { label: 'rok je potekel', className: 'bg-red-50 text-red-600 border-red-200' },
-  due: { label: 'na vrsti', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-  upcoming: { label: 'kmalu', className: 'bg-amber-50 text-amber-700 border-amber-200' },
+  overdue: { label: 'rok je potekel', className: 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800' },
+  due: { label: 'na vrsti', className: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800' },
+  upcoming: { label: 'kmalu', className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800' },
 }
 
 interface Props {

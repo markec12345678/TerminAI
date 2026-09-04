@@ -136,7 +136,7 @@ export function BackupCard() {
         ) : (
           <>
             <div className="flex items-start gap-2 rounded-lg border border-emerald-200/60 bg-emerald-50/60 p-3 text-xs text-muted-foreground dark:bg-emerald-950/30">
-              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
+              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
               <span>
                 Samodejno varovanje je vklopljeno — nova kopija se naredi ob vsakem zagonu (največ ena na dan).{' '}
                 {data?.lastBackupAt ? (

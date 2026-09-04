@@ -84,6 +84,21 @@
 - Ni odvisnosti od oblaka, naročnin ali interneta
 - Zaščita lastniškega območja s PIN-kodo
 
+### 🌙 Temni način
+- Stikalo v navigacijski vrstici — **svetli/temni način** z roza/burgundy paleto, prilagojeno za temno
+- Nastavitev se **zapomni** (localStorage) in upošteva sistemsko preferenco
+- Vsi statusni znaki (potrjen/čaka/izostanek) imajo temne različice — berljivost povsod
+
+### ✨ Animacije (Framer Motion)
+- Hero: postopni vstop besedila in **lebdeče kartice** ob strani
+- Sekcije se prikažejo ob pomiku (scroll-reveal) — subtilno, enkrat na obisk
+- Upošteva nastavitev `prefers-reduced-motion` (brez gibanja, če uporabnik tako želi)
+
+### 🔍 Hitro iskanje v koledarju
+- Iskalno polje nad koledarjem dneva — filtrira termine po **imenu ali telefonu**
+- Slovenski števec zadetkov (1 zadetek / 2 zadetka / 5 zadetkov) in gumb za počiščenje
+- Prazno stanje z jasnim sporočilom, ko ni zadetkov
+
 ---
 
 ## Tehnični sklad

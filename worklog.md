@@ -280,3 +280,28 @@ Stage Summary:
 - Prodajni argumenti: "sistem ve, kdaj ste zaprti — nobena stranka več ne rezervira na 1. maj", "formule pri stranki, ne v zvezku", "GDPR izbris v 10 sekundah", "obnova v enem kliku, brez izgube"
 - Baza: 7 novih API poti/podatkov; demo ima praznike 2026+2027, premor ponedeljek (predstavitev)
 - Naslednji možni koraki: pilot pri pravem salonu, multi-izvajalci, online faza (WhatsApp Business API)
+
+---
+Task ID: 12
+Agent: Z.ai Code (glavni agent)
+Task: UI/UX izboljšave — temni način, Framer Motion animacije, hitro iskanje v koledarju (na podlagi analize: next-themes in framer-motion bila nameščena a neuporabljena)
+
+Work Log:
+- Analiza: .dark CSS blok je obstajal (generična shadcn paleta), vendar brez ThemeProviderja/stikala; framer-motion in next-themes v package.json neuporabljena; dnevni list za tiskanje je že obstajal (gumb v koledarju) — ni podvojen
+- NOV src/components/theme-provider.tsx (next-themes, attribute="class", defaultTheme="light", enableSystem) + vdelan v layout.tsx
+- NOV src/components/theme-toggle.tsx: stikalo v navbarju — ikoni se preklapljata prek CSS dark: razredov (brez hidracijskega nesoglasja, brez setState v efektu — lint čist)
+- globals.css: .dark zamenjan s custom rozo/burgundy temno paleto (primary oklch 0.74/0.17/16, temno rjava ozadja hue 20, chart prilagojene); .dark različice za scrollbar in dot-grid; keyframes float-soft (6s/7s zamik) + prefers-reduced-motion izključitev
+- Popravljenih ~30 trdo-kodiranih svetlih barv po 14 komponentah (emerald/amber/rose/red/status znaki, hoverji, badge) z dark: različicami (npr. bg-emerald-100 → dark:bg-emerald-950 dark:text-emerald-300)
+- HERO (framer-motion): postopni vstop (badge → naslov → besedilo → gumbi → statistike, zamiki 0.08s, fadeUp 22px, ease [0.22,1,0.36,1]); desna vizualna kartica scale+y vstop; lebdeči kartici prek animate-float-soft; useReducedMotion spoštovan
+- NOV src/components/terminai/reveal.tsx: scroll-reveal ovojnica (whileInView, once, margin -60px)
+- sections.tsx: Reveal na naslovih + kartice funkcij (zamik 0.05s*i) + trije koraki + cenovni načrti (h-full) + FAQ + FinalCta; demo-section.tsx: Reveal na glavi
+- DASHBOARD: hitro iskanje v koledarju — stanje search, filteredAppointments (ime + telefon z normalizacijo presledkov), iskalno polje z ikono + gumb počisti + slovenski števec zadetkov (1 zadetek/2-3-4 zadetki/5+ zadetkov), ločeno prazno stanje za iskanje; appointments.map → filteredAppointments.map
+- 2 lint napaki odpravljeni: odvečen } v booking-widget (parsing) in setState v efektu v theme-toggle (rešeno s CSS preklopom ikon)
+- E2E (agent-browser): stikalo → .dark na <html> (lab ozadje), persistenca prek osvežitve; VLM ocene temnega načina: hero 9/10, cene 9/10, demo/booking 9/10, svetli hero 9/10 ("production-ready dark mode"); iskanje: "Ana" → 4→1 zadetek + status, "xyz123" → prazno stanje, "386 41" → Ana Novak (normalizacija OK), števec 0 zadetkov; mobilni 375px: scrollWidth=375 (0 preliva, lastniški zavihek vključno), noga naravno potisnjena; 0 konzolnih napak/opozoril; dev.log brez napak; bun run lint čisto
+- README: 3 nove sekcije (Temni način, Animacije, Hitro iskanje)
+
+Stage Summary:
+- 3 nove UI/UX funkcionalnosti: 🌙 temni način (custom roza paleta + persistenca), ✨ Framer Motion (hero vstop + lebdeče kartice + scroll-reveal vseh sekcij), 🔍 hitro iskanje v koledarju (ime/telefon)
+- Oba neuporabljena paketa (next-themes, framer-motion) zdaj v polni uporabi
+- VLM povprečna ocena 9/10, E2E vse zeleno, lint čist
+- Naslednji možni koraki: pilot pri pravem salonu, prodajni PDF, online faza (WhatsApp Business API), morebitni več-izvajalci

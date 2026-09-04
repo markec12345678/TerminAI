@@ -7,6 +7,7 @@ import { BookingWidget } from './booking-widget'
 import { AiAssistant } from './ai-assistant'
 import { AiAssistantOffline } from './ai-assistant-offline'
 import { Dashboard } from './dashboard'
+import { Reveal } from './reveal'
 import type { BusinessDto, ServiceDto } from './types'
 
 // Build-time zastavica: USB/offline build ima NEXT_PUBLIC_AI_ENABLED=false
@@ -47,7 +48,7 @@ export function DemoSection() {
   return (
     <section id="demo" className="scroll-mt-16 bg-gradient-to-b from-muted/40 to-background py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="mx-auto max-w-2xl text-center">
+        <Reveal className="mx-auto max-w-2xl text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1.5 text-xs font-medium text-primary">
             Živi demo · ne navidezen
           </div>
@@ -60,7 +61,7 @@ export function DemoSection() {
             vključena samo za predstavitev. Demo salon:{' '}
             <strong className="text-foreground">{business?.name ?? 'Studio Aura'}, Ljubljana</strong>.
           </p>
-        </div>
+        </Reveal>
 
         <Tabs defaultValue="stranka" className="mt-8">
           <div className="flex justify-center">

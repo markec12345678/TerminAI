@@ -96,7 +96,7 @@ export function RemindersDialog({ open, onOpenChange, businessName, tomorrowDate
                 <div
                   key={a.id}
                   className={`flex items-center gap-3 rounded-xl border p-3 transition-colors ${
-                    isSent ? 'border-emerald-200 bg-emerald-50/50' : 'border-border/60'
+                    isSent ? 'border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/40' : 'border-border/60'
                   }`}
                 >
                   <span className="flex h-10 w-12 shrink-0 flex-col items-center justify-center rounded-lg bg-secondary text-sm font-semibold">
@@ -108,7 +108,7 @@ export function RemindersDialog({ open, onOpenChange, businessName, tomorrowDate
                     <div className="truncate text-xs text-muted-foreground">{a.service.name}</div>
                   </div>
                   {isSent ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                       <CheckCircle2 className="h-4 w-4" /> poslano
                     </span>
                   ) : (

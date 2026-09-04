@@ -1,34 +1,71 @@
 'use client'
 
+import { motion, useReducedMotion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Sparkles, ArrowDown, Bell, CalendarCheck, TrendingUp, PhoneOff, WifiOff } from 'lucide-react'
 
 export function Hero() {
+  const reduced = useReducedMotion()
+
+  // Postopni vstop — vsak element pride malo kasneje
+  const fadeUp = {
+    hidden: { opacity: 0, y: reduced ? 0 : 22 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.55, delay: 0.08 * i, ease: [0.22, 1, 0.36, 1] as const },
+    }),
+  }
+
   return (
     <section className="relative overflow-hidden dot-grid">
       <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-primary/10 blur-3xl" aria-hidden="true" />
-      <div className="pointer-events-none absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-amber-200/30 blur-3xl" aria-hidden="true" />
+      <div className="pointer-events-none absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-amber-200/30 blur-3xl dark:bg-amber-500/10" aria-hidden="true" />
 
       <div className="relative mx-auto grid max-w-6xl gap-10 px-4 pb-16 pt-14 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-12 lg:pb-24 lg:pt-20">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1.5 text-xs font-medium text-primary">
+          <motion.div
+            custom={0}
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1.5 text-xs font-medium text-primary"
+          >
             <WifiOff className="h-3.5 w-3.5" />
             Deluje tudi brez interneta · podatki ostanejo pri vas
-          </div>
+          </motion.div>
 
-          <h1 className="mt-5 font-display text-4xl font-semibold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
+          <motion.h1
+            custom={1}
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            className="mt-5 font-display text-4xl font-semibold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl"
+          >
             Manjkajoči termini <br />
             <span className="italic text-primary">so končani.</span>
-          </h1>
+          </motion.h1>
 
-          <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+          <motion.p
+            custom={2}
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg"
+          >
             TerminAI je rezervacijski sistem za frizerske, kozmetične in druge salone. Stranke rezervirajo same
             <strong className="text-foreground"> 24/7</strong> — na vašem računalniku, brez naročnine in brez
             odvisnosti od interneta. Izostanki se zmanjšajo za <strong className="text-foreground">do 40 %</strong>,
             AI recepcionarka Ana pa je na voljo kot <strong className="text-foreground">dodatek</strong>.
-          </p>
+          </motion.p>
 
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+          <motion.div
+            custom={3}
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            className="mt-7 flex flex-col gap-3 sm:flex-row"
+          >
             <Button asChild size="lg" className="gap-2 text-base shadow-lg shadow-primary/25">
               <a href="#demo">
                 <Sparkles className="h-4 w-4" /> Poglej živi demo
@@ -37,9 +74,15 @@ export function Hero() {
             <Button asChild size="lg" variant="outline" className="gap-2 text-base">
               <a href="#cene">Cene za salone</a>
             </Button>
-          </div>
+          </motion.div>
 
-          <dl className="mt-10 grid max-w-lg grid-cols-3 gap-4 border-t pt-6">
+          <motion.dl
+            custom={4}
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            className="mt-10 grid max-w-lg grid-cols-3 gap-4 border-t pt-6"
+          >
             {[
               { icon: <PhoneOff className="h-4 w-4" />, value: '−80 %', label: 'telefoniranja' },
               { icon: <Bell className="h-4 w-4" />, value: '−40 %', label: 'izostankov' },
@@ -52,26 +95,32 @@ export function Hero() {
                 <dd className="mt-1 font-display text-3xl font-semibold text-primary">{s.value}</dd>
               </div>
             ))}
-          </dl>
+          </motion.dl>
         </div>
 
         {/* Vizualna kartica */}
-        <div className="relative hidden lg:block" aria-hidden="true">
-          <div className="absolute left-6 top-6 z-10 max-w-[240px] -rotate-2 rounded-2xl border bg-card p-4 shadow-xl">
+        <motion.div
+          initial={{ opacity: 0, scale: reduced ? 1 : 0.96, y: reduced ? 0 : 16 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
+          className="relative hidden lg:block"
+          aria-hidden="true"
+        >
+          <div className="animate-float-soft absolute left-6 top-6 z-10 max-w-[240px] -rotate-2 rounded-2xl border bg-card p-4 shadow-xl">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100">
-                <CalendarCheck className="h-3.5 w-3.5 text-emerald-600" />
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950">
+                <CalendarCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
               </span>
               Nova rezervacija
             </div>
             <div className="mt-2 font-medium">Ana Novak</div>
             <div className="text-xs text-muted-foreground">Striženje — ženske · sob 10:30</div>
-            <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600">
+            <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
               <WifiOff className="h-3 w-3" /> Brez interneta · offline
             </div>
           </div>
 
-          <div className="absolute bottom-10 right-4 z-10 max-w-[230px] rotate-1 rounded-2xl border bg-card p-4 shadow-xl">
+          <div className="animate-float-soft-delayed absolute bottom-10 right-4 z-10 max-w-[230px] rotate-1 rounded-2xl border bg-card p-4 shadow-xl">
             <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Prihodki — oktober</div>
             <div className="mt-1 font-display text-3xl font-semibold text-primary">4.280 €</div>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
@@ -111,7 +160,7 @@ export function Hero() {
               <span className="font-semibold text-white">72 %</span>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       <div className="relative flex justify-center pb-8">

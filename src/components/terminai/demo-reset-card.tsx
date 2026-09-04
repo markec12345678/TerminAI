@@ -56,7 +56,7 @@ export function DemoResetCard() {
     <Card className="border-amber-200/60">
       <CardContent className="space-y-3 p-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-amber-600" />
+          <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />
           <h3 className="text-sm font-semibold">Demo podatki (za predstavitev)</h3>
         </div>
         <p className="text-xs leading-relaxed text-muted-foreground">

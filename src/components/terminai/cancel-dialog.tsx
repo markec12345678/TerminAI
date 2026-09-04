@@ -89,7 +89,7 @@ export function CancelDialog() {
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 font-display">
-                <CheckCircle2 className="h-5 w-5 text-emerald-600" /> Termin je odpovedan
+                <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /> Termin je odpovedan
               </DialogTitle>
               <DialogDescription>
                 {info ? `${info.businessName} se bo veselil vašega novega obiska — rezervirate ga lahko na tej strani.` : 'Hvala za obvestilo.'}

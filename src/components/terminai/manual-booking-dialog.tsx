@@ -306,7 +306,7 @@ export function ManualBookingDialog({ open, onOpenChange, date, prefill, onCreat
                       >
                         {s.time}
                         {s.available && s.peak && !selected && (
-                          <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 text-amber-900">
+                          <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 text-amber-950">
                             <Flame className="h-2.5 w-2.5" />
                           </span>
                         )}

@@ -245,7 +245,7 @@ export function ClientsTab() {
                       {c.noShows > 0 && (
                         <Badge
                           variant="outline"
-                          className="gap-1 border-rose-200 bg-rose-50 text-rose-600"
+                          className="gap-1 border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-400"
                           title="Število izostankov — poteče če pravi termini"
                         >
                           <AlertTriangle className="h-3 w-3" /> {c.noShows}× ni prišla
@@ -314,7 +314,7 @@ export function ClientsTab() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600"
+                        className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-950/60 dark:hover:text-red-300"
                         onClick={() => setDeleteTarget(c)}
                         aria-label={`Izbriši ${c.name}`}
                         title="GDPR izbris — stranka in vsi njeni termini"

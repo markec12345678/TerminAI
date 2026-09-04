@@ -326,7 +326,7 @@ export function BookingWidget({ services, businessName, businessTagline, busines
                   <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
                     <CalendarIcon className="mx-auto mb-2 h-6 w-6 opacity-40" />
                     {closedReason
-                      ? <>Na ta dan je salon zaprt <span className="text-rose-600">({closedReason})</span>. Izberite drug dan.</>
+                      ? <>Na ta dan je salon zaprt <span className="text-rose-600 dark:text-rose-400">({closedReason})</span>. Izberite drug dan.</>
                       : <>Na ta dan je salon zaprt. Izberite drug dan.</>}
                   </div>
                 ) : (
@@ -349,7 +349,7 @@ export function BookingWidget({ services, businessName, businessTagline, busines
                         >
                           {s.time}
                           {s.available && s.peak && !selected && (
-                            <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 text-[7px] text-amber-900" title="Vršni čas">
+                            <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 text-[7px] text-amber-950" title="Vršni čas">
                               <Flame className="h-2.5 w-2.5" />
                             </span>
                           )}
@@ -369,7 +369,7 @@ export function BookingWidget({ services, businessName, businessTagline, busines
                       <CalendarIcon className="h-3.5 w-3.5" />
                       {dateParts(date!).dayName}, {dateParts(date!).dayNum}. {dateParts(date!).month} ob {slot.time}
                     </span>
-                    {slot.peak && <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">vršni čas</span>}
+                    {slot.peak && <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300">vršni čas</span>}
                   </>
                 ) : (
                   'Izberite dan in uro …'
@@ -454,8 +454,8 @@ export function BookingWidget({ services, businessName, businessTagline, busines
           </div>
         ) : confirmed ? (
           <div className="py-4 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
-              <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950">
+              <CheckCircle2 className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
             </div>
             <h4 className="font-display text-2xl font-semibold">Termin potrjen!</h4>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -513,7 +513,7 @@ export function BookingWidget({ services, businessName, businessTagline, busines
                       }
                     }}
                   >
-                    {linkCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                    {linkCopied ? <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
                     {linkCopied ? 'Kopirano' : 'Kopiraj'}
                   </Button>
                 </div>

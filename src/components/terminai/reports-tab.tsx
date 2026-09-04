@@ -52,9 +52,9 @@ function KpiCard({
     accent === 'primary'
       ? 'bg-primary/10 text-primary'
       : accent === 'emerald'
-        ? 'bg-emerald-100 text-emerald-600'
+        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
         : accent === 'amber'
-          ? 'bg-amber-100 text-amber-600'
+          ? 'bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400'
           : 'bg-secondary text-secondary-foreground'
   return (
     <Card className="border-border/60">
