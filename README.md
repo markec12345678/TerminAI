@@ -153,6 +153,12 @@
 - Gumb **WhatsApp** s pripravljeno čestitko in rojstnodnevnim povabilom (-20 % v rojstnem mesecu — najbolj odprto sporočilo, ki ga stranka prejme)
 - Kot Zenoti »birthday campaigns«, a osebno in brez naročnine
 
+### 📄 Prodajni letak (PDF) — orodje za pilot pri salonu
+- **5 strani (A4-podobno)**: naslovnica z 3 statistikami (199 € enkrat / 0 € naročnine / 100 % pri vas) → koristi → delovni dan s TerminAIjem (časovnica 8 korakov) → primerjava s Zenoti/Fresha → cene + FAQ → temna zaključna stran s CTA
+- Blagovna znamka skladna s stranjo: burgundy paleta + Playfair Display/Inter; **vektorski PDF** (besedilo izberljivo, ostro pri povečavi)
+- Gumb **»Prenesi prodajni letak (PDF)«** na koncu cenovne sekcije (odpre `public/terminai-letak.pdf`)
+- Vir: `sales-flyer/terminai-letak.html` (urediv HTML) → `html2pdf-next.js`; kopija za USB: `dist-usb/TERMINAI/PRODAJNI-LETA.pdf` — namestitelj ga natisne in pusti frizerki
+
 ---
 
 ## Tehnični sklad

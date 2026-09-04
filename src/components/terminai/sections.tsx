@@ -19,6 +19,7 @@ import {
   HardDrive,
   Wrench,
   CalendarX2,
+  FileDown,
 } from 'lucide-react'
 
 const FEATURES = [
@@ -258,10 +259,18 @@ export function Pricing() {
           ))}
         </div>
 
-        <p className="mt-6 flex items-center justify-center gap-2 text-center text-xs text-muted-foreground">
+        <p className="mt-6 flex flex-wrap items-center justify-center gap-2 text-center text-xs text-muted-foreground">
           <Smartphone className="h-3.5 w-3.5" /> Preizkus brez stroškov: namestim sistem pri vas, stranke ga
           preizkusijo, plačate šele po odločitvi.
         </p>
+
+        <div className="mt-4 flex justify-center">
+          <Button asChild variant="outline" className="gap-2 border-primary/40 hover:border-primary/60 hover:bg-primary/5">
+            <a href="/terminai-letak.pdf" target="_blank" rel="noopener noreferrer">
+              <FileDown className="h-4 w-4" /> Prenesi prodajni letak (PDF)
+            </a>
+          </Button>
+        </div>
       </div>
     </section>
   )

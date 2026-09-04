@@ -47,3 +47,11 @@ NOVOSTI (build 2026-09-04):
     nov termin na kartici izostanka + hint na cekalni seznam.
   - Deljenje fotografij: "Poslji stranki" (Web Share API na
     telefonu, prenos + WhatsApp na racunalniku), "Prenesi" JPEG.
+
+NOVOSTI (build 2026-09-04, dopolnitev):
+  - PRODAJNI-LETA.pdf v korenu USB: 5-strani prodajni letak
+    (naslovnica, koristi, delovni dan, primerjava z Zenoti, cene+FAQ, CTA).
+    Natisni ga in pusti frizerki. HTML vir: prodajni-letak.html
+    (urejanje besedila/cen v poljubnem urejevalniku).
+  - Stran ima nov gumb "Prenesi prodajni letak (PDF)" pod cenami
+    (odpre /terminai-letak.pdf — deluje tudi offline).

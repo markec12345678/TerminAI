@@ -407,3 +407,25 @@ Stage Summary:
 - Zenoti primerjava (225–500 $/mesec) — TerminAI pokriva celoten življenjski cikel: rezervacija → check-in → formula + foto → zaključek → rebooking → no-show recovery → win-back → rojstnodnevna čestitka
 - Prodajni argument: "Zenoti 'no-show recovery' in Photo Manager: v naročnini. TerminAI: izostanek pretvorite v novo rezervacijo z enim klikom, fotografijo pošljete stranki z enim klikom — brez naročnine."
 - Naslednji možni koraki: pilot pri pravem salonu, prodajni PDF, online faza (WhatsApp Business API)
+
+---
+Task ID: 17
+Agent: Z.ai Code (glavni agent)
+Task: Prodajni letak (PDF) — orodje za pilota pri pravem salonu
+
+Work Log:
+- PDF skill (creative-flow brief: HTML → html2pdf-next.js, Paged.js ni nameščen → --nopaged Chromium native @page, 720×1020 px/stran)
+- NOV sales-flyer/terminai-letak.html: 5 strani — naslovnica (temna burgundy, badge "Za male salone in solo frizerke", 3 statistike: 199 € enkrat / 0 € naročnine / 100 % pri vas) → Zakaj + 6 kartic koristi (2×3 grid) → "Vaš dan s TerminAIjem" časovnica 8 korakov (jutranji pregled → zvok → check-in → zamujanje → formula+fotografija → rebooking → no-show recovery → rojstni dnevi) → primerjalna tabela (TerminAI/Zenoti/Fresha: letni strošek, offline, podatki, slovenščina, solo) + Zenoti citat → 3 cenovne kartice (199 €/19 €/39 €) + FAQ (3 vprašanja) → temna zaključna stran "Uro kasneje vse deluje." z 3 koraki in kontaktom
+- Blagovna znamka skladna s stranjo: burgundy #9e2749 družina (XL svetlo #fffdfc, L #f9edf2, S #ecd5df) + Playfair Display (naslovi) + Inter (besedilo) — isti font kot spletna stran
+- ITERACIJE PO QA: (1) prva različica: 4. stran 60 % prazna s TEMNIM ozadjem (body bg = temna) → rešitev: oblikovana .ending zaključna stran (fiksna 1020px, break-before: page, zrcali naslovnico) + body bg preklopljen na svetlo (temni rob < 1px na naslovnici/zaključku je neviden, temni blok 25 % pa je bil glavna napaka); (2) krogi na naslovnici prekrižali robove strani (top:-120px) → prestavljeni čez levo/desno rob (horizontalni clip); (3) stran s cenami imela ~40 % dihalnega prostora → dodan FAQ (3 vprašanja, Q žeton);
+- VALIDACIJA: poster_validate check-html (edine napake = lažni pozitivi cover_validateja na CELOTNEM dokumentu: vsebinske divider črte 12–16 px pod naslovi po dizajnu + gnezdeni <small> v staršu; sama naslovnica čista — SKILL.md: cover_validate je le za samostojne cover datoteke); pdf_qa.py --no-tables: PASS (vsiChecks: fonti vgrajeni, brez preliva, simetrični robovi, full-bleed naslovnica, metapodatki); metapodatki nastavljeni (meta.set: Title/Author/Creator/Subject)
+- VLM ocene po iteracijah: naslovnica 10/10, časovnica 9/10 (celotna 1–8), primerjava 8/10, cene+FAQ 9/10, zaključna stran 10/10; končna struktura: 5 strani, 330 KB, ~788 besed
+- Besedilo: ekstrakcija pymupdf — 0 tofu, čšž pravilni; vektorski PDF (page.pdf, besedilo izberljivo)
+- INTEGRACIJA: public/terminai-letak.pdf (dostop 200, 338 KB) + gumb "Prenesi prodajni letak (PDF)" na koncu cenovne sekcije (FileDown ikona, outline primary stil, target=_blank) + dist-usb/TERMINAI/PRODAJNI-LETA.pdf + prodajni-letak.html vir za urejanje
+- E2E (agent-browser): gumb klik → navigacija na /terminai-letak.pdf → contentType application/pdf ✓ → back deluje; mobilni 375 px: scrollWidth 375 (0 preliva), gumb viden; 0 konzolnih napak; bun run lint čist; dev.log brez napak
+- README (nova sekcija 📄 Prodajni letak) + ZA-TEBE.txt (PRODAJNI-LETA.pdf navodila za namestitelja: natisni in pusti frizerki)
+
+Stage Summary:
+- Prodajni letak (5 strani, vektorski, 330 KB) — prvo prodajno orodje za pilota: naslovnica z veselo statistiko, delovni dan po Zenoti benchmarku, primerjava (2.700–6.000 $/leto Zenoti vs 199 € enkrat), cene skladne s stranjo (199/19/39), FAQ za ugovore, temna CTA zaključna stran
+- Deliverables: sales-flyer/terminai-letak.html (vir) + public/terminai-letak.pdf (spletni prenos) + dist-usb/TERMINAI/PRODAJNI-LETA.pdf (USB) — html2pdf-next.js, QA PASS, VLM 9–10/10
+- Naslednji možni koraki: pilot pri pravem salonu (letak natisnjen), online faza (WhatsApp Business API), večjezični letak (EN)

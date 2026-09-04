@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+<meta charset="UTF-8">
+<title>TerminAI — Prodajni letak</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+@page {
+  size: 720px 1020px;
+  margin: 0;
+}
+:root {
+  --c-deep: #3d0f22;      /* najtemnejša burgundy — cover ozadje */
+  --c-primary: #9e2749;   /* primarna roza-burgundy */
+  --c-soft: #f9edf2;      /* mehko roza ozadje kartic */
+  --c-border: #ecd5df;    /* mehke črte */
+  --c-text: #2a1a20;      /* besedilo */
+  --c-mut: #6f5a61;       /* umirjeno besedilo */
+}
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 720px;
+  background: #fffdfc; /* svetla podloga: zadnja vsebinska stran se konča kot papir, ne temni blok */
+  color: var(--c-text);
+  font-family: 'Inter', 'Liberation Sans', sans-serif;
+  font-size: 13px;
+  line-height: 1.6;
+  line-break: strict;
+  word-break: normal;
+}
+@media screen {
+  html { height: auto; display: flex; justify-content: center; background: #241018; }
+  body { transform-origin: top center; margin: 20px auto; box-shadow: 0 8px 40px rgba(0,0,0,.4); }
+}
+p, td, li, div { overflow-wrap: break-word; }
+img, svg { max-width: 100%; height: auto; }
+
+/* ============ COVER ============ */
+.cover {
+  width: 720px;
+  height: 1020px;
+  box-sizing: border-box;
+  break-after: page;
+  overflow: hidden;            /* dovoljeno samo na cover */
+  position: relative;
+  background: linear-gradient(160deg, #471229 0%, var(--c-deep) 55%, #2a0a18 100%);
+  color: #fdf6f8;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 64px;
+}
+.cover .circle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.cover .c1 { width: 340px; height: 340px; top: 0; right: -120px; background: radial-gradient(circle, rgba(158,39,73,.35), rgba(158,39,73,0) 70%); }
+.cover .c2 { width: 220px; height: 220px; bottom: 0; left: -50px; background: radial-gradient(circle, rgba(158,39,73,.28), rgba(158,39,73,0) 70%); }
+.cover .c3 { width: 120px; height: 120px; top: 180px; left: 56px; border: 1px solid rgba(236,213,223,.25); background: none; }
+.cover-badge {
+  display: inline-block;
+  align-self: flex-start;
+  border: 1px solid rgba(236,213,223,.45);
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #eccfd8;
+  margin-bottom: 34px;
+}
+.cover-title {
+  font-family: 'Playfair Display', 'Liberation Serif', serif;
+  font-size: 68px;
+  font-weight: 900;
+  line-height: 1.02;
+  margin: 0;
+  letter-spacing: -1px;
+}
+.cover-subtitle {
+  font-family: 'Playfair Display', 'Liberation Serif', serif;
+  font-size: 23px;
+  font-style: italic;
+  font-weight: 400;
+  color: #e9c4cf;
+  margin: 14px 0 0;
+}
+.cover-tagline {
+  margin: 30px 0 0;
+  font-size: 14.5px;
+  line-height: 1.75;
+  color: #d9b9c2;
+  max-width: 470px;
+}
+.cover-tagline strong { color: #fdf6f8; font-weight: 600; }
+.cover-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin-top: 52px;
+  border-top: 1px solid rgba(236,213,223,.3);
+  padding-top: 30px;
+  max-width: 100%;
+}
+.cover-stat {
+  flex: 1 1 auto;
+  min-width: 150px;
+  max-width: 100%;
+}
+.cover-stat + .cover-stat { border-left: 1px solid rgba(236,213,223,.22); padding-left: 24px; margin-left: 24px; }
+.cover-stat .num {
+  font-family: 'Playfair Display', 'Liberation Serif', serif;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fdf6f8;
+}
+.cover-stat .num small { font-size: 16px; font-weight: 400; color: #e9c4cf; }
+.cover-stat .lbl {
+  margin-top: 8px;
+  font-size: 10.5px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: #b48ea0;
+}
+.cover-edition {
+  position: absolute;
+  bottom: 40px; left: 64px; right: 64px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #8d6572;
+}
+
+/* ============ VSEBINA ============ */
+.main-content {
+  background: #fffdfc;
+  padding: 56px 56px 40px;
+}
+.chapter-header {
+  break-after: avoid;
+  break-inside: avoid;
+  margin-top: 26px;
+}
+.chapter-header:first-child { margin-top: 0; }
+.section-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--c-primary);
+}
+.section-title {
+  font-family: 'Playfair Display', 'Liberation Serif', serif;
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 6px 0 0;
+  color: var(--c-text);
+}
+.divider {
+  width: 44px;
+  height: 3px;
+  background: var(--c-primary);
+  border-radius: 2px;
+  margin: 12px 0 16px;
+}
+.intro-text {
+  font-size: 13.5px;
+  color: var(--c-mut);
+  max-width: 600px;
+}
+.intro-text strong { color: var(--c-text); font-weight: 600; }
+
+/* kartice koristi */
+.benefit-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+  max-width: 100%;
+}
+.benefit {
+  flex: 1 1 290px;
+  min-width: 240px;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: var(--c-soft);
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  padding: 16px 18px 14px;
+  break-inside: avoid;
+}
+.benefit .dot {
+  width: 9px; height: 9px;
+  border-radius: 3px;
+  background: var(--c-primary);
+  display: inline-block;
+  margin-right: 8px;
+}
+.benefit .t {
+  display: inline;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--c-text);
+}
+.benefit .d {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--c-mut);
+}
+
+/* timeline dneva */
+.timeline {
+  margin: 18px 0 0 6px;
+  padding: 0;
+  list-style: none;
+  max-width: 620px;
+}
+.timeline li {
+  position: relative;
+  padding: 0 0 16px 40px;
+  break-inside: avoid;
+}
+.timeline li::before {
+  content: '';
+  position: absolute;
+  left: 12px; top: 6px; bottom: -4px;
+  width: 2px;
+  background: var(--c-border);
+}
+.timeline li:last-child::before { display: none; }
+.timeline .step-dot {
+  position: absolute;
+  left: 0; top: 3px;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--c-soft);
+  border: 1px solid var(--c-border);
+  color: var(--c-primary);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+.timeline .step-t {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text);
+}
+.timeline .step-t .time { color: var(--c-primary); }
+.timeline .step-d {
+  font-size: 12px;
+  color: var(--c-mut);
+  margin-top: 2px;
+}
+
+/* primerjalna tabela */
+.cmp-table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  table-layout: fixed;
+  font-size: 12px;
+}
+.cmp-table th, .cmp-table td {
+  padding: 9px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--c-border);
+  overflow-wrap: break-word;
+}
+.cmp-table thead th {
+  font-size: 10.5px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--c-mut);
+  border-bottom: 2px solid var(--c-primary);
+}
+.cmp-table td.us {
+  background: var(--c-soft);
+  font-weight: 600;
+  color: var(--c-text);
+}
+.cmp-table th.us { color: var(--c-primary); }
+.cmp-table .yes { color: #1f7a4d; font-weight: 700; }
+.cmp-table .no  { color: #a8435e; font-weight: 700; }
+
+/* citat */
+.quote {
+  border-left: 3px solid var(--c-primary);
+  background: var(--c-soft);
+  border-radius: 0 12px 12px 0;
+  padding: 16px 20px;
+  margin: 18px 0 0;
+  break-inside: avoid;
+}
+.quote .q {
+  font-family: 'Playfair Display', 'Liberation Serif', serif;
+  font-size: 14.5px;
+  font-style: italic;
+  color: var(--c-text);
+  line-height: 1.5;
+}
+.quote .s {
+  margin-top: 8px;
+  font-size: 10.5px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--c-mut);
+}
+
+/* cene */
+.price-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+  max-width: 100%;
+}
+.price-card {
+  flex: 1 1 190px;
+  min-width: 180px;
+  max-width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  padding: 18px 18px 16px;
+  background: #fffdfc;
+  break-inside: avoid;
+  position: relative;
+}
+.price-card.hi {
+  border: 2px solid var(--c-primary);
+  background: var(--c-soft);
+}
+.price-card .badge {
+  position: absolute;
+  top: -11px; left: 16px;
+  background: var(--c-primary);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+.price-card .name {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--c-mut);
+}
+.price-card .price {
+  font-family: 'Playfair Display', 'Liberation Serif', serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--c-text);
+  margin: 8px 0 2px;
+  line-height: 1;
+}
+.price-card .period {
+  font-size: 10.5px;
+  color: var(--c-mut);
+}
+.price-card ul {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.price-card li {
+  font-size: 11.5px;
+  color: var(--c-mut);
+  padding: 3px 0 3px 18px;
+  position: relative;
+}
+.price-card li::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 9px;
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  background: var(--c-primary);
+  opacity: .55;
+}
+
+/* CTA — zaključna stran */
+.ending {
+  width: 720px;
+  height: 1020px;
+  box-sizing: border-box;
+  break-before: page;
+  overflow: hidden;
+  position: relative;
+  background: linear-gradient(200deg, #471229 0%, var(--c-deep) 55%, #2a0a18 100%);
+  color: #fdf6f8;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 64px;
+}
+.ending .circle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.ending .e1 { width: 300px; height: 300px; top: 0; left: -110px; background: radial-gradient(circle, rgba(158,39,73,.3), rgba(158,39,73,0) 70%); }
+.ending .e2 { width: 200px; height: 200px; bottom: 0; right: -60px; background: radial-gradient(circle, rgba(158,39,73,.25), rgba(158,39,73,0) 70%); }
+.ending-tag {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #eccfd8;
+}
+.ending-title {
+  font-family: 'Playfair Display', 'Liberation Serif', serif;
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1.08;
+  margin: 16px 0 0;
+}
+.ending-title em { font-style: italic; color: #e9c4cf; }
+.ending-sub {
+  margin: 16px 0 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #d9b9c2;
+  max-width: 470px;
+}
+.ending-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 44px;
+  max-width: 100%;
+}
+.ending-step {
+  flex: 1 1 170px;
+  min-width: 160px;
+  max-width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(236,213,223,.25);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+.ending-step .n {
+  font-family: 'Playfair Display', 'Liberation Serif', serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: #e9c4cf;
+  line-height: 1;
+}
+.ending-step .t {
+  margin-top: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fdf6f8;
+}
+.ending-step .d {
+  margin-top: 4px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: #d9b9c2;
+}
+.ending-contact {
+  margin-top: 44px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(236,213,223,.3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 32px;
+  font-size: 13px;
+  color: #eccfd8;
+}
+.ending-contact strong { color: #fdf6f8; }
+.ending-edition {
+  position: absolute;
+  bottom: 40px; left: 64px; right: 64px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #8d6572;
+}
+
+/* FAQ */
+.faq {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+  max-width: 100%;
+}
+.faq-item {
+  flex: 1 1 290px;
+  min-width: 250px;
+  max-width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  padding: 14px 18px 13px;
+  background: #fffdfc;
+  break-inside: avoid;
+}
+.faq-item .q {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--c-text);
+}
+.faq-item .q::before {
+  content: '?';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--c-soft);
+  color: var(--c-primary);
+  font-size: 10px;
+  font-weight: 800;
+  margin-right: 7px;
+}
+.faq-item .a {
+  margin-top: 6px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--c-mut);
+}
+
+.doc-footer {
+  margin-top: 26px;
+  padding-top: 14px;
+  border-top: 1px solid var(--c-border);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #a08a92;
+}
+</style>
+</head>
+<body>
+
+<!-- ============ NASLOVNICA ============ -->
+<div class="cover">
+  <div class="circle c1"></div>
+  <div class="circle c2"></div>
+  <div class="circle c3"></div>
+  <div class="cover-badge">Za male salone in solo frizerke</div>
+  <h1 class="cover-title">TerminAI</h1>
+  <div class="cover-subtitle">Rezervacijski sistem za vaš salon</div>
+  <p class="cover-tagline">
+    Stranke rezervirajo same — <strong>24/7, na svojem telefonu</strong>.
+    Vi samo priključite računalnik v salonu. <strong>Brez naročnine.
+    Brez oblaka. V slovenščini.</strong>
+  </p>
+  <div class="cover-stats">
+    <div class="cover-stat">
+      <div class="num">199 <small>€</small></div>
+      <div class="lbl">Enkraten nakup</div>
+    </div>
+    <div class="cover-stat">
+      <div class="num">0 <small>€</small></div>
+      <div class="lbl">Mesečna naročnina</div>
+    </div>
+    <div class="cover-stat">
+      <div class="num">100 <small>%</small></div>
+      <div class="lbl">Podatki pri vas</div>
+    </div>
+  </div>
+  <div class="cover-edition">
+    <span>TerminAI · 2026</span>
+    <span>Prodajni letak</span>
+  </div>
+</div>
+
+<!-- ============ VSEBINA ============ -->
+<div class="main-content">
+
+  <div class="chapter-header">
+    <div class="section-tag">Zakaj</div>
+    <div class="section-title">Rezervacija naj ne bo več odvisna od vašega telefona</div>
+    <div class="divider"></div>
+  </div>
+  <p class="intro-text">
+    Vsak dan zamujeni WhatsAppi, termini v zvezku, prazni prostori med obiski in
+    stranke, ki jih pozabite poklicati nazaj. <strong>TerminAI prepusti rezervacije
+    strankam samim</strong> — na vašem računalniku teče koledar, ki sam ve, kdaj ste
+    prosti, kaj stori storitev in kdo je na vrsti za naslednji obisk.
+  </p>
+
+  <div class="benefit-grid">
+    <div class="benefit">
+      <span class="dot"></span><span class="t">Rezervacije 24/7</span>
+      <p class="d">Stranke rezervirajo kadar koli — tudi ob 23. uri, ko vi že spite. Vsak prosti termin je na voljo.</p>
+    </div>
+    <div class="benefit">
+      <span class="dot"></span><span class="t">Deluje brez interneta</span>
+      <p class="d">Sistem teče na računalniku v salonu. Stranke rezervirajo prek telefona v vašem WiFi — internetne povezave ne potrebujete.</p>
+    </div>
+    <div class="benefit">
+      <span class="dot"></span><span class="t">Podatki ostanejo pri vas</span>
+      <p class="d">Baza strank, termini in prihodki so na vašem računalniku, ne v oblaku tretje osebe. Rezervna kopija na USB s klikom.</p>
+    </div>
+    <div class="benefit">
+      <span class="dot"></span><span class="t">Zvočna opozorila</span>
+      <p class="d">Slišite, ko prispe nova rezervacija, odpoved ali sporočilo — tudi medtem ko strižete.</p>
+    </div>
+    <div class="benefit">
+      <span class="dot"></span><span class="t">Pametne vršne cene</span>
+      <p class="d">Sobota in popoldnevi samodejno dražji, tihi termini cenejši — zasedenost se izenači, več je prometa.</p>
+    </div>
+    <div class="benefit">
+      <span class="dot"></span><span class="t">Formule in fotografije</span>
+      <p class="d">Zapisi barvanja pri vsaki stranki, fotografije pred in po — vse shranjeno lokalno, vidno samo za PIN-om.</p>
+    </div>
+  </div>
+
+  <div class="chapter-header">
+    <div class="section-tag">Delovni dan</div>
+    <div class="section-title">Vaš dan s TerminAIjem</div>
+    <div class="divider"></div>
+  </div>
+  <ul class="timeline">
+    <li>
+      <span class="step-dot">1</span>
+      <div class="step-t"><span class="time">8:00</span> — jutranji pregled</div>
+      <div class="step-d">Današnji termini, prihodki in zasedenost na enem zaslonu. Dnevni list natisnete z enim klikom.</div>
+    </li>
+    <li>
+      <span class="step-dot">2</span>
+      <div class="step-t">Zvok: nova rezervacija</div>
+      <div class="step-d">Stranka je rezervirala s telefona — vi slišite prijeten ton in nadaljujete s striženjem.</div>
+    </li>
+    <li>
+      <span class="step-dot">3</span>
+      <div class="step-t">Stranka pride — »Prišla je«</div>
+      <div class="step-d">En klik na check-in. Če zamudi, program sam opozori po 15 minutah.</div>
+    </li>
+    <li>
+      <span class="step-dot">4</span>
+      <div class="step-t">Obisk: formula in fotografija</div>
+      <div class="step-d">Ob zaključku zapišete mešanico barve in po potrebi fotografijo pred/po — shranjeno pri stranki.</div>
+    </li>
+    <li>
+      <span class="step-dot">5</span>
+      <div class="step-t">»Kdaj naslednjič?«</div>
+      <div class="step-d">Program predlaga naslednji termin (4–6 tednov) in vam pripravi sporočilo za stranko.</div>
+    </li>
+    <li>
+      <span class="step-dot">6</span>
+      <div class="step-t">Če ne pride — WhatsApp spodbuda</div>
+      <div class="step-d">En klik na »Ni prišla« in pripravljeno sporočilo spodbudi novo naročilo. Čakalni seznam zapolni prazen termin.</div>
+    </li>
+    <li>
+      <span class="step-dot">7</span>
+      <div class="step-t">Stranka, ki je dolgo ni bilo</div>
+      <div class="step-d">Program pokaže, koga ni bilo več kot 8 tednov — WhatsApp sporočilo za vrnitev.</div>
+    </li>
+    <li>
+      <span class="step-dot">8</span>
+      <div class="step-t">Rojstni dnevi</div>
+      <div class="step-d">Čestitka z enim klikom, z orodjem za ponudbo v rojstnem mesecu.</div>
+    </li>
+  </ul>
+
+  <div class="chapter-header">
+    <div class="section-tag">Primerjava</div>
+    <div class="section-title">Kaj pravzaprav plačujete drugje</div>
+    <div class="divider"></div>
+  </div>
+  <table class="cmp-table">
+    <thead>
+      <tr>
+        <th style="width:27%">Kaj</th>
+        <th class="us" style="width:26%">TerminAI</th>
+        <th style="width:26%">Zenoti</th>
+        <th style="width:21%">Fresha</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Letni strošek</td>
+        <td class="us">199 € enkrat</td>
+        <td>2.700–6.000 €</td>
+        <td>provizije</td>
+      </tr>
+      <tr>
+        <td>Deluje brez interneta</td>
+        <td class="us"><span class="yes">Da</span></td>
+        <td><span class="no">Ne</span></td>
+        <td><span class="no">Ne</span></td>
+      </tr>
+      <tr>
+        <td>Kje so podatki strank</td>
+        <td class="us">Pri vas</td>
+        <td>V oblaku</td>
+        <td>V oblaku</td>
+      </tr>
+      <tr>
+        <td>Slovenščina</td>
+        <td class="us"><span class="yes">Da</span></td>
+        <td><span class="no">Ne</span></td>
+        <td>delno</td>
+      </tr>
+      <tr>
+        <td>Za solo frizerke</td>
+        <td class="us"><span class="yes">Da</span></td>
+        <td>»ni za solo«</td>
+        <td>da</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="quote">
+    <div class="q">Zenoti je odličen za verige salonov — a zaračuna 225–500 $ mesečno na lokacijo, 12-mesečno pogodbo in ocenjujejo, da »ni za solo frizerke«. Enake vsakodnevne recepte ste dobili tukaj — za ceno enega obiska.</div>
+    <div class="s">Povzetek neodvisnih recenzij (Capterra, 4,4 zvezdice)</div>
+  </div>
+
+  <div class="chapter-header">
+    <div class="section-tag">Cene</div>
+    <div class="section-title">Enkrat plačate. Sistem je vaš.</div>
+    <div class="divider"></div>
+  </div>
+  <div class="price-grid">
+    <div class="price-card hi">
+      <span class="badge">Priporočamo</span>
+      <div class="name">Osnovni paket</div>
+      <div class="price">199 €</div>
+      <div class="period">enkrat · sistem postane vaš</div>
+      <ul>
+        <li>Namestitev na vašem računalniku</li>
+        <li>Vnos vaših storitev in cen skupaj z vami</li>
+        <li>Deluje popolnoma offline</li>
+        <li>Rezervna kopija baze na USB</li>
+        <li>Brez naročnine — plačate enkrat</li>
+      </ul>
+    </div>
+    <div class="price-card">
+      <div class="name">Vzdrževanje</div>
+      <div class="price">19 €</div>
+      <div class="period">na mesec · neobvezno</div>
+      <ul>
+        <li>Posodobitve sistema</li>
+        <li>Tehnična pomoč v slovenščini</li>
+        <li>Pregled rezervnih kopij</li>
+        <li>Preklic kadar koli</li>
+      </ul>
+    </div>
+    <div class="price-card">
+      <div class="name">Dodatek Ana AI</div>
+      <div class="price">39 €</div>
+      <div class="period">na mesec · ko greste na splet</div>
+      <ul>
+        <li>AI recepcionarka v slovenščini</li>
+        <li>SMS in e-mail spomniki</li>
+        <li>Povezava sistema na splet</li>
+        <li>Vklop / izklop kadar koli</li>
+      </ul>
+    </div>
+  </div>
+  <p class="intro-text" style="margin-top:14px">
+    Brez skritega, brez tveganja: namestitev pri vas, preizkus na vaših strankah,
+    plačilo šele ko ste zadovoljni. Vzdrževanje in Ana AI sta neobvezna.
+  </p>
+
+  <div class="chapter-header">
+    <div class="section-tag">Pogosta vprašanja</div>
+    <div class="section-title">Kaj frizerke vprašajo največkrat</div>
+    <div class="divider"></div>
+  </div>
+  <div class="faq">
+    <div class="faq-item">
+      <div class="q">Kaj če moje stranke nimajo pametnega telefona?</div>
+      <div class="a">Rezervacijska stran deluje na vsakem telefonu z brskalnikom — brez namestitve aplikacije. Starejše stranke lahko seveda pokličejo, termin pa vpišete vi v nadzorno ploščo.</div>
+    </div>
+    <div class="faq-item">
+      <div class="q">Kaj se zgodi, če računalnik pokvari?</div>
+      <div class="a">Podatki so v eni majhni datoteki, ki jo s klikom kopirate na USB ključek. Na nov računalnik jo prenesemo v celoti — vsi termini, stranke in fotografije so nazaj v minuti.</div>
+    </div>
+    <div class="faq-item">
+      <div class="q">Ali lahko kasneje preidem na splet?</div>
+      <div class="a">Da. Baza se uvozi na strežnik z enako shemo, vklopi se Ana AI in spomniki — isti podatki, ista izkušnja, brez pretvorbe.</div>
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <span>TerminAI · 2026</span>
+    <span>Podatki v tem letaku so informativnega značaja</span>
+  </div>
+
+</div>
+
+<!-- ============ ZAKLJUČEK ============ -->
+<div class="ending">
+  <div class="circle e1"></div>
+  <div class="circle e2"></div>
+  <div class="ending-tag">Kako začnemo</div>
+  <div class="ending-title">Uro kasneje <em>vse deluje.</em></div>
+  <p class="ending-sub">
+    Brez obveznosti, brez tehničnega znanja, brez naročnine. Prinesem sistem,
+    skupaj ga napolniva z vašimi storitvami — in takoj ga preizkusiva na vaših strankah.
+  </p>
+  <div class="ending-steps">
+    <div class="ending-step">
+      <div class="n">1</div>
+      <div class="t">Pišite ali pokličite</div>
+      <div class="d">Dogovorim se za obisk — brez obveznosti in brez stroškov.</div>
+    </div>
+    <div class="ending-step">
+      <div class="n">2</div>
+      <div class="t">Namestitev pri vas</div>
+      <div class="d">Prinesem sistem na USB ključku in skupaj vnesemo vaše storitve in cene.</div>
+    </div>
+    <div class="ending-step">
+      <div class="n">3</div>
+      <div class="t">Stranke takoj rezervirajo</div>
+      <div class="d">Odprejo stran na svojem telefonu — rezervacije prihajajo same, 24/7.</div>
+    </div>
+  </div>
+  <div class="ending-contact">
+    <span><strong>TerminAI</strong> · rezervacijski sistem za salone</span>
+    <span><strong>info@terminai.si</strong></span>
+  </div>
+  <div class="ending-edition">
+    <span>TerminAI · 2026</span>
+    <span>Deluje tudi brez interneta</span>
+  </div>
+</div>
+
+</body>
+</html>
