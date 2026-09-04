@@ -248,3 +248,35 @@ Stage Summary:
 - Dva tiča hrošča odpravljena: FK reset baze + horizontalni preliv na mobilnem (vsi zavihki)
 - Push: commit na github.com/markec12345678/TerminAI
 - Naslednji možni koraki: pilot pri pravem salonu, prodajni enostranski PDF, online faza (WhatsApp Business API)
+
+---
+Task ID: 11
+Agent: Z.ai Code (glavni agent)
+Task: Iskanje po spletu/znanju — analiza vrzeli proti konkurenci (Fresha, Booksy, Planity, Timely, Lime Booking) in implementacija vseh manjkajočih funkcij
+
+Work Log:
+- SPLETNA ANALIZA: 2 iskanji (8+6 zadetkov — Fresha/Planity/Naiva/TimeTailor/Lime Booking ...). Ugotovljene vrzeli: zaprti dnevi/prazniki/dopust (kritično), premor/kosilo (kritično), opombe o stranki (polje v bazi, nedostopno v UI), GDPR izbris/izvoz, obnova iz kopije, buffer priprave, PWA
+- Prisma: WorkingHours.breakStart/breakEnd + model ClosedDay (date @unique, reason) + Service.bufferMin; db:push
+- NOV src/lib/holidays.ts: slovenianHolidays (11 fiksnih + velikonočna nedelja/ponedeljek/binkošti prek Meeus/Jones/Butcher computusa), ensureHolidays (idempotentno), closedDayReason, upcomingDays
+- booking.ts: DayHours tip s premorom; getHoursForDayAsync vrne null za zaprt dan (vsvi klicoči pokriti); generateSlots: preskok premora, trajanje+buffer; seedDemo uvozi praznike za 2 leti
+- NOV API /api/closed-days: GET javno (200 dni za trakove), POST add/add-range (dopust)/holidays (PIN), DELETE ?date (PIN)
+- /api/hours: GET+PUT premori z validacijo (znotraj delovnega časa, start<end)
+- /api/appointments POST: jasen 400 "salon zaprto" namesto 409; /api/availability: closedReason v odgovoru
+- Sporočila: ReplyAvailability.closedReason → odgovor "smo žal ZAPRTI (razlog)" + alternativni dnevi
+- /api/services (+[id]): bufferMin validacija; storitveni dialog: izbira priprave 0–30 min
+- NOV /api/clients/[id]: GET = GDPR izvoz JSON (Content-Disposition, vsi termini), PATCH = opombe/e-pošta/ime, DELETE = stranka + termini (transakcija)
+- backup.ts: restoreBackup (zaščitna kopija → $disconnect → atomarni rename → $connect); BACKUP_NAME_RE z -N priponko ob trku imen; POST /api/backup {action:restore}; BackupCard: gumb Obnovi + AlertDialog + reload
+- PWA: src/app/manifest.ts (logo.svg, standalone, rose tema)
+- UI: kartica Zaprti dnevi & prazniki (uvoz, dopust od-do, posamezen dan, seznam z brisanjem); premor vnosi (sončna ikona) v Delovnem času; trakovi dni (widget + ročni dialog) prečrtajo zaprte dneve; ClientsTab: opombe (svinčnik, line-clamp prikaz), izvoz/izbris gumbi, AlertDialog; nova kartica Funkcije + 3 nova FAQ
+- HROŠČ UJET S TESTIRANJEM: VACUUM INTO zavrne obstoječo datoteko → varnostna kopija "pred obnovo" je padla ob istem imenu (ista minuta) → razrešitev imen s -2, -3 priponkami (BACKUP_NAME_RE posodobljen povsod)
+- Restart dev (db:push): rm .next + start-dev.sh (prvi poskus port TIME_WAIT, drugi uspešen)
+- E2E (agent-browser): prazniki uvoženi prek UI (28); zaprt dan 2026-09-09 dodan prek obrazca → trak stranke prečrta/onemogoči (14 dni, 1 disabled) → brisanje prek X ✓; premor ponedeljek 12-13: sloti 12:00/12:30 blokirani, 11:30 in 13:00 prosti ✓; buffer 15 min: zadnji slot 17:30→17:00 ✓; POST na zaprt dan = 400 ✓; sporočilo "jutri ob 10h" → odgovor "ZAPRTI (dopust test) + ponedeljek 09:00" ✓; GDPR: opombe Ana Novak shranjene+prikazane, izvoz (Content-Disposition), izbris prek AlertDialog (toast "odstranjenih terminov: 1", stranka izginila) ✓; obnova: kopija → Restore Test vnešen → restore → stranka/termin izginila, zaščitna kopija -2 ustvarjena ✓; 0 konzolnih napak/opozoril; mobilni 375 px: 0 preliva na vseh 5 zavihkih; dev.log brez napak
+- Testni podatki počiščeni (Gdpr×2, Restore, testni zaprti dnevi, testno sporočilo); Ana Novak opombe + ponedeljkov premor ostajata kot demo
+- README (nove sekcije), NAVODILA.txt (4 nova razdelka), ZA-TEBE.txt (NOVOST 6) posodobljeni
+- Push: commit c149dfe na github.com/markec12345678/TerminAI
+
+Stage Summary:
+- 7 vrzeli odpravljenih: zaprti dnevi/prazniki/dopust, premor, buffer priprave, opombe o stranki, GDPR izvoz/izbris, obnova iz kopije, PWA manifest
+- Prodajni argumenti: "sistem ve, kdaj ste zaprti — nobena stranka več ne rezervira na 1. maj", "formule pri stranki, ne v zvezku", "GDPR izbris v 10 sekundah", "obnova v enem kliku, brez izgube"
+- Baza: 7 novih API poti/podatkov; demo ima praznike 2026+2027, premor ponedeljek (predstavitev)
+- Naslednji možni koraki: pilot pri pravem salonu, multi-izvajalci, online faza (WhatsApp Business API)
