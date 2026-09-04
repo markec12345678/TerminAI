@@ -55,3 +55,14 @@ NOVOSTI (build 2026-09-04, dopolnitev):
     (urejanje besedila/cen v poljubnem urejevalniku).
   - Stran ima nov gumb "Prenesi prodajni letak (PDF)" pod cenami
     (odpre /terminai-letak.pdf — deluje tudi offline).
+
+NOVOSTI (build 2026-09-04, spletni demo):
+  - SPLETNI DEMO ZA VEDNO NA VOLJO: https://terminai-eight.vercel.app
+    (Vercel, samodejna objava ob vsakem pushu na main).
+  - Vsak obisk se zacne s svezimi demo podatki (Studio Aura)
+    - serverless SQLite v /tmp, spremembe niso trajne.
+  - Rumen demo trak na vrhu strani opozarja obiskovalce.
+  - Push na GitHub (main) = nova razlicica na spletu v ~2 min.
+  - Opozorilo: demo je odprt (brez PIN-a) - namenjen predstavitvam.
+    Za pravi online salon: Postgres/Turso + WhatsApp Business API.
+

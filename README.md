@@ -287,6 +287,22 @@ Message (neodvisna tabela za sprejeta sporočila strank)
 
 ---
 
+## 🌐 Spletni demo (Vercel)
+
+Repozitorij je povezan z Vercelom — vsak push na `main` samodejno objavi novo različico.
+
+**Javna povezava dema:** `https://terminai-eight.vercel.app`
+
+- **Serverless SQLite**: Vercelove funkcije dovoljujejo pisanje le v `/tmp`, zato se baza ob vsakem "cold startu" prepiše iz demo predloge `db/demo-template.db` (770 KB, vsebuje Studio Aura: 6 strank, 103 termine, 2 fotografiji).
+- **Rumen trak "Spletni demo"** se prikaže samodejno (env `NEXT_PUBLIC_DEMO_MODE`) in pošilja jasno sporočilo: spremembe niso trajno shranjene. Lokalna/USB različica traku nikoli ne vidi.
+- **Ključne datoteke**: `src/lib/vercel-db.ts` (priprava baze v `/tmp`), `src/lib/db.ts` (izbira URL-ja), `next.config.ts` (`outputFileTracingIncludes` spravi predlogo v funkcijo), `src/components/demo-banner.tsx`.
+- **Varnostne opombe**: demo je odprt (brez PIN-a) — kdorkoli lahko spremeni ali ponastavi demo podatke (vpliv je omejen na eno instanco funkcije). Za trajno spletno različico bi bila potrebna prava baza (npr. Postgres/Turso) in WhatsApp Business API.
+- `postinstall: prisma generate` poskrbi, da Vercel vedno zgenerira Prisma klienta.
+
+*Namenjeno predstavitvam in pilotu — pravi izdelek ostaja offline namestitev.*
+
+---
+
 ## Licenca
 
 Vse pravice pridržane — komercialni izdelek.

@@ -429,3 +429,30 @@ Stage Summary:
 - Prodajni letak (5 strani, vektorski, 330 KB) — prvo prodajno orodje za pilota: naslovnica z veselo statistiko, delovni dan po Zenoti benchmarku, primerjava (2.700–6.000 $/leto Zenoti vs 199 € enkrat), cene skladne s stranjo (199/19/39), FAQ za ugovore, temna CTA zaključna stran
 - Deliverables: sales-flyer/terminai-letak.html (vir) + public/terminai-letak.pdf (spletni prenos) + dist-usb/TERMINAI/PRODAJNI-LETA.pdf (USB) — html2pdf-next.js, QA PASS, VLM 9–10/10
 - Naslednji možni koraki: pilot pri pravem salonu (letak natisnjen), online faza (WhatsApp Business API), večjezični letak (EN)
+---
+Task ID: 18
+Agent: Z.ai Code (glavni agent)
+Task: Preveri Vercel deployment (uporabnik priskrbel token) in nadaljuj — splawni demo
+
+Work Log:
+- RECON s tokenom (vcp_…): Vercel API (v9/projects, v6/v13/deployments) — projekt "terminai" (team_KuVkEd4HM0StzdABN6HqzycD, račun robertpezdirc12-design) povezan z GitHubom (markec12345678/TerminAI, productionBranch main); obstoječi deployment READY/PROMOTED, a LOKALNO 2 COMMITA NISTA BILA PUSHANA (Task 16 + 17)
+- DIAGNOZA live spletišča: produkcijski alias terminai-eight.vercel.app javen (HTTP 200), a VSI API-ji 500 ("Napaka pri nalaganju storitev/terminov") — vzrok: db/custom.db in .env sta GITIGNORED (Vercel brez baze), DATABASE_URL absolutna lokalna pot, serverless datotečni sistem samo-za-branje
+- REŠITEV (serverless SQLite demo): src/lib/vercel-db.ts (NOV) — na VERCEL skopira demo predlogo v /tmp/terminai.db pred prvim PrismaClientom (sinhrono, enkrat na cold start; fallback prazna datoteka + jasna napaka v logu); src/lib/db.ts — datasources.db.url iz databaseUrl() (Vercel: file:/tmp/terminai.db, lokalno: .env), log ['error','warn'] na Vercelu (manj šuma)
+- db/demo-template.db (NOV, 770 KB, komitiran): kopija custom.db — Studio Aura, 6 strank, 103 termini, 2 fotografiji, waitlist, brez PIN-a (odprt demo)
+- next.config.ts: outputFileTracingIncludes {"/**","/api/**"} → ["./db/demo-template.db"] (datoteka pride v serverless funkcijo; ključna pot za file tracing)
+- package.json: postinstall "prisma generate" (zanesljiva generacija klienta na Vercelu)
+- src/components/demo-banner.tsx (NOV) + layout.tsx: rumen trak "Spletni demo — vsak obisk se začne s svežimi demo podatki" SAMO, če je NEXT_PUBLIC_DEMO_MODE nastavljen (inlined ob buildu); lokalna/USB različica traku nikoli ne vidi
+- Vercel env: NEXT_PUBLIC_DEMO_MODE="true" (production+preview) nastavljen prek API (POST /v10/projects/terminai/env)
+- PUSH: 3 commiti na GitHub (Task 16, Task 17, Task 18) → auto-deploy dpl_7faZMb38jWdsoBLXji2zXRbyg6t8 → READY/PROMOTED (~80 s)
+- E2E LIVE (curl + agent-browser na terminai-eight.vercel.app): /api/services 200 (Studio Aura + 5 storitev) ✓; /api/clients 200 (6 strank) ✓; /api/photos?clientId 200 (2 sličici Ane) + /api/photos?id 200 (full 167 KB dataUrl — lightbox pot) ✓; /api/appointments 200 (4 termini dneves: Ana confirmed, Marko completed, Petra confirmed, Luka pending) ✓; /terminai-letak.pdf 200 (338 KB, application/pdf — Task 17 zdaj živ tudi online) ✓; banner "Spletni demo" v HTML ✓
+- E2E INTERAKCIJE (agent-browser): landing → "Preizkusi demo" → zavihek "Nadzorna plošča lastnika" (vsi zavihki, walk-in, iCal izvoz...) ✓; Stranke → zgodovina Ane → 2 sličici → LIGHTBOX: naslov "Po · balayage 6-34 + 7-31" + 4 gumbi (Zapri|Prenesi|Pošlji stranki|Izbriši) ✓; klik "Pošlji stranki" s špionom na window.open → wa.me/38641555123 s sporočilom "Poglejte vašo novo frizuro 💇‍♀️✨ balayage 6-34 + 7-31" ✓; mobilni 375 px: scrollWidth 375 (0 preliva), banner viden ✓; 0 konzolnih napak, 0 page error
+- VLM ocene: desktop 9/10 (banner izrazit, termini vidni), mobilni 9/10, lightbox 8/10
+- Lint čist; lokalni dev server po spremembah restartan (turbopack cache panic → izbrisal cache, čist zagon, API 200)
+- DOKUMENTACIJA: README.md (nova sekcija 🌐 Spletni demo (Vercel) — arhitektura, varnostne opombe), dist-usb/TERMINAI/ZA-TEBE.txt (NOVOSTI spletni demo — javna povezava, push = nova različica, opozorilo odprt demo)
+
+Stage Summary:
+- Uporabnikov Vercel deployment diagnosticiran in POPRAVLJEN: vzrok 500-ik je bil gitignored SQLite/.env + absolutna pot; rešitev = demo predloga baze v /tmp prek outputFileTracingIncludes + dinamičen datasource URL
+- JAVNA povezava: https://terminai-eight.vercel.app (terminai-robertpezdirc12-… preusmerja na Vercel SSO — uporabljati "-eight" alias)
+- Vsi Taski 1–17 zdaj živi tudi online (vključno Task 16 deljenje fotografij z WhatsApp in Task 17 prodajni letak PDF); vsak push na main = samodejna nova objava
+- Demo je ekvivalenten offline izdelku (isti podatki, fotografije, formule) — razlika: podatki niso trajni (cold start reset) in API varnostne kopije ne delujejo (samo za branje)
+- Naslednji možni koraki: pilot pri pravem salonu (letak + spletni demo povezava), prava online baza (Postgres/Turso) + WhatsApp Business API, custom domena (terminai.si)
