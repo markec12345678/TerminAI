@@ -183,3 +183,19 @@ NOVOST: WALK-IN — STRANKA JE TU
 Pride stranka brez termina? Gumb »Walk-in« v glavi koledarja: vpišite telefon
 (ime se samo dopolni), izberite storitev in prosti slot — vpisana je TAKOJ
 kot prijavljena. 10 sekund in je na stolu.
+
+NOVOST: FOTOGRAFIJE OBISKOV (PRED / PO / REFERENCA)
+===================================================
+Ob zaključku obiska kliknite »Dodaj fotografijo« — slika se sama pomanjša
+in shrani na vaš računalnik. Vrsta: Po (rezultat), Pred, Rezultat ali
+Referenca (slika, ki jo PRINESE stranka — »takšno frizuro hočem«).
+Slike najdete v zgodovini stranke (ikona ure) — klik za povečavo,
+gumb za brisanje. Nič ne gre v oblak: slike so vaše, za vedno.
+
+NOVOST: ROJSTNI DNEVI 🎂
+========================
+Kartica »Rojstni dnevi« (desno od koledarja) pokaže, kdo ima rojstni dan
+v naslednjih dneh — danes, jutri, čez 3 dni. Ob vsaki je gumb WhatsApp
+s pripravljeno čestitko in vabilom (-20 % v rojstnem mesecu — to lahko
+pred pošiljanjem še spremenite). Rojstni dan vpišete pri stranki
+(svinčilka v zavihku Stranke): »5. 3.« ali »05-03«, brez leta.

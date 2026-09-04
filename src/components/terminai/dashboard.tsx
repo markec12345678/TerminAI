@@ -51,6 +51,7 @@ import { BackupCard } from './backup-card'
 import { CompleteDialog } from './complete-dialog'
 import { WalkInDialog } from './walk-in-dialog'
 import { WaitlistCard } from './waitlist-card'
+import { BirthdayCard } from './birthday-card'
 import { recurrenceLabel } from '@/lib/labels'
 import { copyToClipboard } from '@/lib/clipboard'
 import { playSound, getSoundPref, setSoundPref, unlockAudio } from '@/lib/sounds'
@@ -927,6 +928,8 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
           <RecurrenceCard refreshKey={recurrenceKey + onRefreshKey} onBookForCustomer={openManual} businessName={businessName} />
 
           <WaitlistCard businessName={businessName} onCountChange={setWaitlistCount} />
+
+          <BirthdayCard businessName={businessName} />
 
           <ShareQrCard />
         </div>

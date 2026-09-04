@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
           include: { service: { select: { name: true } } },
           orderBy: { startAt: 'desc' },
         },
+        _count: { select: { photos: true } },
       },
       orderBy: { createdAt: 'asc' },
     })
@@ -45,6 +46,8 @@ export async function GET(req: NextRequest) {
         phone: c.phone,
         email: c.email,
         notes: c.notes,
+        birthday: c.birthday,
+        photoCount: c._count.photos,
         visits: c.appointments.length,
         noShows: noShowMap.get(c.id) ?? 0,
         totalCents,

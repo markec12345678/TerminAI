@@ -51,6 +51,50 @@ export interface WaitlistEntryDto {
   createdAt: string
 }
 
+/** Fotografija stranke (lokalni Photo Manager). Seznam nosi thumbUrl; povečava pridobi dataUrl. */
+export interface PhotoDto {
+  id: string
+  kind: 'result' | 'before' | 'after' | 'reference' | string
+  caption: string | null
+  thumbUrl: string
+  appointmentId: string | null
+  appointment: { service: string; date: string } | null
+  createdAt: string
+}
+
+/** Rojstni dan stranke — "MM-DD" (brez leta) + število dni do naslednjega. */
+export interface BirthdayDto {
+  id: string
+  name: string
+  phone: string
+  birthday: string
+  inDays: number
+}
+
+const MONTH_SLO_FULL = [
+  'januar', 'februar', 'marec', 'april', 'maj', 'junij',
+  'julij', 'avgust', 'september', 'oktober', 'november', 'december',
+]
+
+/** "05-03" → "5. marec" (za prikaz rojstnega dne). */
+export function formatBirthday(bd: string, full = false): string {
+  const [mm, dd] = bd.split('-').map(Number)
+  if (!mm || !dd) return bd
+  return `${dd}. ${full ? MONTH_SLO_FULL[mm - 1] : MONTH_SLO[mm - 1]}`
+}
+
+/** "5. 3." / "05-03" / "5/3" → "05-03" (null = prazno, false = neveljavno). */
+export function parseBirthdayInput(v: string): string | null | false {
+  const s = v.trim()
+  if (!s) return null
+  const m = /^(\d{1,2})[-./ ]+(\d{1,2})[-./ ]*$/.exec(s)
+  if (!m) return false
+  const dd = Number(m[1])
+  const mm = Number(m[2])
+  if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return false
+  return `${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`
+}
+
 export interface AppointmentDto {
   id: string
   startAt: string

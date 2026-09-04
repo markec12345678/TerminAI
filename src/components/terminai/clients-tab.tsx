@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -44,8 +44,12 @@ import {
   RefreshCw,
   History,
   Palette,
+  Camera,
+  Cake,
 } from 'lucide-react'
-import { formatPrice, dateParts } from './types'
+import { shrinkFull, shrinkThumb } from '@/lib/image-resize'
+import { formatPrice, dateParts, formatBirthday, parseBirthdayInput } from './types'
+import type { PhotoDto } from './types'
 import { waLink, WhatsAppIcon } from './whatsapp'
 
 interface ClientRow {
@@ -54,6 +58,8 @@ interface ClientRow {
   phone: string
   email: string | null
   notes: string | null
+  birthday: string | null
+  photoCount: number
   visits: number
   noShows: number
   totalCents: number
@@ -69,6 +75,13 @@ interface VisitRow {
   cena: number
   opomba: string | null
   formula: string | null
+}
+
+const PHOTO_KIND_LABEL: Record<string, string> = {
+  before: 'Pred',
+  after: 'Po',
+  result: 'Rezultat',
+  reference: 'Referenca',
 }
 
 const VISIT_STATUS: Record<string, { label: string; className: string }> = {
@@ -103,16 +116,26 @@ export function ClientsTab({ businessName }: Props) {
   // Win-back filter: stranke, ki jih je dolgo ni bilo
   const [staleOnly, setStaleOnly] = useState(false)
 
-  // Urejanje stranke (opombe, e-pošta)
+  // Urejanje stranke (opombe, e-pošta, rojstni dan)
   const [editOpen, setEditOpen] = useState(false)
   const [editing, setEditing] = useState<ClientRow | null>(null)
   const [editNotes, setEditNotes] = useState('')
   const [editEmail, setEditEmail] = useState('')
+  const [editBirthday, setEditBirthday] = useState('')
   const [editSaving, setEditSaving] = useState(false)
 
-  // Zgodovina obiskov (s formulami)
+  // Zgodovina obiskov (s formulami + fotografije)
   const [historyTarget, setHistoryTarget] = useState<ClientRow | null>(null)
   const [history, setHistory] = useState<VisitRow[] | null>(null)
+  const [photos, setPhotos] = useState<PhotoDto[] | null>(null)
+
+  // Povečava fotografije (lightbox)
+  const [zoomPhoto, setZoomPhoto] = useState<PhotoDto | null>(null)
+  const [zoomFull, setZoomFull] = useState<string | null>(null)
+  const [zoomLoading, setZoomLoading] = useState(false)
+  const [zoomDeleting, setZoomDeleting] = useState(false)
+  const photoInputRef = useRef<HTMLInputElement>(null)
+  const [addingPhoto, setAddingPhoto] = useState(false)
 
   // GDPR izbris
   const [deleteTarget, setDeleteTarget] = useState<ClientRow | null>(null)
@@ -192,24 +215,41 @@ export function ClientsTab({ businessName }: Props) {
     setEditing(c)
     setEditNotes(c.notes ?? '')
     setEditEmail(c.email ?? '')
+    // "05-03" → "5. 3." (berljivo za vnos; server sprejme tudi "05-03")
+    setEditBirthday(c.birthday ? c.birthday.split('-').map(Number).reverse().join('. ') + '.' : '')
     setEditOpen(true)
   }
 
   const saveClient = async () => {
     if (!editing) return
+    // Rojstni dan: sprejmemo "5. 3.", "05-03" itn.; prazno = izbris
+    const bd = parseBirthdayInput(editBirthday)
+    if (bd === false) {
+      toast({
+        title: 'Rojstni dan ni veljaven',
+        description: 'Zapišite ga kot 5. 3. ali 05-03 (dan in mesec).',
+        variant: 'destructive',
+      })
+      return
+    }
     setEditSaving(true)
     try {
       const res = await ownerFetch(`/api/clients/${editing.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notes: editNotes, email: editEmail }),
+        body: JSON.stringify({ notes: editNotes, email: editEmail, birthday: bd ?? '' }),
       })
       const data = await res.json()
       if (!res.ok) {
         toast({ title: 'Napaka', description: data.error ?? 'Shranjevanje ni uspelo.', variant: 'destructive' })
         return
       }
-      toast({ title: 'Shranjeno ✓', description: `${editing.name} — opombe vidne pri naslednjem obisku.` })
+      toast({
+        title: 'Shranjeno ✓',
+        description: bd
+          ? `${editing.name} — rojstni dan ${formatBirthday(bd, true)}; opombe vidne pri naslednjem obisku.`
+          : `${editing.name} — opombe vidne pri naslednjem obisku.`,
+      })
       setEditOpen(false)
       load()
     } catch {
@@ -219,10 +259,11 @@ export function ClientsTab({ businessName }: Props) {
     }
   }
 
-  /** Zgodovina obiskov z zasebnimi opombami (formule) — en sam klic. */
+  /** Zgodovina obiskov z zasebnimi opombami (formule) + fotografije. */
   const openHistory = (c: ClientRow) => {
     setHistoryTarget(c)
     setHistory(null)
+    setPhotos(null)
     ownerFetch(`/api/clients/${c.id}?view=plain`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((d) => setHistory(d.termini ?? []))
@@ -230,6 +271,74 @@ export function ClientsTab({ businessName }: Props) {
         setHistory([])
         toast({ title: 'Napaka', description: 'Zgodovine ni bilo mogoče naložiti.', variant: 'destructive' })
       })
+    ownerFetch(`/api/photos?clientId=${c.id}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => setPhotos(d.photos ?? []))
+      .catch(() => setPhotos([]))
+  }
+
+  /** Povečava fotografije — naloži veliko sliko (dataUrl) posebej. */
+  const openZoom = (p: PhotoDto) => {
+    setZoomPhoto(p)
+    setZoomFull(null)
+    setZoomLoading(true)
+    ownerFetch(`/api/photos?id=${p.id}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => setZoomFull(d.photo?.dataUrl ?? null))
+      .catch(() => setZoomFull(null))
+      .finally(() => setZoomLoading(false))
+  }
+
+  const deleteZoomPhoto = async () => {
+    if (!zoomPhoto) return
+    setZoomDeleting(true)
+    try {
+      const res = await ownerFetch(`/api/photos?id=${zoomPhoto.id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error()
+      setPhotos((prev) => (prev ? prev.filter((p) => p.id !== zoomPhoto.id) : prev))
+      setZoomPhoto(null)
+      setZoomFull(null)
+      toast({ title: 'Fotografija izbrisana' })
+    } catch {
+      toast({ title: 'Napaka', description: 'Brisanje ni uspelo.', variant: 'destructive' })
+    } finally {
+      setZoomDeleting(false)
+    }
+  }
+
+  /** Dodaj referenco — sliko, ki jo prinese stranka (šlosa, ki jo želi). */
+  const addReferencePhoto = async (file: File) => {
+    if (!historyTarget) return
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'To ni slika', description: 'Izberite fotografijo (JPG/PNG).', variant: 'destructive' })
+      return
+    }
+    setAddingPhoto(true)
+    try {
+      const [dataUrl, thumbUrl] = await Promise.all([shrinkFull(file), shrinkThumb(file)])
+      const res = await ownerFetch('/api/photos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId: historyTarget.id,
+          kind: 'reference',
+          dataUrl,
+          thumbUrl,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast({ title: 'Fotografija ni shranjena', description: data.error ?? 'Poskusite znova.', variant: 'destructive' })
+        return
+      }
+      setPhotos((prev) => [data.photo, ...(prev ?? [])])
+      toast({ title: 'Referenca shranjena 📷', description: `${historyTarget.name} — vidna v njeni zgodovini.` })
+    } catch {
+      toast({ title: 'Napaka', description: 'Slike ni bilo mogoče obdelati.', variant: 'destructive' })
+    } finally {
+      setAddingPhoto(false)
+      if (photoInputRef.current) photoInputRef.current.value = ''
+    }
   }
 
   /** GDPR: izvoz vseh podatkov stranke kot JSON datoteko. */
@@ -393,6 +502,16 @@ export function ClientsTab({ businessName }: Props) {
                         <span className="inline-flex items-center gap-1">
                           <Wallet className="h-3 w-3" /> {formatPrice(c.totalCents)}
                         </span>
+                        {c.photoCount > 0 && (
+                          <span className="inline-flex items-center gap-1" title="Fotografije v zgodovini">
+                            <Camera className="h-3 w-3" /> {c.photoCount}
+                          </span>
+                        )}
+                        {c.birthday && (
+                          <span className="inline-flex items-center gap-1" title={`Rojstni dan: ${formatBirthday(c.birthday, true)}`}>
+                            <Cake className="h-3 w-3" /> {formatBirthday(c.birthday)}
+                          </span>
+                        )}
                       </div>
                       {c.notes && (
                         <div
@@ -485,7 +604,7 @@ export function ClientsTab({ businessName }: Props) {
         </CardContent>
       </Card>
 
-      {/* Dialog: zgodovina obiskov stranke (s formulami) */}
+      {/* Dialog: zgodovina obiskov stranke (s formulami + fotografije) */}
       <Dialog open={historyTarget !== null} onOpenChange={(o) => !o && setHistoryTarget(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
@@ -493,9 +612,78 @@ export function ClientsTab({ businessName }: Props) {
               <History className="h-5 w-5 text-primary" /> {historyTarget?.name}
             </DialogTitle>
             <DialogDescription>
-              Vsi obiski — formule in opombe so zasebne (za PIN-om), strankine opombe ob rezervaciji pa so zraven.
+              Vsi obiski — formule in fotografije so zasebne (za PIN-om), strankine opombe pa so zraven.
             </DialogDescription>
           </DialogHeader>
+
+          {/* Fotografije — lokalni Photo Manager: rezultati + reference */}
+          <div className="rounded-xl border border-border/70 p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5 text-sm font-semibold">
+                <Camera className="h-4 w-4 text-primary" /> Fotografije
+                {photos && photos.length > 0 && (
+                  <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                    {photos.length}
+                  </span>
+                )}
+              </span>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                aria-label="Dodaj referenčno fotografijo"
+                onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (f) void addReferencePhoto(f)
+                }}
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 gap-1.5 text-xs"
+                disabled={addingPhoto}
+                onClick={() => photoInputRef.current?.click()}
+              >
+                {addingPhoto ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />} Dodaj referenco
+              </Button>
+            </div>
+            {photos === null ? (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-20 w-20 rounded-lg" />
+                ))}
+              </div>
+            ) : photos.length === 0 ? (
+              <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
+                Še ni fotografij — dodajte jih ob zaključku obiska (pred/po) ali kot referenco,
+                ki jo prinese stranka (šlosa, ki si jo želi).
+              </p>
+            ) : (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {photos.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className="group relative overflow-hidden rounded-lg border border-border transition-transform hover:scale-[1.03] focus-visible:scale-[1.03]"
+                    onClick={() => openZoom(p)}
+                    aria-label={`Poglej fotografijo — ${PHOTO_KIND_LABEL[p.kind] ?? p.kind}`}
+                    title={`${PHOTO_KIND_LABEL[p.kind] ?? p.kind}${p.caption ? ` · ${p.caption}` : ''}`}
+                  >
+                    <img
+                      src={p.thumbUrl}
+                      alt={`Fotografija — ${historyTarget?.name} (${PHOTO_KIND_LABEL[p.kind] ?? p.kind})`}
+                      className="h-20 w-20 object-cover"
+                    />
+                    <span className="absolute bottom-1 left-1 rounded bg-background/85 px-1 text-[9px] font-semibold text-foreground">
+                      {PHOTO_KIND_LABEL[p.kind] ?? p.kind}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           {history === null ? (
             <div className="space-y-2 py-2">
               {[1, 2, 3].map((i) => (
@@ -546,6 +734,57 @@ export function ClientsTab({ businessName }: Props) {
         </DialogContent>
       </Dialog>
 
+      {/* Dialog: povečava fotografije (lightbox) */}
+      <Dialog open={zoomPhoto !== null} onOpenChange={(o) => !o && (setZoomPhoto(null), setZoomFull(null))}>
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="flex flex-wrap items-center gap-2 font-display text-base">
+              <Camera className="h-4 w-4 text-primary" />
+              {zoomPhoto && (PHOTO_KIND_LABEL[zoomPhoto.kind] ?? zoomPhoto.kind)}
+              {zoomPhoto?.caption && (
+                <span className="font-normal text-muted-foreground">· {zoomPhoto.caption}</span>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              {zoomPhoto?.appointment
+                ? `${zoomPhoto.appointment.service} — ${dateParts(zoomPhoto.appointment.date.slice(0, 10)).dayName}, ${dateParts(zoomPhoto.appointment.date.slice(0, 10)).dayNum}. ${dateParts(zoomPhoto.appointment.date.slice(0, 10)).month}`
+                : `Pri stranki od ${zoomPhoto ? dateParts(zoomPhoto.createdAt.slice(0, 10)).dayNum : ''}. ${zoomPhoto ? dateParts(zoomPhoto.createdAt.slice(0, 10)).month : ''}`}
+              {zoomPhoto && ` · ${historyTarget?.name ?? ''}`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex min-h-48 justify-center overflow-hidden rounded-xl border border-border/70 bg-muted/40">
+            {zoomLoading ? (
+              <div className="flex h-72 w-full items-center justify-center">
+                <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : zoomFull ? (
+              <img
+                src={zoomFull}
+                alt={`Fotografija — ${historyTarget?.name ?? ''}`}
+                className="max-h-[70vh] w-auto max-w-full object-contain"
+              />
+            ) : (
+              <div className="flex h-72 w-full items-center justify-center text-sm text-muted-foreground">
+                Slike ni bilo mogoče naložiti.
+              </div>
+            )}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => (setZoomPhoto(null), setZoomFull(null))}>
+              Zapri
+            </Button>
+            <Button
+              variant="destructive"
+              className="gap-1.5"
+              disabled={zoomDeleting}
+              onClick={() => void deleteZoomPhoto()}
+            >
+              {zoomDeleting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Izbriši fotografijo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Dialog: opombe o stranki */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-md">
@@ -554,7 +793,7 @@ export function ClientsTab({ businessName }: Props) {
               <NotebookPen className="h-5 w-5 text-primary" /> {editing?.name}
             </DialogTitle>
             <DialogDescription>
-              Formule barvanja, alergije, želje — vidne samo vam (za PIN-om).
+              Formule barvanja, alergije, rojstni dan — vidno samo vam (za PIN-om).
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
@@ -568,6 +807,29 @@ export function ClientsTab({ businessName }: Props) {
                 rows={4}
                 maxLength={1000}
               />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="cl-birthday" className="flex items-center gap-1">
+                <Cake className="h-3.5 w-3.5 text-primary" /> Rojstni dan
+              </Label>
+              <div className="grid gap-1.5 sm:grid-cols-2">
+                <Input
+                  id="cl-birthday"
+                  value={editBirthday}
+                  onChange={(e) => setEditBirthday(e.target.value)}
+                  placeholder="npr. 5. 3."
+                  inputMode="numeric"
+                  maxLength={10}
+                />
+                <p className="text-[11px] leading-snug text-muted-foreground sm:pt-1.5">
+                  {(() => {
+                    const p = parseBirthdayInput(editBirthday)
+                    if (p === null) return 'Brez leta — samo za čestitko.'
+                    if (p === false) return 'Neveljavno — zapišite kot 5. 3.'
+                    return `Shranimo: ${formatBirthday(p, true)}`
+                  })()}
+                </p>
+              </div>
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="cl-email">E-pošta</Label>

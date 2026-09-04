@@ -72,6 +72,8 @@ export async function PATCH(req: NextRequest) {
  */
 async function wipeAll(): Promise<void> {
   await db.$transaction(async (tx) => {
+    await tx.photo.deleteMany({}) // fotografije (FK na Client/Appointment)
+    await tx.waitlistEntry.deleteMany({}) // čakalni seznam (FK na Service)
     await tx.appointment.deleteMany({})
     await tx.client.deleteMany({})
     await tx.service.deleteMany({})

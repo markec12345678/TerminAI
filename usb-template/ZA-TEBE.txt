@@ -172,3 +172,14 @@ NOVOST 8 — KOT DRAGI ZENOTI (po zenotijevskih receptih, brez naročnine)
 - »Dolgo jih ni bilo«: seznam strank po 8 tednih brez obiska + WhatsApp
   sporočilo s klikom (Zenoti: AI Retention Manager, 450 $/mesec).
 - Walk-in: stranka brez termina je na stolu v 10 sekundah.
+
+NOVOST 9 — FOTOGRAFIJE IN ROJSTNI DNEVI (Zenoti Photo Manager + birthday, 0 EUR/mesec)
+- Fotografija PRED/Po ob vsakem obisku: pomanjša se sama in shrani na
+  VAŠ računalnik (nikoli v oblak — za razliko od Zenotija, ki slike
+  hrani pri sebi in zaračunava 225–500 USD/mesec).
+- Referenca: stranka prineše sliko "takšno frizuro hočem" — shranite
+  jo pri njej, naslednjič v 1 sekundi vidite, kaj je mislila.
+- Povečava z enim klikom v zgodovini stranke; GDPR izvoz vsebuje slike.
+- Rojstni dnevi: kartica vam pove, kdo ima rojstni dan (danes/jutri/
+  čez 3 dni) + pripravljena WhatsApp čestitka z vabilom (-20 % v
+  rojstnem mesecu). Najbolj odprto sporočilo, ki ga stranka prejme.

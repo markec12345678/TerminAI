@@ -357,3 +357,32 @@ Stage Summary:
 - Celoten življenjski cikel stranke zdaj pokrit: rezervacija → obisk (formula) → rebooking → win-back ob odhodu
 - Prodajni argument: "Zenoti zaračuna 5.400 $/leto za to. TerminAI ima enake recepte, brez naročnine, v slovenščini"
 - Naslednji možni koraki: pilot pri pravem salonu, prodajni PDF, rojstnodnevna sporočila, slike rezultatov (Zenoti Photo Manager)
+
+---
+Task ID: 15
+Agent: Z.ai Code (glavni agent)
+Task: Rojstnodnevna sporočila + lokalni Photo Manager (slike rezultatov/referenc) — zadnji 2 Zenoti funkciji s seznama "v koži frizerke"
+
+Work Log:
+- NADALJEVANJE po Zenoti analizi (Task 14 seznam naslednjih korakov: rojstnodnevna sporočila + slike rezultatov)
+- Prisma: Client.birthday "MM-DD" (brez leta — GDPR minimalno) + NOV model Photo (clientId, appointmentId?, kind result|before|after|reference, dataUrl velika ~1200px, thumbUrl sličica ~320px, caption); onDelete: Cascade na Client, SetNull na Appointment; db:push + restart dev (rm .next + start-dev.sh, TIME_WAIT 45 s)
+- API NOV /api/photos (GET ?id= ena slika za povečavo | ?clientId=&appointmentId= seznam sličic; POST z Zod validacijo: JPEG base64 max 600 KB / sličica 120 KB, max 12/obisk, 300/stranko, termin mora pripadati stranki; DELETE ?id=) — vse za PIN-om
+- API NOV /api/birthdays (GET: stranke z rojstnim dnevom v naslednjih 45 dneh, urejeno po bližini, inDays izračunan v UTC konvenciji programa; preverjeno: danes/jutri/čez N/prek leti)
+- /api/clients: + birthday, photoCount (_count) v vrsticah; /api/clients/[id]: PATCH sprejema birthday ("5. 3."/"05-03"/"5 3" → normalizacija, prazno = izbris), GDPR izvoz vsebuje tudi PRAVE slike (base64 — fotografija je osebni podatek!), DELETE briše fotografije pred termini (transakcija)
+- POPRAVEK zarotne napake: wipeAll v /api/setup ni brisal WaitlistEntry (FK na Service — demo obnova bi padla, latentni hrošč iz Taska 14!) → zdaj briše Photo + WaitlistEntry prvi; E2E demo reset preverjen (brez FK napak, novi seed vključuje rojstne dneve)
+- seedDemo: rojstni dnevi relativno na danes (Ana = DANES, Petra +3, Maja +9, Marko +25 — demo vedno pokaže vsa stanja)
+- lib/image-resize.ts (NOV, client): canvas pomanjšanje v brskalniku — full 1200px q0.82 + thumb 320px q0.72 (foto s telefona 3–12 MB → ~150–250 KB; brez oblaka)
+- complete-dialog.tsx: foto odsek (izbira vrste Pred/Po/Rezultat/Referenca, gumb Dodaj fotografijo, takojšnja nalaga + sličice z brisanjem); done-state sporočilo omenja formule+fotografije
+- clients-tab.tsx: zgodovina stranke dobi galerijo sličic (kind odznakice) + lightbox (velika slika se naloži šele ob kliku — /api/photos?id=) z brisanjem + gumb "Dodaj referenco" (slika, ki jo prinese stranka); vrstica stranke pokaže 📷 N + 🎂 datum; urejanje: polje Rojstni dan z živim predogledom ("Shranimo: 5. marec" / "Neveljavno")
+- birthday-card.tsx (NOV): desni stolpec dashboarda pod čakalnim seznamom; "danes 🎉" poudarjen, jutri/čez N dni, WhatsApp čestitka (-20 % v rojstnem mesecu); prazno stanje pokaže naslednjo stranko; max-h-72 scroll
+- DEMO SLIKE: 2 AI-generirani fotografiji (balayage rezultat + referenca, 864×1152 → JPEG full 154/122 KB, thumb 15/11 KB) prek image-generation + PIL pretvorba, vstavljene prek sqlite (Prisma epoch-ms format!)
+- HROŠČI UJETI: (1) manjkajoč backtick v validBirthday (parse error, lint ujel); (2) regex separator "5. 3." (pika+presledek) ni deloval → [-./ ]+; (3) dev server je imel star Prisma klient v pomnilniku → "Unknown field photos" → restart; (4) VLM lažno "odrezan gumb" — programsko preverjeno clipped:false; slika centrirana (flex justify-center)
+- E2E (agent-browser): kartica Rojstni dnevi (Ana danes 🎉, Petra +3, Maja +9; wa.me povezave s slovenskim sporočilom) ✓; zgodovina Ane: 2 sličici (Po/Referenca) → lightbox full img + caption + delete ✓; CompleteDialog: foto odsek + DEJAVNO nalaganje datoteke prek agent-browser upload (canvas resize → POST → toast "Fotografija shranjena" → sličica v dialogu) ✓; zaključek obiska s formulo → done-state → rebooking predizpolnjen (Ana Novak | +386 41 555 123 v inputih) ✓; urejanje rojstnega dneva: "32. 5." → Neveljavno, "12. 8." → predogled 12. avgust, shrani (API potrdi) ✓; demo obnova z novimi razredi ✓; 0 konzolnih napak, 0 napak v dev.log, 0 preliva na 375 px, lint čist
+- VLM ocene: kartica 8/10, lightbox 7/10 (izboljšan centring), mobilni 8.3/10, temni način 9/10, končni dashboard 9/10
+- README (2 nova razdelka: Fotografije strank, Rojstni dnevi) + ZA-TEBE.txt (NOVOST 9) + NAVODILA.txt (2 novi razdelka za lastnico)
+
+Stage Summary:
+- Zadnji 2 Zenoti "killer feature" preneseni lokalno: 📸 Photo Manager (pred/po/referenca, resize v brskalniku, slike v SQLite = varnostne kopije jih zajamejo, GDPR popoln) in 🎂 birthday campaigns (čestitka z enim klikom)
+- Popoln življenjski cikel stranke + spomin na izgled: rezervacija → obisk (formula + FOTO) → rebooking → win-back → rojstnodnevna čestitka
+- Prodajni argument: "Zenoti Photo Manager + birthday campaigns: 225–500 $/mesec, slike v njihovem oblaku. TerminAI: enkratni nakup, sline ostanejo pri vas."
+- Naslednji možni koraki: pilot pri pravem salonu, prodajni PDF, slike za stranko (deljenje pred/po prek WhatsApp), predplačniška avtorizacija ob no-show

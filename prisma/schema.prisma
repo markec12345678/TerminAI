@@ -67,8 +67,11 @@ model Client {
   phone       String
   email       String?
   notes       String?
+  // Rojstni dan kot "MM-DD" (brez leta — GDPR minimalno, za čestitke)
+  birthday    String?
   createdAt   DateTime @default(now())
   appointments Appointment[]
+  photos      Photo[]
 }
 
 // Čakalni seznam — stranke, ki želijo termin, ko se kaj sprosti.
@@ -97,8 +100,26 @@ model Appointment {
   cancelToken String?  @unique // enkratna koda za odpoved prek povezave (/?cancel=)
   notes       String?  // strankina opomba ob rezervaciji (vidna tudi stranki)
   ownerNote   String?  // zasebna opomba frizerke ob obisku: formula, kaj je narejeno, količine …
+  photos      Photo[]  // fotografije obiska (pred / po / referenca)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt // samodejno ob vsaki spremembi — za zaznavanje novih rezervacij (polling)
+}
+
+// Fotografija — rezultat ("pred/po") ali referenca, ki jo prinese stranka.
+// Shranjena LOKALNO v SQLite (base64 JPEG, pomanjšan v brskalniku):
+// nikoli v oblaku — za razliko od Zenoti Photo Manager (225+ USD/mesec).
+// thumbUrl = majhna sličica za sezname; dataUrl = velika (za povečavo).
+model Photo {
+  id            String       @id @default(cuid())
+  clientId      String
+  client        Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  appointmentId String?      // veže na konkreten obisk (če je bila posneta ob njem)
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  kind          String       @default("result") // result | before | after | reference
+  dataUrl       String       // base64 JPEG (pomanjšan na ~1200 px)
+  thumbUrl      String       // base64 sličica (~320 px) za sezname
+  caption       String?      // npr. "6-34 + 7-43" ali "šlosa, ki jo želi"
+  createdAt     DateTime     @default(now())
 }
 
 model Message {

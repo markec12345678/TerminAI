@@ -138,6 +138,19 @@
 - Termin se vpiše **takoj kot prijavljen** (status »Prišla«) — brez koraka »potrdi«, ker stranka že stoji pred vami
 - Telefon samodejno poišče stranko v bazi in dopolni ime — vpis v 10 sekundah
 
+### 📸 Fotografije strank — lokalni »Photo Manager« (kot Zenoti, a brez oblaka)
+- Ob **zaključku obiska** dialog sprejme fotografijo **pred / po / rezultat**: pomanjša se v brskalniku (~1200 px JPEG) in shrani **lokalno v SQLite** — nikoli v oblak
+- V **zgodovini stranke** galerija sličic: en klik → povečava (velika slika se naloži šele takrat), brisanje z gumbom
+- Gumb **»Dodaj referenco«** — slika, ki jo prinese stranka (»šlosa, ki si jo želi«), shranjena pri njenem profilu
+- Fotografije so **osebni podatek**: GDPR izvoz vsebuje prave slike, GDPR izbris jih izbriše; varnostne kopije (VACUUM INTO) jih zajamejo samodejno
+- Zenoti za Photo Manager zaračuna 225–500 USD/mesec in slike hranijo v njihovem oblaku — TerminAI jih hrani pri vas
+
+### 🎂 Rojstni dnevi — čestitka z enim klikom
+- Kartica **»Rojstni dnevi«** v dashboardu: kdaj ima rojstni dan v naslednjih 14 dneh (»danes 🎉«, »jutri«, »čez 3 dni«)
+- Rojstni dan se vpiše pri stranki (**brez leta** — GDPR minimalno, samo za čestitko); sprejme »5. 3.« ali »05-03«
+- Gumb **WhatsApp** s pripravljeno čestitko in rojstnodnevnim povabilom (-20 % v rojstnem mesecu — najbolj odprto sporočilo, ki ga stranka prejme)
+- Kot Zenoti »birthday campaigns«, a osebno in brez naročnine
+
 ---
 
 ## Tehnični sklad

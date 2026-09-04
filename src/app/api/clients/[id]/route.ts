@@ -9,7 +9,19 @@ const patchSchema = z.object({
   email: z.string().email('Napačen e-poštni naslov').optional().or(z.literal('')),
   // Opombe o stranki: formule barvanja, alergije, želje ...
   notes: z.string().max(1000).optional().or(z.literal('')),
+  // Rojstni dan kot "MM-DD" (brez leta) ali prazno (izbris)
+  birthday: z.string().max(10).optional().or(z.literal('')),
 })
+
+/** Preveri/normalizira rojstni dan: sprejme "MM-DD"; vrne null ob napaki. */
+function validBirthday(v: string): string | null {
+  const m = /^(\d{1,2})[-./ ]+(\d{1,2})[-./ ]*$/.exec(v.trim())
+  if (!m) return null
+  const dd = Number(m[1])
+  const mm = Number(m[2])
+  if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return null
+  return `${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`
+}
 
 /**
  * GET /api/clients/[id] (PIN) — podatki stranke.
@@ -31,6 +43,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           orderBy: { startAt: 'desc' },
           include: { service: { select: { name: true } } },
         },
+        photos: { orderBy: { createdAt: 'desc' }, select: { kind: true, caption: true, dataUrl: true, createdAt: true, appointmentId: true } },
       },
     })
     if (!client) {
@@ -43,6 +56,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         telefon: client.phone,
         ePosta: client.email ?? null,
         opombe: client.notes ?? null,
+        rojstniDan: client.birthday ?? null,
       },
       termini: client.appointments.map((a) => ({
         datum: a.startAt.toISOString(),
@@ -51,6 +65,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         cena: a.priceCents,
         opomba: a.notes ?? null,
         formula: a.ownerNote ?? null,
+      })),
+      fotografije: client.photos.map((p) => ({
+        posneta: p.createdAt.toISOString(),
+        vrsta: p.kind,
+        opis: p.caption ?? null,
       })),
     }
 
@@ -67,6 +86,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         ...a,
         formula: undefined, // zasebna opomba frizerke ni podatek stranke — v izvoz ne gre
         cena: `${(a.cena / 100).toFixed(2)} €`,
+      })),
+      // Fotografije so osebni podatek — v izvoz gredo prave slike (base64 JPEG)
+      fotografije: client.photos.map((p) => ({
+        posneta: p.createdAt.toISOString(),
+        vrsta: p.kind,
+        opis: p.caption ?? null,
+        slika: p.dataUrl,
       })),
     }
 
@@ -107,6 +133,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (d.phone !== undefined) data.phone = d.phone
     if (d.email !== undefined) data.email = d.email || null
     if (d.notes !== undefined) data.notes = d.notes || null
+    if (d.birthday !== undefined) {
+      if (d.birthday === '') {
+        data.birthday = null // izbris rojstnega dne
+      } else {
+        const bd = validBirthday(d.birthday)
+        if (!bd) {
+          return NextResponse.json(
+            { error: 'Rojstni dan ni veljaven — zapišite ga kot 5. 3. ali 05-03.' },
+            { status: 400 }
+          )
+        }
+        data.birthday = bd
+      }
+    }
 
     const client = await db.client.update({ where: { id }, data })
     return NextResponse.json({ ok: true, client: { id: client.id, name: client.name } })
@@ -126,15 +166,19 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   }
   try {
     const { id } = await params
-    const client = await db.client.findUnique({ where: { id }, include: { _count: { select: { appointments: true } } } })
+    const client = await db.client.findUnique({
+      where: { id },
+      include: { _count: { select: { appointments: true, photos: true } } },
+    })
     if (!client) {
       return NextResponse.json({ error: 'Stranka ne obstaja' }, { status: 404 })
     }
 
     const deleted = await db.$transaction(async (tx) => {
+      await tx.photo.deleteMany({ where: { clientId: id } })
       const appts = await tx.appointment.deleteMany({ where: { clientId: id } })
       await tx.client.delete({ where: { id } })
-      return { appointments: appts.count }
+      return { appointments: appts.count, photos: client._count.photos }
     })
 
     return NextResponse.json({ ok: true, removedAppointments: deleted.appointments })

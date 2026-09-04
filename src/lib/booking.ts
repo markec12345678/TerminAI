@@ -239,12 +239,18 @@ export async function seedDemo(): Promise<void> {
     )
   )
 
+  // Rojstni dnevi — relativno glede na danes, da demo vedno pokaže
+  // "danes 🎉", "jutri", "čez N dni" (za rojstnodnevno kartico).
+  const bdIn = (days: number): string => {
+    const d = new Date(Date.now() + days * 86400000)
+    return `${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+  }
   const clientsData = [
-    { name: 'Ana Novak', phone: '+386 41 555 123' },
-    { name: 'Marko Kovač', phone: '+386 31 444 789' },
-    { name: 'Petra Zupan', phone: '+386 51 333 256' },
+    { name: 'Ana Novak', phone: '+386 41 555 123', birthday: bdIn(0) },
+    { name: 'Marko Kovač', phone: '+386 31 444 789', birthday: bdIn(25) },
+    { name: 'Petra Zupan', phone: '+386 51 333 256', birthday: bdIn(3) },
     { name: 'Luka Bizjak', phone: '+386 30 222 914' },
-    { name: 'Maja Kos', phone: '+386 70 111 652' },
+    { name: 'Maja Kos', phone: '+386 70 111 652', birthday: bdIn(9) },
     { name: 'Tina Hočevar', phone: '+386 41 900 340' },
   ]
   const clients = await Promise.all(clientsData.map((c) => db.client.create({ data: c })))
