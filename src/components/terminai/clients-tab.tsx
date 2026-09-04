@@ -46,6 +46,7 @@ import {
   Palette,
   Camera,
   Cake,
+  Share2,
 } from 'lucide-react'
 import { shrinkFull, shrinkThumb } from '@/lib/image-resize'
 import { formatPrice, dateParts, formatBirthday, parseBirthdayInput } from './types'
@@ -275,6 +276,45 @@ export function ClientsTab({ businessName }: Props) {
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((d) => setPhotos(d.photos ?? []))
       .catch(() => setPhotos([]))
+  }
+
+  /** Prenese polno fotografijo kot JPEG datoteko (npr. za objavo ali WhatsApp prilogo). */
+  const downloadZoomPhoto = () => {
+    if (!zoomFull || !zoomPhoto || !historyTarget) return
+    const el = document.createElement('a')
+    el.href = zoomFull
+    el.download = `TerminAI-${historyTarget.name.replace(/\s+/g, '-')}-${zoomPhoto.kind}.jpg`
+    document.body.appendChild(el)
+    el.click()
+    el.remove()
+  }
+
+  /**
+   * Deli fotografijo s stranko:
+   * 1) na telefonu — sistemsko deljenje (slika gre neposredno v WhatsApp),
+   * 2) na računalniku — fotografija se prenese + odpre se WhatsApp pogovor s pripravljenim sporočilom.
+   */
+  const shareZoomPhoto = async () => {
+    if (!zoomFull || !zoomPhoto || !historyTarget) return
+    const caption = zoomPhoto.caption ? ` ${zoomPhoto.caption}` : ''
+    const text = `Poglejte vašo novo frizuro 💇‍♀️✨${caption}`
+    try {
+      const blob = await (await fetch(zoomFull)).blob()
+      const file = new File([blob], `TerminAI-${historyTarget.name.replace(/\s+/g, '-')}.jpg`, { type: blob.type || 'image/jpeg' })
+      if (typeof navigator.share === 'function' && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], text })
+        return
+      }
+    } catch (e) {
+      if ((e as Error)?.name === 'AbortError') return // uporabnica preklicala deljenje
+      // nadaljuj na povratni način — vsaj prenos
+    }
+    downloadZoomPhoto()
+    window.open(waLink(historyTarget.phone, text), '_blank', 'noopener')
+    toast({
+      title: 'Fotografija prenešena',
+      description: `Priložite jo v WhatsApp pogovor z ${historyTarget.name}, ki se je odprl.`,
+    })
   }
 
   /** Povečava fotografije — naloži veliko sliko (dataUrl) posebej. */
@@ -769,9 +809,28 @@ export function ClientsTab({ businessName }: Props) {
               </div>
             )}
           </div>
-          <DialogFooter className="gap-2">
+          <DialogFooter className="flex-wrap gap-2">
             <Button variant="outline" onClick={() => (setZoomPhoto(null), setZoomFull(null))}>
               Zapri
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-1.5"
+              disabled={!zoomFull}
+              onClick={downloadZoomPhoto}
+              aria-label="Prenesi fotografijo"
+              title="Prenesi na računalnik (JPEG)"
+            >
+              <Download className="h-4 w-4" /> <span className="hidden sm:inline">Prenesi</span>
+            </Button>
+            <Button
+              className="gap-1.5 bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600"
+              disabled={!zoomFull || !historyTarget}
+              onClick={() => void shareZoomPhoto()}
+              aria-label="Pošlji stranki prek WhatsAppa"
+              title="Pošlji stranki — na telefonu deljenje, na računalniku prenos + WhatsApp"
+            >
+              <Share2 className="h-4 w-4" /> <span className="hidden sm:inline">Pošlji stranki</span>
             </Button>
             <Button
               variant="destructive"
@@ -779,7 +838,7 @@ export function ClientsTab({ businessName }: Props) {
               disabled={zoomDeleting}
               onClick={() => void deleteZoomPhoto()}
             >
-              {zoomDeleting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Izbriši fotografijo
+              {zoomDeleting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Izbriši
             </Button>
           </DialogFooter>
         </DialogContent>

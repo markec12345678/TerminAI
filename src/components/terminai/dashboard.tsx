@@ -53,6 +53,7 @@ import { WalkInDialog } from './walk-in-dialog'
 import { WaitlistCard } from './waitlist-card'
 import { BirthdayCard } from './birthday-card'
 import { recurrenceLabel } from '@/lib/labels'
+import { waLink, WhatsAppIcon } from './whatsapp'
 import { copyToClipboard } from '@/lib/clipboard'
 import { playSound, getSoundPref, setSoundPref, unlockAudio } from '@/lib/sounds'
 import { QRCodeSVG } from 'qrcode.react'
@@ -389,11 +390,15 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
       setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)))
       loadStats()
       if (status === 'checked_in') playSound('arrival')
+      const wl = waitlistCountRef.current
       toast(
         status === 'no_show'
           ? {
               title: 'Zabeleženo: stranka ni prišla',
-              description: 'Izostanek se vidi pri stranki v zavihku Stranke.',
+              description:
+                wl > 0
+                  ? `Izostanek se vidi pri stranki v zavihku Stranke. ${wl} ${wl === 1 ? 'stranka čaka' : wl === 2 ? 'stranki čakata' : 'strank čaka'} na termin — sproščen čas lahko ponudite iz čakalnega seznama.`
+                  : 'Izostanek se vidi pri stranki v zavihku Stranke.',
             }
           : status === 'checked_in'
             ? {
@@ -837,6 +842,22 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                                 <UserX className="h-4 w-4" />
                               </Button>
                             </>
+                          )}
+                          {a.status === 'no_show' && (
+                            <Button asChild size="icon" variant="outline" className="h-8 w-8 border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-300">
+                              <a
+                                href={waLink(
+                                  a.client.phone,
+                                  `Žal vas danes nismo dočakali 💇‍♀️ Kdaj vam ustreza nov termin? Rada vas spet vidim!`
+                                )}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label={`Ponudi ${a.client.name} nov termin prek WhatsAppa`}
+                                title="Pokebaj stranko — WhatsApp sporočilo za nov termin je pripravljeno"
+                              >
+                                <WhatsAppIcon className="h-4 w-4" />
+                              </a>
+                            </Button>
                           )}
                           {a.status === 'checked_in' && (
                             <Button

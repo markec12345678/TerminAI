@@ -27,3 +27,17 @@ CE NE DELUJE:
   - Pogon ponovno zazenite (ZAGON.bat).
   - Windows vprasalnik "dovoli dostop" potrdite (zasebna omrezja).
   - Ce racunalnik izklopcijo, aplikacija se ustavi — to je normalno.
+
+NOVOST — KO STRANKA NE PRIDE:
+  1. Kliknite rdec gumb "Ni prisla" na terminu.
+  2. Program vam ponudi, kdo caka na termin (cekani seznam).
+  3. Na kartici ostane ZELEN WhatsApp gumb — kliknite ga in
+     stranki se odpre sporocilo za nov termin. Tako izostanek
+     pretvorite v novo rezervacijo!
+
+NOVOST — SLIKE STRANKAM:
+  1. Zavihek "Stranke" > ura (zgodovina) > kliknite sliko.
+  2. Gumb "Poslji stranki" — na telefonu gre slika naravnost
+     v WhatsApp; na racunalniku se slika prenese in odpre se
+     pogovor (sliko priložite kot prilogo).
+  3. Gumb "Prenesi" shrani sliko na disk (za objavo).

@@ -386,3 +386,24 @@ Stage Summary:
 - Popoln življenjski cikel stranke + spomin na izgled: rezervacija → obisk (formula + FOTO) → rebooking → win-back → rojstnodnevna čestitka
 - Prodajni argument: "Zenoti Photo Manager + birthday campaigns: 225–500 $/mesec, slike v njihovem oblaku. TerminAI: enkratni nakup, sline ostanejo pri vas."
 - Naslednji možni koraki: pilot pri pravem salonu, prodajni PDF, slike za stranko (deljenje pred/po prek WhatsApp), predplačniška avtorizacija ob no-show
+
+---
+Task ID: 16
+Agent: Z.ai Code (glavni agent)
+Task: Zaključek Zenoti analize — deljenje fotografij strankam + no-show recovery (zadnji 2 vrzeli po Zenoti benchmarku)
+
+Work Log:
+- NADALJEVANJE po Zenoti analizi (Task 14/15 naslednji koraki: "slike za stranko (deljenje pred/po prek WhatsApp)" + no-show vrzel iz primerjalne tabele)
+- CLIENTS-TAB (lightbox): NOV gumb "Prenesi" (JPEG na disk — objava/arhiv, download atribut) + NOV gumb "Pošlji stranki" (zelena primarna akcija, Share2 ikona): na telefonu Web Share API z datoteko (navigator.canShare({files}) — slika gre neposredno v WhatsApp/aplikacije), na računalniku povratni način (prenos + wa.me povezava s pripravljenim sporočilom "Poglejte vašo novo frizuro 💇‍♀️✨ + caption"), AbortError (preklic deljenja) tiho ignoriran; toast "Fotografija prenešena" pojasni prilogo; noga lightboxa flex-wrap + skrita besedila pod sm (ikone samo) za mobilni
+- DASHBOARD (no-show recovery): (1) toast ob "Ni prišla" zdaj doda waitlist hint ko čakalni seznam ni prazen ("N strank čaka na termin — sproščen čas lahko ponudite iz čakalnega seznama", slovenska dvojina) — kot pri odpovedi; (2) NOV WhatsApp gumb na kartici z no_show statusom: pripravljeno sporočilo "Žal vas danes nismo dočakali 💇‍♀️ Kdaj vam ustreza nov termin? Rada vas spet vidim!" (waLink + WhatsAppIcon, emerald stil kot povabi-v-čakalno-vrsto) — izostanek se pretvori v novo rezervacijo (Zenoti no-show recovery, lokalno)
+- HROŠČ UJET: tipkarska napaka v aria-label ("Ponudni" → "Ponudi") — E2E jo je razkril, popravljena
+- E2E (agent-browser): testni termin 35 min v preteklosti (status confirmed, Ana Novak) → badge "zamuja X min" se prikaže ✓ → klik "Ni prišla" → toast "stranki čakata na termin — sproščen čas lahko ponudite iz čakalnega seznama" (waitlist: Nina Zver + Karmen Vidmar) ✓ → kartica no_show + WhatsApp gumb z href wa.me/38641555123?text=Žal vas danes nismo dočakali... ✓; lightbox: Stranke → zgodovina Ane → sličica → 4 gumbi (Zapri | Prenesi | Pošlji stranki | Izbriši) ✓ → klik "Pošlji stranki" s špionom na window.open → zajet wa.me URL s telefonom 38641555123 + sporočilom s caption-om "šlosa, ki si jo želi" + toast "Fotografija prenešena" ✓ (prvi poskus brez špiona je brskalnik dejansko navigiral na api.whatsapp.com s pravilnimi parametri — dokaz, da pot deluje v praksi); "Prenesi" klik brez napak ✓; 0 konzolnih napak, 0 page error; mobilni 375 px: scrollWidth 375 (0 preliva) tudi v odprtem lightboxu
+- VLM ocene: lightbox 9/10 (zelena CTA 10/10, "jasno vidni, uredno zloženi"), no-show kartica 9/10 (elementi jasni, brez prekrivanj)
+- Testni podatki počiščeni (oba testna termina izbrisana, Ana Novak povrnjena: 09:30 confirmed); bun run lint čist; dev.log brez napak (polling GET ?since 200)
+- README (2 sekciji dopolnjeni: no-show recovery z WhatsApp spodbudo + deljenje fotografij), dist-usb NAVODILA.txt (2 novi razdelka za lastnico — ASCII), ZA-TEBE.txt (NOVOSTI build 2026-09-04)
+
+Stage Summary:
+- Zadnji 2 Zenoti vrzeli zaprti: 📤 deljenje fotografij (Web Share API na telefonu / prenos + WhatsApp na računalniku) in 🚫 no-show recovery (WhatsApp spodbuda za ponovno naročanje + waitlist hint v toastu)
+- Zenoti primerjava (225–500 $/mesec) — TerminAI pokriva celoten življenjski cikel: rezervacija → check-in → formula + foto → zaključek → rebooking → no-show recovery → win-back → rojstnodnevna čestitka
+- Prodajni argument: "Zenoti 'no-show recovery' in Photo Manager: v naročnini. TerminAI: izostanek pretvorite v novo rezervacijo z enim klikom, fotografijo pošljete stranki z enim klikom — brez naročnine."
+- Naslednji možni koraki: pilot pri pravem salonu, prodajni PDF, online faza (WhatsApp Business API)

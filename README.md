@@ -62,8 +62,9 @@
 - Ena klik **„Obnovi demo podatke“** (vpis DEMO + PIN): Studio Aura z bogato zgodovino (~40 dni, ponavljanja, izostanki)
 - Po predstavitvi sledi „Nastavi pravi salon“ — prehod na prave podatke
 
-### ⚠️ Sledenje izostankov (no-show)
-- En klik **„Ni prišla“** na pretekel termin (mesto klica odpovedi)
+### ⚠️ Sledenje izostankov (no-show) — kot Zenoti "no-show recovery"
+- En klik **„Ni prišla“** na pretekel termin (mesto klica odpovedi); če ima kdo čakalni seznam, toast ponudi **sproščen čas iz čakalne vrste**
+- Na kartici izostanka ostane **WhatsApp gumb „Ponudi nov termin“** — pripravljeno sporočilo (»Žal vas danes nismo dočakali 💇‍♀️ Kdaj vam ustreza nov termin?«) spodbudi ponovno naročanje
 - Izostanki se **samodejno štejejo pri stranki** — rdeča oznaka „2× ni prišla“ v bazi strank
 - Izostanki se ne štejejo v obiske, prihodke ali zasedenost
 
@@ -141,6 +142,7 @@
 ### 📸 Fotografije strank — lokalni »Photo Manager« (kot Zenoti, a brez oblaka)
 - Ob **zaključku obiska** dialog sprejme fotografijo **pred / po / rezultat**: pomanjša se v brskalniku (~1200 px JPEG) in shrani **lokalno v SQLite** — nikoli v oblak
 - V **zgodovini stranke** galerija sličic: en klik → povečava (velika slika se naloži šele takrat), brisanje z gumbom
+- **Deljenje s stranko:** v povečavi gumb **»Pošlji stranki«** — na telefonu se odpre sistemsko deljenje (fotografija gre neposredno v WhatsApp), na računalniku se slika prenese + odpre WhatsApp pogovor s pripravljenim sporočilom; gumb **»Prenesi«** shrani JPEG na disk (objava, arhiv)
 - Gumb **»Dodaj referenco«** — slika, ki jo prinese stranka (»šlosa, ki si jo želi«), shranjena pri njenem profilu
 - Fotografije so **osebni podatek**: GDPR izvoz vsebuje prave slike, GDPR izbris jih izbriše; varnostne kopije (VACUUM INTO) jih zajamejo samodejno
 - Zenoti za Photo Manager zaračuna 225–500 USD/mesec in slike hranijo v njihovem oblaku — TerminAI jih hrani pri vas
