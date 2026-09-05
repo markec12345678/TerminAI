@@ -183,3 +183,39 @@ NOVOST 9 — FOTOGRAFIJE IN ROJSTNI DNEVI (Zenoti Photo Manager + birthday, 0 EU
 - Rojstni dnevi: kartica vam pove, kdo ima rojstni dan (danes/jutri/
   čez 3 dni) + pripravljena WhatsApp čestitka z vabilom (-20 % v
   rojstnem mesecu). Najbolj odprto sporočilo, ki ga stranka prejme.
+
+NOVOSTI (razlicica 37):
+  - Temni nacin je ODSTRANJEN: en pomoten klik na ikono lune ga ni vec
+    mogoce zazeti (stran je vedno svetla, tudi ce ima stranka telefon
+    v temnem nacinu).
+  - Datumi in "danes" so zdaj po slovenskem casu: prej se je dan na
+    plosci preklopil ob 01:00/02:00 ponoce, termini pa so bili "prosti"
+    se uro ali dve v preteklost.
+  - iCal izvoz: Google/Apple Koledar zdaj pokaze tocno tisto uro, ki jo
+    vidi plosca (prej +1-2 uri zamika).
+  - Rezervacijski medpomnilnik: cleaning/buffer po storitvi se zdaj
+    res uposteva (prej se je lahko dve stranki rezervirali druga za
+    drugo brez premora).
+  - Zaprtje dneva/dopust: plosca zdaj opozori, ce na te dneve ze
+    obstajajo termini (ne odpre jih sam, ampak pove koliko jih je).
+  - Spomniki: oznaka "poslano" se zapomni cez ponovno odpiranje
+    (prej dvojni spomniki) + gumb "Ponastavi oznake".
+  - Popravljene vrstice za dvojino/mnozino (npr. "3 stranke cakajo"),
+    leto na potrditvi rezervacije ("7. sep", ne "7. sep 20") in
+    potrditvena besedila o SMS-u (pošiljanje je ročno prek WhatsAppa).
+
+NOVOSTI (razlicica 38) — MOTOR ZVESTOBE (pameten, ne fiksen):
+  - "Dolgo jih ni bilo" ni vec fiksno 8 tednov: vsaka stranka ima SVOJ
+    ritem (npr. vsake 4 tedne). Alarm se sprozi, ko ritem preseze —
+    Ana, ki pride na 5 tednov, se odkrije po 7 tednih, ne po 8.
+  - Nova kartica "Dolgo jih ni bilo" na nadzorni plosci (desni stolpec):
+    kdo je zamudil svoj ritem, zadnja storitev, predlagan nov termin,
+    gumb VABI (WhatsApp) in NAROI (vnos ze predizpolnjen z datumom).
+  - Pametni rebooking: ko zakljucite obisk, plosca PREDLAGA naslednji
+    termin (npr. "Sobota, 12. sep — obicajno vsak teden") glede na
+    ritem stranke in njen obicajni dan v tednu. En klik = ze izpolnjen.
+  - Ritem stranke se izracuna iz njenih obiskov (mediana razmikov),
+    padec nazaj na "ponavljajoci obisk", ce je ni dovolj podatkov.
+  - Zavihek Stranke: filter "Dolgo jih ni bilo" zdaj enako pameten.
+  - Pri prodaji: plosca pove, KOGA poklicati danes — to je delo, ki
+    ga Zenoti zaračunava kot "AI Retention Manager" (450 USD/mesec).

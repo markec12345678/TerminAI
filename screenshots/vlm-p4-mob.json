@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "Na podlagi slike (390px širine):\n\n1)  **Da**, kartice in gumbi **izgledajo uporabno**. Gumba \"Vabi\" in \"Naroči\" so dovolj veliki za prst, besedilo v karticah se prilagaja širini in ni vidnega nezaželenega preloma (besedilo je čitljivo znotraj belih okvirjev).\n2)  **Ne**, besedilo **ne uhaja** iz okvirjev. Vsebina je pravilno zavita znotraj posameznih blokov (kartic, seznamov), čeprav je na določenih mestih (npr. dolgi opisi ali napis spodaj) zelo strnjeno.\n3)  **Ocena: 8/10**. Pregleden, moderen dizajn z dobro hierarhijo in udobnim razmikom med elementi. Odštevam točko zaradi nekoliko prevelikega navpičnega prostora (dolgo listanje) in nekaterih manjših pisav pri metapodatkih.",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1788631097,
+  "id": "202609060158034ab6b3479da14bc8",
+  "model": "glm-5v-turbo",
+  "object": "chat.completion",
+  "request_id": "202609060158034ab6b3479da14bc8",
+  "usage": {
+    "completion_tokens": 276,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 5151,
+    "prompt_tokens_details": {
+      "cached_tokens": 2
+    },
+    "total_tokens": 5427
+  }
+}

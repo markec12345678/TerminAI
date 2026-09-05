@@ -56,6 +56,13 @@ function nextDates(days: number): string[] {
   return out
 }
 
+/** Datumski ključ + N dni (varno, po UTC). */
+function plusDaysKey(key: string, days: number): string {
+  const [y, m, d] = key.split('-').map(Number)
+  const t = new Date(Date.UTC(y, m - 1, d + days))
+  return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(t.getUTCDate()).padStart(2, '0')}`
+}
+
 /**
  * Ročni vnos termina — za rezervacije, ki so prišle po telefonu ali WhatsAppu.
  * Uporablja isti API kot javni rezervacijski widget (prekrivanja se preverijo).
@@ -82,8 +89,19 @@ export function ManualBookingDialog({ open, onOpenChange, date, prefill, onCreat
   useEffect(() => {
     if (!open) return
     const ds = nextDates(14)
-    setDates(ds)
     const wanted = prefill?.date ?? date
+    // Motor zvestobe: predlagani datum je lahko dlje od 14-dnevnega traka
+    // (npr. rebooking čez 5 tednov) — ga dodamo kot čip na konec, da ga
+    // lastnik VIDI izbranega, namesto da bi se tiho zavrnil.
+    if (
+      wanted &&
+      /^\d{4}-\d{2}-\d{2}$/.test(wanted) &&
+      wanted > ds[ds.length - 1] &&
+      wanted <= plusDaysKey(ds[0], 90)
+    ) {
+      ds.push(wanted)
+    }
+    setDates(ds)
     setPickedDate(wanted && ds.includes(wanted) ? wanted : ds[0])
     setServiceId(prefill?.serviceId ?? null)
     setName(prefill?.name ?? '')
@@ -122,6 +140,16 @@ export function ManualBookingDialog({ open, onOpenChange, date, prefill, onCreat
   useEffect(() => {
     if (open && serviceId && pickedDate) loadSlots(serviceId, pickedDate)
   }, [open, serviceId, pickedDate, loadSlots])
+
+  // Čip predlaganega datuma (izven 14-dnevnega traka) pomakni v vidno polje
+  useEffect(() => {
+    if (!open || !prefill?.date) return
+    const t = setTimeout(() => {
+      const el = document.querySelector('[role="radiogroup"][aria-label="Izberite dan"] button[aria-checked="true"]')
+      el?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    }, 80)
+    return () => clearTimeout(t)
+  }, [open, prefill])
   const service = useMemo(() => services.find((s) => s.id === serviceId) ?? null, [services, serviceId])
   const slot = useMemo(() => slots.find((s) => s.time === time) ?? null, [slots, time])
 

@@ -58,3 +58,6 @@ server.log
 db/custom.db
 db/backups/
 tool-results/
+
+# USB izvoz (velik, 1+ GB) — ne v git
+dist-usb/

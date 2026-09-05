@@ -25,7 +25,7 @@ import { playSound } from '@/lib/sounds'
 import { shrinkFull, shrinkThumb } from '@/lib/image-resize'
 import { ljNow } from '@/lib/ljubljana'
 import { Palette, CheckCircle2, CalendarPlus, Sparkles, RefreshCw, Camera, Trash2 } from 'lucide-react'
-import type { AppointmentDto, PhotoDto } from './types'
+import type { AppointmentDto, PhotoDto, RebookSuggestionDto } from './types'
 import { formatPrice, timeOfIso } from './types'
 
 interface Props {
@@ -35,8 +35,8 @@ interface Props {
   appointment: AppointmentDto | null
   /** Po uspešnem zaključku (parent osveži koledar/statistiko) */
   onCompleted: () => void
-  /** Odpre ročni vnos z predizpolnjeno stranko/storitvijo (rebooking) */
-  onBookNext: (a: AppointmentDto) => void
+  /** Odpre ročni vnos z predizpolnjeno stranko/storitvijo/datumom (pametni rebooking) */
+  onBookNext: (a: AppointmentDto, suggestedDate?: string | null) => void
 }
 
 const PHOTO_KINDS = [
@@ -63,6 +63,8 @@ export function CompleteDialog({ open, onOpenChange, appointment, onCompleted, o
   const [uploading, setUploading] = useState(false)
   const [removing, setRemoving] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  // Pametni predlog naslednjega termina (Motor zvestobe) — undefined = se nalaga
+  const [suggest, setSuggest] = useState<RebookSuggestionDto | null | undefined>(undefined)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -70,6 +72,7 @@ export function CompleteDialog({ open, onOpenChange, appointment, onCompleted, o
       setNote(appointment.ownerNote ?? '')
       setDone(false)
       setKind('after')
+      setSuggest(undefined)
       // Fotografije, ki so že pripete na ta obisk (npr. "pred" posneta prej)
       ownerFetch(`/api/photos?clientId=${appointment.client.id}&appointmentId=${appointment.id}`)
         .then((r) => (r.ok ? r.json() : Promise.reject()))
@@ -77,6 +80,23 @@ export function CompleteDialog({ open, onOpenChange, appointment, onCompleted, o
         .catch(() => setPhotos([]))
     }
   }, [open, appointment])
+
+  // Ko je obisk zaključen, pridobi predlog naslednjega termina (osebni ritem stranke)
+  useEffect(() => {
+    if (!done || !open || !appointment) return
+    let cancelled = false
+    ownerFetch(`/api/loyalty/rebook?appointmentId=${appointment.id}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => {
+        if (!cancelled) setSuggest(d.suggestion ?? null)
+      })
+      .catch(() => {
+        if (!cancelled) setSuggest(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [done, open, appointment])
 
   if (!appointment) return null
 
@@ -148,7 +168,7 @@ export function CompleteDialog({ open, onOpenChange, appointment, onCompleted, o
   }
 
   const bookNext = () => {
-    onBookNext(appointment)
+    onBookNext(appointment, suggest?.date ?? null)
     onOpenChange(false)
   }
 
@@ -294,6 +314,15 @@ export function CompleteDialog({ open, onOpenChange, appointment, onCompleted, o
                       ? `Prihaja ${appointment.recurWeeks === 2 ? 'vsaki 2 tedni' : `vsake ${appointment.recurWeeks} tedne`} — predlagajte podoben termin.`
                       : 'Veliko frizerk takoj dogovori naslednji termin — manj praznih lukenj.'}
                   </p>
+                  {suggest && (
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5 rounded-lg border border-primary/25 bg-primary/5 px-2.5 py-1.5 text-xs">
+                      <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" />
+                      <span>
+                        Predlagam <strong>{suggest.label}</strong>
+                        <span className="text-muted-foreground"> ({suggest.reason})</span>
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

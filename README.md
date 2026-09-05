@@ -85,10 +85,10 @@
 - Ni odvisnosti od oblaka, naročnin ali interneta
 - Zaščita lastniškega območja s PIN-kodo
 
-### 🌙 Temni način
-- Stikalo v navigacijski vrstici — **svetli/temni način** z roza/burgundy paleto, prilagojeno za temno
-- Nastavitev se **zapomni** (localStorage) in upošteva sistemsko preferenco
-- Vsi statusni znaki (potrjen/čaka/izostanek) imajo temne različice — berljivost povsod
+### 🌙 Izključno svetla znamka (temni način odstranjen)
+- TerminAI je **vedno svetel** (kremna/burgundy znamka) — temnega načina ni mogoče prižgati ne pomotoma ne s temnim OS (`forcedTheme`, razred `.dark` nikoli nanesen)
+- `color-scheme: light` na korenu — avtohteni vgradniki (datumi, poverljiva okna, scrollbars) ostanejo svetli tudi na temnih napravah
+- Prejšnja različica je imela preklop svetlo/temno; odstranjen je bil po poročilu uporabnika, da se je temni način prižgal pomotoma (en pomotoma tapnjen mesec se je trajno zapisal v localStorage)
 
 ### ✨ Animacije (Framer Motion)
 - Hero: postopni vstop besedila in **lebdeče kartice** ob strani
@@ -120,7 +120,8 @@
 
 ### 🔄 Rebooking ob zaključku (kot Zenoti »rebooking nudges«)
 - Takoj po zaključku obiska dialog ponudi **»Naroči naslednji obisk?«** — stranka je še v salonu, to je trenutek, ko reče »ja«
-- Ročni vnos se **predizpolni** z imenom, telefonom in storitvijo stranke; pri ponavljajočih obiskih tudi z intervalom
+- **Motor zvestobe predlaga datum**: »Predlagam Sobota, 12. sep (običajno vsak teden)« — po ritemu stranke (interval ponavljanja ali mediana njenih obiskov), pripet na njen običajni dan v tednu
+- Ročni vnos se **predizpolni** z imenom, telefonom, storitvijo in **predlaganim datumom**; če je ta dlje kot 14-dnevni trak dni, se trak razširi in čip sam pomakne v vidno polje
 - Veliko frizerk takoj dogovori naslednji termin → manj praznih lukenj v koledarju
 
 ### ⏳ Čakalni seznam (kot Zenoti »Automated Waitlist«)
@@ -129,10 +130,13 @@
 - Vsaka stranka na seznamu ima **gumb WhatsApp** z vnaprej izpolnjenim povabilom; »čaka X dni/tednov« pri vsaki
 - Ko dobijo termin, jih z enim klikom odstranite s seznama
 
-### 💚 »Dolgo jih ni bilo« — povabi nazaj (win-back)
-- Filter v bazi strank: **8+ tednov brez obiska in brez novega termina** → rumena oznaka »10 tednov ni bilo tu«
-- En klik **WhatsApp** z osebnim sporočilom (»Živjo Ana! Že dolgo te nismo videle pri Studio Aura …«)
-- Kot Zenoti »AI Retention Manager«, a brez naročnine in z osebnim pristopom — vračanje strank = najcenejši prihodek
+### 💚 »Dolgo jih ni bilo« — motor zvestobe (pametni win-back)
+- **Ni fiksnih 8 tednov**: vsaka stranka ima svoj ritem (mediana razmikov med njenimi obiski, padec na interval ponavljanja). Ana, ki pride na 5 tednov, se odkrije po ~7 tednih — ne šele po 8
+- Nova kartica na nadzorni plošči: kdo je zamudil svoj ritem, zadnja storitev, **predlagan nov termin** (zarolan naprej), gumb **VABI** (osebno WhatsApp sporočilo z zadnjo storitvijo) in **NAROI** (vnos že predizpolnjen z datumom)
+- Prag: 1,45× osebnega ritma (min. 4 tedne); brez vzorca 8 tednov; najprej 2 tedna „milosti“
+- Zavihek Stranke: filter »Dolgo jih ni bilo« zdaj enako pameten — oznaka pokaže njen ritem (»običajno vsake 4 tedne«)
+- API: `GET /api/loyalty` (win-back), `GET /api/loyalty/rebook?appointmentId=…` (predlog rebookinga) — oba pod PIN
+- Kot Zenoti »AI Retention Manager« (450 $/mesec), a z osebnim pristopom — vračanje strank = najcenejši prihodek
 
 ### 🏃 Walk-in — stranka je tu brez termina
 - Gumb **»Walk-in«** v glavi koledarja: izbor stranke (dopolni se po telefonu) + storitev + **prosti sloti od zdaj naprej**

@@ -71,6 +71,27 @@ export interface BirthdayDto {
   inDays: number
 }
 
+/** Win-back kandidat — stranka, ki je presegla SVOJ osebni ritem obiskov. */
+export interface WinbackDto {
+  id: string
+  name: string
+  phone: string
+  weeksSince: number
+  typicalWeeks: number | null
+  serviceId: string | null
+  lastService: string | null
+  lastVisitLabel: string
+  suggestedDate: string | null
+  suggestedLabel: string | null
+}
+
+/** Predlog naslednjega obiska (pametni rebooking ob zaključku). */
+export interface RebookSuggestionDto {
+  date: string
+  label: string
+  reason: string
+}
+
 const MONTH_SLO_FULL = [
   'januar', 'februar', 'marec', 'april', 'maj', 'junij',
   'julij', 'avgust', 'september', 'oktober', 'november', 'december',

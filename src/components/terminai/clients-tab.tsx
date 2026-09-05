@@ -64,6 +64,8 @@ interface ClientRow {
   visits: number
   noShows: number
   totalCents: number
+  /** Osebni ritem obiskov v tednih (Motor zvestobe) — null = brez vzorca. */
+  typicalWeeks: number | null
   lastVisit: string | null
   next: { at: string; service: string } | null
   favorite: string | null
@@ -101,8 +103,14 @@ function weeksSince(dateStr: string | null): number | null {
   return days < 0 ? 0 : Math.floor(days / 7)
 }
 
-/** "Dolgo jih ni bilo" — zadnji obisk 8+ tednov nazaj in ni naslednjega termina. */
+/** "Dolgo jih ni bilo" — privzeti prag (v tednih), če stranka ni ponaredila vzorca. */
 const STALE_WEEKS = 8
+
+/** Prag "dolgo je ni" za stranko: 1,45× njenega ritma (min. 4 tedne), brez vzorca 8. */
+function staleLimitWeeks(typicalWeeks: number | null): number {
+  if (!typicalWeeks) return STALE_WEEKS
+  return Math.max(4, Math.round(typicalWeeks * 1.45))
+}
 
 interface Props {
   businessName: string
@@ -170,7 +178,7 @@ export function ClientsTab({ businessName, onDataChanged }: Props) {
     load()
   }, [load])
 
-  /** Za vsako stranko: ali je "dolgo ni bilo tu" (8+ tednov, brez naslednjega termina). */
+  /** Za vsako stranko: ali je "dolgo ni bilo tu" (čez osebni ritem, brez naslednjega termina). */
   const staleMap = useMemo(() => {
     const map = new Map<string, number | null>()
     for (const c of clients) {
@@ -179,7 +187,8 @@ export function ClientsTab({ businessName, onDataChanged }: Props) {
         continue
       }
       const w = weeksSince(c.lastVisit)
-      map.set(c.id, w !== null && w >= STALE_WEEKS ? w : null)
+      const limit = staleLimitWeeks(c.typicalWeeks)
+      map.set(c.id, w !== null && w >= limit ? w : null)
     }
     return map
   }, [clients])
@@ -455,7 +464,7 @@ export function ClientsTab({ businessName, onDataChanged }: Props) {
             className={`ml-auto gap-1.5 ${staleOnly ? '' : 'border-amber-300 text-amber-700 hover:bg-amber-50 hover:text-amber-800 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-950/60'}`}
             onClick={() => setStaleOnly((v) => !v)}
             aria-pressed={staleOnly}
-            title="Stranke, ki jih je 8+ tednov ni bilo tu — povabite jih nazaj"
+            title="Stranke, ki so presegle svoj običajni ritem obiskov — povabite jih nazaj"
           >
             <Heart className="h-4 w-4" /> Dolgo jih ni bilo{staleCount > 0 ? ` (${staleCount})` : ''}
           </Button>
@@ -474,7 +483,7 @@ export function ClientsTab({ businessName, onDataChanged }: Props) {
           <p className="text-[11px] leading-snug text-muted-foreground">
             <NotebookPen className="mr-1 inline h-3 w-3 align-[-2px]" />
             {staleOnly
-              ? 'Te stranke so že 8+ tednov brez obiska in nimajo novega termina — kliknite WhatsApp in jih povabite nazaj.'
+              ? 'Te stranke so presegle svoj običajni ritem obiskov in nimajo novega termina — kliknite WhatsApp in jih povabite nazaj.'
               : 'Opombe (formule barvanja, alergije) se shranijo ob stranki — pri urejanju kliknite svinčnik. Zgodovina obiskov: ura ikona.'}
           </p>
 
@@ -491,7 +500,7 @@ export function ClientsTab({ businessName, onDataChanged }: Props) {
           ) : filtered.length === 0 ? (
             <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
               {staleOnly
-                ? 'Odlično — vse stranke so bile pri vas v zadnjih 8 tednih ali imajo nov termin.'
+                ? 'Odlično — vse stranke so bile pri vas v svojem ritmu ali imajo nov termin.'
                 : query
                   ? 'Ni zadetkov za iskanje.'
                   : 'Baza strank se bo polnila z vsako rezervacijo.'}
@@ -522,9 +531,9 @@ export function ClientsTab({ businessName, onDataChanged }: Props) {
                           <Badge
                             variant="outline"
                             className="gap-1 border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
-                            title="8+ tednov brez obiska in brez novega termina"
+                            title={c.typicalWeeks ? `Presegla svoj ritem (${c.typicalWeeks} tednov) — brez novega termina` : 'Dolgo brez obiska in brez novega termina'}
                           >
-                            <RefreshCw className="h-3 w-3" /> {staleWeeks} {staleWeeks === 2 ? 'tedna' : 'tednov'} ni bilo tu
+                            <RefreshCw className="h-3 w-3" /> {slCount(staleWeeks ?? 0, 'teden', 'tedna', 'tedni', 'tednov')} ni bilo tu
                           </Badge>
                         )}
                         {c.noShows > 0 && (

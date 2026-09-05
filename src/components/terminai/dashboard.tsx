@@ -52,6 +52,7 @@ import { CompleteDialog } from './complete-dialog'
 import { WalkInDialog } from './walk-in-dialog'
 import { WaitlistCard } from './waitlist-card'
 import { BirthdayCard } from './birthday-card'
+import { WinbackCard } from './winback-card'
 import { recurrenceLabel } from '@/lib/labels'
 import { waLink, WhatsAppIcon } from './whatsapp'
 import { copyToClipboard } from '@/lib/clipboard'
@@ -972,6 +973,8 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
 
           <RecurrenceCard refreshKey={recurrenceKey + onRefreshKey} onBookForCustomer={openManual} businessName={businessName} />
 
+          <WinbackCard refreshKey={onRefreshKey} onBookForCustomer={openManual} businessName={businessName} />
+
           <WaitlistCard businessName={businessName} onCountChange={setWaitlistCount} />
 
           <BirthdayCard businessName={businessName} />
@@ -1034,12 +1037,13 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
           // Naloži termine znova, da se formula (ownerNote) prikaže na kartici
           if (selectedDate) loadAppointments(selectedDate)
         }}
-        onBookNext={(a) => {
+        onBookNext={(a, suggestedDate) => {
           openManual({
             name: a.client.name,
             phone: a.client.phone,
             serviceId: a.service.id,
             recurWeeks: a.recurWeeks ?? null,
+            date: suggestedDate ?? undefined,
           })
         }}
       />

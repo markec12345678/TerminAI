@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { nowWallClock } from '@/lib/booking'
 import { pinAllows } from '@/lib/pin'
+import { typicalWeeksOf } from '@/lib/loyalty'
 
 /**
  * Baza strank z zgodovino — obiski, prihodki, zadnji obisk, naslednji termin.
@@ -18,7 +19,13 @@ export async function GET(req: NextRequest) {
       include: {
         appointments: {
           where: { status: { notIn: ['cancelled', 'no_show'] } },
-          include: { service: { select: { name: true } } },
+          select: {
+            startAt: true,
+            status: true,
+            priceCents: true,
+            recurWeeks: true,
+            service: { select: { name: true } },
+          },
           orderBy: { startAt: 'desc' },
         },
         _count: { select: { photos: true } },
@@ -40,6 +47,11 @@ export async function GET(req: NextRequest) {
       const totalCents = done.reduce((s, a) => s + a.priceCents, 0)
       const last = c.appointments.find((a) => a.startAt <= now) ?? null
       const next = upcoming.length > 0 ? upcoming[upcoming.length - 1] : null
+      // Motor zvestobe: osebni ritem stranke (mediana razmikov → recurWeeks)
+      const typicalWeeks = typicalWeeksOf(
+        c.appointments.filter((a) => a.startAt <= now).map((a) => a.startAt),
+        last?.recurWeeks ?? null
+      )
       return {
         id: c.id,
         name: c.name,
@@ -51,6 +63,7 @@ export async function GET(req: NextRequest) {
         visits: c.appointments.length,
         noShows: noShowMap.get(c.id) ?? 0,
         totalCents,
+        typicalWeeks,
         lastVisit: last ? last.startAt.toISOString().slice(0, 10) : null,
         next: next
           ? {

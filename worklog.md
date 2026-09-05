@@ -519,3 +519,30 @@ Stage Summary:
 - "Podobne napake" najdene z neodvisno revizijo (Explore podagent): 15+ popravkov, vsi E2E preverjeni; varnostna revizija čista
 - Deliverables: src/lib/ljubljana.ts (nova), blocksForDay (booking.ts), slCount (types.ts), ~20 datotek popravljeno, produkcija + USB + zip + ZA-TEBE posodobljeni
 - Naslednji možni koraki: P4 Motor zvestobe (win-back + rojstnodnevna sporočila + pametni rebooking — že odobren), posodobitev GitHub repozitorija (zaostanek od Taska 19), README posodobitev o odstranitvi temnega načina
+
+---
+Task ID: 38
+Agent: Z.ai Code (glavni agent)
+Task: P4 — Motor zvestobe (pametni win-back + pametni rebooking), nadaljevanje po Tasku 37 („nadaljuj")
+
+Work Log:
+- PREVERBA STANJA: Task 37 (temni način + 15 hroščev) je bil v prejšnji sesiji že DOKONČAN (worklog, deploy, USB); produkcija terminai-eight.vercel/app živi (health OK, tema „light"); worklog Taskov 20–36 manjka (rotacija datoteke) — stanje preverjeno neposredno v kodi
+- UGOTOVITEV: vsi trije „P4" stebri po imenu že obstajajo (win-back filter Task 14, rojstni dnevi Task 15, ponavljanja + rebooking nudge), a RAZPRŠENI in NEUMNI: fiksni 8-tedenski prag, rebooking brez predlaganega datuma, win-back skrit v zavihku Stranke
+- NOVA KODA src/lib/loyalty.ts (jedro motorja): medianGapDays (razmiki med obiski, 3+ obiski, 3 dni–1 leto), typicalWeeksOf (mediana → recurWeeks → null; izvožena tudi za /api/clients), staleThresholdWeeks (1,45× ritma, min. 4 tedne; brez vzorca 8), getWinbackCandidates (brez prihajajočega termina, 14-dnevna milost, predlagan datum zarolan naprej do 30 dni, razvrščeno po nujnosti, max 12), suggestNextVisit (recurWeeks → +N tednov isti dan; sicer mediana prišita na dan-v-tednu obiska; varnostna mreža: nikoli v preteklosti)
+- NOVI API-JI (obad PIN): GET /api/loyalty (winback seznam), GET /api/loyalty/rebook?appointmentId (predlog naslednjega obiska)
+- NOVA KOMPONENTA winback-card.tsx na nadzorni plošči (desni stolpec pod Ponavljajočimi obiski): „Dolgo jih ni bilo" + odznakam slCount tednov (rdeča 12+), zadnja storitev · običajno vsake X tedne · zadnji obisk, predlagan termin, gumba VABI (osebno WhatsApp sporočilo s storitvijo) + NAROI (predizpolnjen vnos); prazno stanje pozitivno; opomba „prag ni fiksni"
+- PAMETNI REBOOKING v complete-dialog.tsx: po zaključku obiska fetch /api/loyalty/rebook → vrlstica „✨ Predlagam Sobota, 12. sep (običajno vsak teden)"; gumb Naroči naslednji obisk preda datum v prefill (onBookNext dobi 2. argument)
+- POPRAVLJEN SKRITI HROŠČ (zgodnejši od P4): manual-booking-dialog je traku 14 dni TIHO VRGEL PROČ predizpolnjen datum izven traka — prizadel je tudi RecurrenceCard (nextDue 15–21 dni); sedaj se trak razširi s predlaganim čipom (do 90 dni) + scrollIntoView, da ga lastnik VIDI izbranega
+- /api/clients: + typicalWeeks v vrsticah; clients-tab staleMap uporablja staleLimitWeeks (1,45× ritma), odznakam „X tednov ni bilo tu" s title ritma, vsa besedila osvežena („presegle svoj običajni ritem")
+- DATA: scripts/seed-stale.ts (E2E pomoč) + scripts/demo-winback-example.ts: custom.db (USB/lokalno) preimenovala testno stranko v realistično Nuša Leban (Striženje — ženske, 3 obiski ~4 tedne, zadnji 10 tednov); demo-template.db (Vercel) ista stranka dodana — spletni demo sedaj pokaže kartico z živim primerom
+- DOKUMENTACIJA: README (temni način prepisan v „izključno svetla znamka", rebooking + win-back razdelki posodobljeni na pametne); usb-template/ZA-TEBE.txt sinkroniziran z dist različico (prej bi naslednji izvoz IZGUBIL opombe 37!) + NOVOSTI različica 38
+- E2E (agent-browser, lokalno + produkcija): /api/loyalty → Nuša (10 tednov, ritem 4, predlog Sobota 19. sep) ✓; /api/loyalty/rebook → recurWeeks=5 „Sobota, 10. okt (vsakih 5 tednov)" ✓; mediana poti: zaključil Anin termin → „Predlagam Sobota, 12. sep (običajno vsak teden)" → Naroči → dialog z IZBRANIM čipom SOB 12 sep ✓; winback „Naroči" za Nušo → trak razširjen, SOB 19 sep IZBRAN ✓; WhatsApp href: „Živjo Ivana! … že 10 tednov te ni bilo pri nas … Kdaj ti ustreza termin za striženje — ženske?" ✓; produkcija: tema „light" tudi po temni preferenci, Nuša + kartica vidni, 0 konzolnih napak; mobil 390 px: sw=cw=390 (0 preliva), noga na dnu dokumenta; VLM desktop 9/10, mobil 8/10; lint čist
+- SANDBOX: Turbopack panic po produkcijskem buildu (znan vzorec) → rm -rf .next + čist zagon (200); dev server dvakrat tiho umrl v sesiji → vzdrževalni restart
+- DEPLOY: sourceless rsync → /tmp/terminai-deploy (brez db/backups) → vercel deploy --prod → terminai-eight.vercel.app 200; loyalty + rebook živa na produkciji
+- USB: export-usb.sh (offline test 3456: 200 + API + 0 CDN) → dist-usb/TERMINAI (1,4 G) + TERMINAI-USB.zip (995 MB)
+
+Stage Summary:
+- Motor zvestobe P4 dokončan: win-back ni več fiksni 8-tedenski filter ampak OSEBNI ritem stranke (mediana razmikov), kartica na plošči z VABI/NAROI, rebooking ob zaključku PREDLAGA datum (ritem + običajni dan v tednu) in ga dejansko predizpolni
+- Bonus hrošč: 14-dnevni trak ročnega vnosa je tihe zavrnil predlagane/datume izven traka (prizadel tudi starejšo RecurrenceCard) — popravljen z razširitvijo traku
+- Prodajni argument: „AI Retention Manager" (Zenoti, 450 $/mesec) = 3 lokalne vrstice kode mediane
+- Naslednji možni koraki: GitHub push (zaostanek od Taska 19 — v toku), pilot pri salonu, online faza (prava baza + WhatsApp Business API)
