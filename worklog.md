@@ -546,3 +546,21 @@ Stage Summary:
 - Bonus hrošč: 14-dnevni trak ročnega vnosa je tihe zavrnil predlagane/datume izven traka (prizadel tudi starejšo RecurrenceCard) — popravljen z razširitvijo traku
 - Prodajni argument: „AI Retention Manager" (Zenoti, 450 $/mesec) = 3 lokalne vrstice kode mediane
 - Naslednji možni koraki: GitHub push (zaostanek od Taska 19 — v toku), pilot pri salonu, online faza (prava baza + WhatsApp Business API)
+
+---
+Task ID: 38 (dopolnitev)
+Agent: Z.ai Code (glavni agent)
+Task: Popravev USB izvoza + GitHub push (nadaljevanje Taska 38)
+
+Work Log:
+- USB PAKET JE BIL POKVARJEN (1,4 G): Next standalone file-tracing je v OUT/app povlekel CEL PROJEKT — vključno z gnezdenim dist-usb/TERMINAI-USB.zip (558 MB, ostanek prejšnjega izvoza!) — isto se je zgodilo že pri Tasku 37 (vzrok 1,4 G paketa)
+- export-usb.sh DOGRAJEN: po cp standalone sledi obrambno čiščenje (~25 tipov smeti: dist-usb, dev.log, screenshots, src, skripte, konfigi …); app sme vsebovati samo .next, node_modules, public, server.js, package.json (+ db, .env, custom.db)
+- dist-usb izbrisal in重建: čist paket TERMINAI 326 MB (prej 1,4 G) + offline test 200 + /api/loyalty deluje na USB (Nuša Leban) + 0 CDN odvisnosti; TERMINAI-USB.zip zdaj 148 MB (prej 995 MB!)
+- GIT: dist-usb (959 MB blobov) je bil v zgodovini → GitHub pre-receive zavrnjen (limita 100 MB/datoteko); rešitev: .gitignore + git filter-branch --index-filter na dbbd59c..HEAD (2 commita prepisana, dist-usb izbrisam iz zgodovine) → PUSH USPEšen dbbd59c..7eff9cd (Task 37 + Task 38 objavljena)
+- POZNAN PAST: filter-branch končni reset --hard je zbrisal datoteke, ki so bile trackerane v starem HEAD-u (USB bat/txt/runtime/zip) — zato ponoven export; dist-usb je od zdaj v .gitignore in se to ne more več zgoditi
+- Dev server: znana Turbopack korupcija po produkcijskem buildu → rm -rf .next + čist zagon (200, tema „light", 0 konzolnih napak)
+
+Stage Summary:
+- USB paket 4,3× manjši (326 MB / zip 148 MB) — gnezdena 558 MB smet odstranjena za vedno z obrambnim čiščenjem v export-usb.sh
+- GitHub repozitorij markec12345678/TerminAI je ZDROV (brez velikih datotek) in posodobljen do Taska 38
+- Vsa preverba zelena: lokalno 200, produkcija 200, offline USB 200, lint čist

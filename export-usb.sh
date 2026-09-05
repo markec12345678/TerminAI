@@ -27,6 +27,19 @@ mkdir -p "$OUT/app" "$OUT/runtime"
 # Standalone build vsebuje: server.js, node_modules subset, .next/static, public
 cp -r "$ROOT/.next/standalone/." "$OUT/app/"
 
+# Obramba pred smetmi: Next file-tracing včasih povleče projektne mape
+# (dist-usb z ZIPOM, dev.log, screenshots …) v standalone — jih odstranimo,
+# da na USB ne pride 800 MB odvečne vsebine. App sme vsebovati samo:
+# .next, node_modules, public, server.js, package.json (+ db, .env).
+for JUNK in dist-usb screenshots scripts src dev.log worklog.md README.md \
+            .git .env.local sales-flyer download examples mini-services \
+            db/backups prisma Caddyfile eslint.config.mjs export-usb.sh \
+            next.config.ts postcss.config.mjs tailwind.config.ts tsconfig.json \
+            components.json bun.lock skills start-dev.sh tests upload usb-template; do
+  rm -rf "$OUT/app/$JUNK"
+done
+echo "    Vsebina app/: $(ls "$OUT/app" | tr '\n' ' ')"
+
 # Baza: friskno kopijo demo baze (stranka resetira prek UI "Cist start")
 rm -f "$OUT/app/custom.db"
 cp "$ROOT/db/custom.db" "$OUT/app/custom.db"
