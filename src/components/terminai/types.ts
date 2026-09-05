@@ -69,6 +69,11 @@ export interface BirthdayDto {
   phone: string
   birthday: string
   inDays: number
+  /** "YYYY-MM-DD" prihajajoče ponovitve — ključ oznak "poslano" in predlog termina. */
+  dateKey: string
+  /** Priljubljena storitev (najpogosteje obiskana med zaključenimi) — za osebno čestitko in predizpolnjen vnos. */
+  serviceId?: string | null
+  service?: string | null
 }
 
 /** Win-back kandidat — stranka, ki je presegla SVOJ osebni ritem obiskov. */
@@ -105,6 +110,8 @@ export function formatBirthday(bd: string, full = false): string {
 }
 
 /** "5. 3." / "05-03" / "5/3" → "05-03" (null = prazno, false = neveljavno). */
+const DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
 export function parseBirthdayInput(v: string): string | null | false {
   const s = v.trim()
   if (!s) return null
@@ -112,7 +119,7 @@ export function parseBirthdayInput(v: string): string | null | false {
   if (!m) return false
   const dd = Number(m[1])
   const mm = Number(m[2])
-  if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return false
+  if (mm < 1 || mm > 12 || dd < 1 || dd > DAYS_IN_MONTH[mm - 1]) return false
   return `${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`
 }
 

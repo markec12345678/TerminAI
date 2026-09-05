@@ -219,3 +219,20 @@ NOVOSTI (razlicica 38) — MOTOR ZVESTOBE (pameten, ne fiksen):
   - Zavihek Stranke: filter "Dolgo jih ni bilo" zdaj enako pameten.
   - Pri prodaji: plosca pove, KOGA poklicati danes — to je delo, ki
     ga Zenoti zaračunava kot "AI Retention Manager" (450 USD/mesec).
+
+NOVOSTI (razlicica 39) — ROJSTNI DNEVI, PAMETNO (zakljucek motorja zvestobe):
+  - Cestitka je zdaj OSEBNA: omeni strankino najpogostejo storitev
+    (npr. "Kdaj ti ustreza termin za strizenje - zenske?") in je
+    podpisana z imenom salona.
+  - Ugodnost v cestitki je NASTAVLJIVA (zobnik na kartici): sami
+    odlocite, kaj obljubite (npr. "-20 % na obisk") — privzeto je
+    PRAZNO, tako da plosca ne obljublja popusta, ki ga ne nujete.
+  - Zascita pred dvojnimi cestitkami: klik na WhatsApp oznaci stranko
+    ("poslano") — naslednji dan takoj vidite, komu ste ze poslali.
+    Oznaka se sama resetira naslednje leto. Gumb "Ponastavi oznake".
+  - Gumb NAROI na rojstnem dnevu: vnos termina ze predizpolnjen s
+    stranko, njeno priljubljeno storitev in DNJEM rojstnega dne.
+  - Demo rojstni dnevi razporejeni cez leto (septemberski sklop za
+    zivo predstavitev + november/januar/maj, da kartica nikoli
+    ne pade prazna ob drugem letnem casu) in prazna kartica vseeno
+    pove, kdaj je naslednji rojstni dan.

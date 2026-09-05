@@ -977,7 +977,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
 
           <WaitlistCard businessName={businessName} onCountChange={setWaitlistCount} />
 
-          <BirthdayCard businessName={businessName} />
+          <BirthdayCard businessName={businessName} refreshKey={onRefreshKey} onBookForCustomer={openManual} />
 
           <ShareQrCard />
         </div>

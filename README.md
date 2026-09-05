@@ -152,10 +152,13 @@
 - Zenoti za Photo Manager zaračuna 225–500 USD/mesec in slike hranijo v njihovem oblaku — TerminAI jih hrani pri vas
 
 ### 🎂 Rojstni dnevi — čestitka z enim klikom
-- Kartica **»Rojstni dnevi«** v dashboardu: kdaj ima rojstni dan v naslednjih 14 dneh (»danes 🎉«, »jutri«, »čez 3 dni«)
-- Rojstni dan se vpiše pri stranki (**brez leta** — GDPR minimalno, samo za čestitko); sprejme »5. 3.« ali »05-03«
-- Gumb **WhatsApp** s pripravljeno čestitko in rojstnodnevnim povabilom (-20 % v rojstnem mesecu — najbolj odprto sporočilo, ki ga stranka prejme)
-- Kot Zenoti »birthday campaigns«, a osebno in brez naročnine
+- Kartica **»Rojstni dnevi«** v dashboardu: kdaj ima rojstni dan v naslednjih 14 dneh (»danes 🎉«, »jutri«, »čez 3 dni«); prazna kartica vseeno pove, kdaj je naslednji rojstni dan
+- Rojstni dan se vpiše pri stranki (**brez leta** — GDPR minimalno, samo za čestitko); sprejme »5. 3.« ali »05-03« (z mesečno preverbo veljavnosti)
+- Čestitka je **osebna**: omeni strankino najpogostejo storitev (izračunano iz obiskov) in je podpisana z imenom salona
+- **Ugodnost nastavljiva** (zobnik na kartici): npr. »−20 % na obisk« — privzeto PRAZNA, da plošča ne obljublja popusta, ki ga salon ne nudi
+- **Brez dvojnih čestitk**: klik na WhatsApp stranko označi (»poslano«), oznaka se shranjuje lokalno in se sama ponastavi naslednje leto; gumb »Ponastavi oznake«
+- Gumb **Naroči**: vnos termina predizpolnjen s stranko, njeno priljubljeno storitev in dnem rojstnega dne
+- Kot Zenoti »birthday campaigns«, a osebno, brez naročnine in brez obljub, ki jih niste odobrili
 
 ### 📄 Prodajni letak (PDF) — orodje za pilot pri salonu
 - **5 strani (A4-podobno)**: naslovnica z 3 statistikami (199 € enkrat / 0 € naročnine / 100 % pri vas) → koristi → delovni dan s TerminAIjem (časovnica 8 korakov) → primerjava s Zenoti/Fresha → cene + FAQ → temna zaključna stran s CTA
