@@ -213,3 +213,17 @@ export function durationLabel(min: number): string {
   const rest = min % 60
   return rest === 0 ? `${h} h` : `${h} h ${rest} min`
 }
+
+/**
+ * Slovensko števanje z dvojino: 1 → edina, 2 → dvojina, 3–4 → množina,
+ * 5+ → rodilnik množine. Primer: slCount(3, 'stranka', 'stranki', 'stranke', 'strank')
+ * → "3 stranke".
+ */
+export function slCount(n: number, one: string, two: string, few: string, many: string): string {
+  if (n === 1) return `1 ${one}`
+  if (n === 2) return `2 ${two}`
+  const m10 = n % 10
+  const m100 = n % 100
+  if (m10 >= 3 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return `${n} ${few}`
+  return `${n} ${many}`
+}

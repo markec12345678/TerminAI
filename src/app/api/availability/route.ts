@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { generateSlots, dayNameFull, getHoursForDayAsync, isPeak, naiveDate } from '@/lib/booking'
+import { generateSlots, dayNameFull, getHoursForDayAsync, isPeak, naiveDate, blocksForDay } from '@/lib/booking'
 import { closedDayReason } from '@/lib/holidays'
 
 export async function GET(req: NextRequest) {
@@ -23,17 +23,12 @@ export async function GET(req: NextRequest) {
         startAt: { gte: dayStart, lte: dayEnd },
         status: { notIn: ['cancelled', 'no_show'] },
       },
-      select: { startAt: true, endAt: true },
+      select: { startAt: true, endAt: true, service: { select: { bufferMin: true } } },
     })
 
     const hours = await getHoursForDayAsync(date)
     const closedReason = hours === null ? (await closedDayReason(date)) : null
-    const slots = generateSlots(
-      service,
-      date,
-      appointments.map((a) => ({ startAt: a.startAt, endAt: a.endAt })),
-      hours
-    )
+    const slots = generateSlots(service, date, blocksForDay(appointments), hours)
 
     return NextResponse.json({
       date,

@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import type { AppointmentDto, AvailabilityDto, ClosedDayDto, ServiceDto, SlotDto } from './types'
 import { dateParts, durationLabel, formatPrice, timeOfIso, cancelUrl } from './types'
+import { ljTodayKey } from '@/lib/ljubljana'
 import { copyToClipboard } from '@/lib/clipboard'
 import { playSound } from '@/lib/sounds'
 import { WhatsAppIcon, waLink, waBookingText } from './whatsapp'
@@ -69,14 +70,15 @@ export function BookingWidget({ services, businessName, businessTagline, busines
     () => ''
   )
 
-  // Se naslednjih 14 dni
+  // Se naslednjih 14 dni (od danes po ljubljanskem wall-clocku)
   useEffect(() => {
     const out: string[] = []
-    const now = new Date()
-    const base = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+    const today = ljTodayKey()
+    const [y, m, d] = today.split('-').map(Number)
+    const base = new Date(Date.UTC(y, m - 1, d))
     for (let i = 0; i < 14; i++) {
-      const d = new Date(base.getTime() + i * 1440 * 60000)
-      out.push(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`)
+      const dd = new Date(base.getTime() + i * 1440 * 60000)
+      out.push(`${dd.getUTCFullYear()}-${String(dd.getUTCMonth() + 1).padStart(2, '0')}-${String(dd.getUTCDate()).padStart(2, '0')}`)
     }
     setDates(out)
   }, [])
@@ -301,7 +303,12 @@ export function BookingWidget({ services, businessName, businessTagline, busines
                       </span>
                       <span className={`text-lg font-semibold leading-none ${closed ? 'line-through' : ''}`}>{p.dayNum}</span>
                       <span className={`text-[10px] ${selected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>{p.month}</span>
-                      {isToday && !selected && <span className="absolute" />}
+                      {isToday && !selected && (
+                        <>
+                          <span className="h-1 w-1 rounded-full bg-primary" aria-hidden="true" />
+                          <span className="sr-only">danes</span>
+                        </>
+                      )}
                     </button>
                   )
                 })}
@@ -404,7 +411,7 @@ export function BookingWidget({ services, businessName, businessTagline, busines
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="bk-phone">Telefon * <span className="text-muted-foreground font-normal">(za SMS spominik)</span></Label>
+                <Label htmlFor="bk-phone">Telefon * <span className="text-muted-foreground font-normal">(za spominik in odpoved)</span></Label>
                 <Input
                   id="bk-phone"
                   value={phone}
@@ -451,7 +458,7 @@ export function BookingWidget({ services, businessName, businessTagline, busines
               )}
             </Button>
             <p className="text-center text-[11px] text-muted-foreground">
-              Odpoved brez stroškov do 24 h pred terminom. Spominik vam pošljemo dan prej.
+              Odpoved brez stroškov do 24 h pred terminom — povezavo za odpoved dobite takoj po potrditvi.
             </p>
           </div>
         ) : confirmed ? (
@@ -472,7 +479,7 @@ export function BookingWidget({ services, businessName, businessTagline, busines
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Termin</span>
                 <span className="font-medium">
-                  {confirmed.startAt.split('T')[0].split('-').reverse().join('.').slice(0, 8)} ob {timeOfIso(confirmed.startAt)}
+                  {dateParts(confirmed.startAt.slice(0, 10)).dayName}, {dateParts(confirmed.startAt.slice(0, 10)).dayNum}. {dateParts(confirmed.startAt.slice(0, 10)).month} ob {timeOfIso(confirmed.startAt)}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -487,7 +494,7 @@ export function BookingWidget({ services, businessName, businessTagline, busines
 
             <div className="mx-auto mt-4 flex max-w-sm items-center gap-2 rounded-lg bg-primary/5 p-3 text-xs text-muted-foreground">
               <Bell className="h-4 w-4 shrink-0 text-primary" />
-              SMS spominik bo poslan na {confirmed.client.phone} dan pred terminom.
+              Vaš telefon ({confirmed.client.phone}) je zapisan ob terminu — salon vam nanj pošlje spominik pred obiskom.
             </div>
 
             {/* Odpovedna povezava — stranka lahko termin odpove sama z enim klikom */}

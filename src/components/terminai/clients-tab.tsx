@@ -49,7 +49,7 @@ import {
   Share2,
 } from 'lucide-react'
 import { shrinkFull, shrinkThumb } from '@/lib/image-resize'
-import { formatPrice, dateParts, formatBirthday, parseBirthdayInput } from './types'
+import { formatPrice, dateParts, formatBirthday, parseBirthdayInput, slCount } from './types'
 import type { PhotoDto } from './types'
 import { waLink, WhatsAppIcon } from './whatsapp'
 
@@ -106,10 +106,12 @@ const STALE_WEEKS = 8
 
 interface Props {
   businessName: string
+  /** Po izbrisu/urejanju stranke osveži tudi nadzorno ploščo (statistika + koledar). */
+  onDataChanged?: () => void
 }
 
 /** Baza strank — obiski, prihodki, opombe (formule) + GDPR izvoz/izbris + zgodovina + win-back. */
-export function ClientsTab({ businessName }: Props) {
+export function ClientsTab({ businessName, onDataChanged }: Props) {
   const [clients, setClients] = useState<ClientRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -417,10 +419,13 @@ export function ClientsTab({ businessName }: Props) {
       }
       toast({
         title: 'Stranka izbrisana',
-        description: `${deleteTarget.name} · odstranjenih terminov: ${data.removedAppointments}`,
+        description: `${deleteTarget.name} · odstranjenih ${slCount(data.removedAppointments, 'termin', 'termina', 'termini', 'terminov')}`,
       })
       setDeleteTarget(null)
       load()
+      // Statistika in dnevni koledar na plošči še kažeta stare vrednosti —
+      // izbrisani termini se namreč ne pojavijo več v polling (?since=).
+      onDataChanged?.()
     } catch {
       toast({ title: 'Napaka', description: 'Povezava ni uspela.', variant: 'destructive' })
     } finally {
@@ -437,9 +442,9 @@ export function ClientsTab({ businessName }: Props) {
             <h3 className="font-semibold">Baza strank</h3>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <span>{clients.length} strank</span>
+            <span>{slCount(clients.length, 'stranka', 'stranki', 'stranke', 'strank')}</span>
             <span>·</span>
-            <span>{totals.visits} obiskov</span>
+            <span>{slCount(totals.visits, 'obisk', 'obiska', 'obiski', 'obiskov')}</span>
             <span>·</span>
             <span className="font-semibold text-foreground">{formatPrice(totals.revenue)}</span>
           </div>
@@ -537,7 +542,7 @@ export function ClientsTab({ businessName }: Props) {
                           <Phone className="h-3 w-3" /> {c.phone}
                         </span>
                         <span className="inline-flex items-center gap-1">
-                          <CalendarDays className="h-3 w-3" /> {c.visits} obiskov
+                          <CalendarDays className="h-3 w-3" /> {slCount(c.visits, 'obisk', 'obiska', 'obiski', 'obiskov')}
                         </span>
                         <span className="inline-flex items-center gap-1">
                           <Wallet className="h-3 w-3" /> {formatPrice(c.totalCents)}
@@ -581,7 +586,7 @@ export function ClientsTab({ businessName }: Props) {
                       </div>
                       <div className="flex shrink-0 gap-1">
                         {isStale && (
-                          <Button asChild size="icon" variant="outline" className="h-8 w-8 border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-300">
+                          <Button asChild size="icon" variant="outline" className="h-10 w-10 border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-300">
                             <a
                               href={winbackLink(c)}
                               target="_blank"
@@ -596,7 +601,7 @@ export function ClientsTab({ businessName }: Props) {
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-8 w-8"
+                          className="h-10 w-10"
                           onClick={() => openHistory(c)}
                           aria-label={`Zgodovina obiskov ${c.name}`}
                           title="Zgodovina obiskov (s formulami)"
@@ -606,7 +611,7 @@ export function ClientsTab({ businessName }: Props) {
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-8 w-8"
+                          className="h-10 w-10"
                           onClick={() => openEdit(c)}
                           aria-label={`Opombe za ${c.name}`}
                           title="Opombe (formule, alergije)"
@@ -616,7 +621,7 @@ export function ClientsTab({ businessName }: Props) {
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-8 w-8"
+                          className="h-10 w-10"
                           disabled={exporting === c.id}
                           onClick={() => void exportClient(c)}
                           aria-label={`Izvozi podatke ${c.name}`}
@@ -627,7 +632,7 @@ export function ClientsTab({ businessName }: Props) {
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-950/60 dark:hover:text-red-300"
+                          className="h-10 w-10 text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-950/60 dark:hover:text-red-300"
                           onClick={() => setDeleteTarget(c)}
                           aria-label={`Izbriši ${c.name}`}
                           title="GDPR izbris — stranka in vsi njeni termini"

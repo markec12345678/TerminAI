@@ -197,8 +197,14 @@ export function composeReply(
     let text = ''
 
     if (hasServices) {
-      const lines = parsed.bookingServices.map((s) => `• ${s.name} (${durationLabel(s.durationMin)}) — ${formatPrice(s.priceCents)}`)
-      text += `Lepo povabljeni! 🌸 Seveda, rezerviramo:\n${lines.join('\n')}\nSkupaj: ${formatPrice(totalCents)}${totalMin > 0 ? ` · trajanje ca. ${durationLabel(totalMin)}` : ''}\n\n`
+      // Cene v osnutku pokažemo redne + vršne (kot v ceniku) — če bi navedli
+      // samo redne, bi stranka soboto zaračunala višjo ceno, kot ji je obljubljena.
+      const lines = parsed.bookingServices.map(
+        (s) => `• ${s.name} (${durationLabel(s.durationMin)}) — ${formatPrice(s.priceCents)}${s.peakPriceCents > s.priceCents ? ` (vršni: ${formatPrice(s.peakPriceCents)})` : ''}`
+      )
+      const peakTotal = parsed.bookingServices.reduce((acc, s) => acc + s.peakPriceCents, 0)
+      const totalNote = peakTotal > totalCents ? ` (vršni: ${formatPrice(peakTotal)})` : ''
+      text += `Lepo povabljeni! 🌸 Seveda, rezerviramo:\n${lines.join('\n')}\nSkupaj: ${formatPrice(totalCents)}${totalNote} — vršne cene veljajo ob sobotah in popoldnevih.\n${totalMin > 0 ? `Trajanje ca. ${durationLabel(totalMin)}.\n` : ''}\n`
     } else {
       text += `Lepo povabljeni! 🌸 Trenutno smo prosti takole:\n\n`
     }

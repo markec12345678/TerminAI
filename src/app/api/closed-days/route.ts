@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { todayKey } from '@/lib/booking'
+import { todayKey, naiveDate } from '@/lib/booking'
 import { ensureHolidays, upcomingDays } from '@/lib/holidays'
 import { pinAllows } from '@/lib/pin'
+
+/** Št. aktivnih terminov na zaprte dneve (opozorilo lastnici — obstoječi termini se NE odpovejo sami). */
+async function countAffected(from: string, to: string): Promise<number> {
+  return db.appointment.count({
+    where: {
+      startAt: { gte: naiveDate(from, '00:00'), lte: naiveDate(to, '23:59') },
+      status: { notIn: ['cancelled', 'no_show'] },
+    },
+  })
+}
 
 const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 
@@ -60,10 +70,10 @@ export async function POST(req: NextRequest) {
       if (existing) {
         // Dopust lahko podaljša obstoječi praznik — samo posodobi razlog
         await db.closedDay.update({ where: { date: data.date }, data: { reason: data.reason ?? existing.reason } })
-        return NextResponse.json({ ok: true, added: 0, updated: 1 })
+        return NextResponse.json({ ok: true, added: 0, updated: 1, affectedAppointments: await countAffected(data.date, data.date) })
       }
       await db.closedDay.create({ data: { date: data.date, reason: data.reason ?? null } })
-      return NextResponse.json({ ok: true, added: 1, updated: 0 })
+      return NextResponse.json({ ok: true, added: 1, updated: 0, affectedAppointments: await countAffected(data.date, data.date) })
     }
 
     if (data.action === 'add-range') {
@@ -79,7 +89,7 @@ export async function POST(req: NextRequest) {
           added++
         }
       }
-      return NextResponse.json({ ok: true, added, updated: 0 })
+      return NextResponse.json({ ok: true, added, updated: 0, affectedAppointments: await countAffected(data.from, data.to) })
     }
 
     // holidays — uvoz praznikov

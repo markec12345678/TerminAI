@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { db } from '@/lib/db'
 import { naiveDate, nowWallClock, todayKey, dateKey, addMinutes, getHoursForDayAsync } from '@/lib/booking'
+import { ljDateKeyOf } from '@/lib/ljubljana'
 import { pinAllows } from '@/lib/pin'
 
 export async function GET(req: NextRequest) {
@@ -44,21 +45,27 @@ export async function GET(req: NextRequest) {
     // Prihodki tega meseca
     const monthRevenueCents = monthAppointments.reduce((sum, a) => sum + a.priceCents, 0)
 
-    // Rezervacije zadnjih 7 dni (po dnevu)
+    // Rezervacije zadnjih 7 dni (po dnevu) — createdAt je PRAVI UTC-trenutek,
+    // zato ga razvrščamo v dneve po ljubljanskem wall-clocku (ne po naivnih
+    // oknih): rezervacija ob 00:30 po slovensko pade v pravi današnji stolpec.
+    const sinceReal = new Date(Date.now() - 8 * 86400000)
+    const created = await db.appointment.findMany({
+      where: { createdAt: { gte: sinceReal }, status: { notIn: ['cancelled', 'no_show'] } },
+      select: { createdAt: true, priceCents: true },
+    })
+    const buckets = new Map<string, { count: number; revenueCents: number }>()
+    for (const a of created) {
+      const k = ljDateKeyOf(a.createdAt)
+      const b = buckets.get(k) ?? { count: 0, revenueCents: 0 }
+      b.count++
+      b.revenueCents += a.priceCents
+      buckets.set(k, b)
+    }
     const weekAgg: { date: string; count: number; revenueCents: number }[] = []
     for (let i = 6; i >= 0; i--) {
       const dayKeyStr = dateKey(addMinutes(naiveDate(today, '00:00'), -i * 1440))
-      const ds = naiveDate(dayKeyStr, '00:00')
-      const de = naiveDate(dayKeyStr, '23:59')
-      const appts = await db.appointment.findMany({
-        where: { createdAt: { gte: ds, lte: de }, status: { notIn: ['cancelled', 'no_show'] } },
-        select: { priceCents: true },
-      })
-      weekAgg.push({
-        date: dayKeyStr,
-        count: appts.length,
-        revenueCents: appts.reduce((s, a) => s + a.priceCents, 0),
-      })
+      const b = buckets.get(dayKeyStr) ?? { count: 0, revenueCents: 0 }
+      weekAgg.push({ date: dayKeyStr, count: b.count, revenueCents: b.revenueCents })
     }
 
     // Predhodni spominki "poslani" (simulacija: vsi jutrišnji potrjeni)

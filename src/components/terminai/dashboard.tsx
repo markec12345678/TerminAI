@@ -60,6 +60,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid } from 'recharts'
 import type { AppointmentDto, StatsDto } from './types'
 import { dateParts, durationLabel, formatPrice, timeOfIso, cancelUrl } from './types'
+import { ljNow, ljTodayKey, ljTomorrowKey } from '@/lib/ljubljana'
 import { QrCode } from 'lucide-react'
 
 const STATUS_META: Record<AppointmentDto['status'], { label: string; className: string }> = {
@@ -258,11 +259,12 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
 
   useEffect(() => {
     const out: string[] = []
-    const now = new Date()
-    const base = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+    const today = ljTodayKey()
+    const [y, m, d] = today.split('-').map(Number)
+    const base = new Date(Date.UTC(y, m - 1, d))
     for (let i = 0; i < 10; i++) {
-      const d = new Date(base.getTime() + i * 1440 * 60000)
-      out.push(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`)
+      const dd = new Date(base.getTime() + i * 1440 * 60000)
+      out.push(`${dd.getUTCFullYear()}-${String(dd.getUTCMonth() + 1).padStart(2, '0')}-${String(dd.getUTCDate()).padStart(2, '0')}`)
     }
     setDates(out)
     setSelectedDate(out[0])
@@ -309,8 +311,8 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
   /** Berljiva slovenska oznaka termina za toast: "danes ob 09:30" / "pet 14. mar ob 10:00". */
   const apptLabel = useCallback((a: AppointmentDto): string => {
     const dateKey = a.startAt.slice(0, 10)
-    const todayKey = new Date().toISOString().slice(0, 10)
-    const tomorrowKey = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
+    const todayKey = ljTodayKey()
+    const tomorrowKey = ljTomorrowKey()
     const p = dateParts(dateKey)
     const dan = dateKey === todayKey ? 'danes' : dateKey === tomorrowKey ? 'jutri' : `${p.dayName} ${p.dayNum}. ${p.month}`
     return `${dan} ob ${timeOfIso(a.startAt)}`
@@ -344,6 +346,24 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                 description: `${a.client.name} — ${a.service.name}, ${apptLabel(a)}`,
               })
               relevant = true
+            } else if (
+              a.updatedAt &&
+              a.status === 'cancelled' &&
+              new Date(a.updatedAt).getTime() > new Date(since).getTime() - 5000
+            ) {
+              // Odpoved termina, ki ga plošča še ni videla (npr. bodoči termin,
+              // odpovedan prek povezave, medtem ko je plošča odprta) — brez tega
+              // bi odpoved bodočih dni ostala tiho (seenRef pozna samo izbrani dan).
+              playSound('cancel')
+              const wl = waitlistCountRef.current
+              toast({
+                title: 'Odpovedan termin',
+                description:
+                  wl > 0
+                    ? `${a.client.name} — ${a.service.name}, ${apptLabel(a)} je odpovedala stranka. ${wl} ${wl === 1 ? 'stranka čaka' : wl === 2 ? 'stranki čakata' : wl <= 4 ? 'stranke čakajo' : 'strank čaka'} na termin — morda želi kdo ta čas (Čakalni seznam).`
+                    : `${a.client.name} — ${a.service.name}, ${apptLabel(a)} je odpovedala stranka. Termin se je sprostil.`,
+              })
+              relevant = true
             }
           } else if (prev !== a.status) {
             if (ownerActionsRef.current.has(key)) {
@@ -355,7 +375,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                 title: 'Odpovedan termin',
                 description:
                   wl > 0
-                    ? `${a.client.name} — ${a.service.name}, ${apptLabel(a)} je odpovedan. ${wl} ${wl === 1 ? 'stranka čaka' : wl === 2 ? 'stranki čakata' : 'strank čaka'} na termin — morda želi kdo ta čas (Čakalni seznam).`
+                    ? `${a.client.name} — ${a.service.name}, ${apptLabel(a)} je odpovedan. ${wl} ${wl === 1 ? 'stranka čaka' : wl === 2 ? 'stranki čakata' : wl <= 4 ? 'stranke čakajo' : 'strank čaka'} na termin — morda želi kdo ta čas (Čakalni seznam).`
                     : `${a.client.name} — ${a.service.name}, ${apptLabel(a)} je odpovedan. Termin se je sprostil.`,
               })
               relevant = true
@@ -397,7 +417,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
               title: 'Zabeleženo: stranka ni prišla',
               description:
                 wl > 0
-                  ? `Izostanek se vidi pri stranki v zavihku Stranke. ${wl} ${wl === 1 ? 'stranka čaka' : wl === 2 ? 'stranki čakata' : 'strank čaka'} na termin — sproščen čas lahko ponudite iz čakalnega seznama.`
+                  ? `Izostanek se vidi pri stranki v zavihku Stranke. ${wl} ${wl === 1 ? 'stranka čaka' : wl === 2 ? 'stranki čakata' : wl <= 4 ? 'stranke čakajo' : 'strank čaka'} na termin — sproščen čas lahko ponudite iz čakalnega seznama.`
                   : 'Izostanek se vidi pri stranki v zavihku Stranke.',
             }
           : status === 'checked_in'
@@ -411,7 +431,11 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                     ? 'Termin potrjen'
                     : 'Termin odpovedan',
                 description:
-                  status === 'cancelled' ? 'Stranka je obveščena prek SMS.' : status === 'confirmed' ? 'Potrditveni SMS je poslan.' : undefined,
+                  status === 'cancelled'
+                    ? 'Stranka ni samodejno obveščena — sporočilo ji pošljite prek WhatsAppa (zavihek Sporočila).'
+                    : status === 'confirmed'
+                      ? 'Termin je potrjen. Sporočilo s potrditvijo pripravite v zavihku Sporočila.'
+                      : undefined,
               }
       )
     } catch {
@@ -697,7 +721,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
               <div className="terminai-scroll max-h-[420px] space-y-2 overflow-y-auto pr-1">
                 {filteredAppointments.map((a) => {
                   const meta = STATUS_META[a.status]
-                  const past = new Date(a.startAt) < new Date()
+                  const past = new Date(a.startAt) < ljNow()
                   return (
                     <div
                       key={a.id}
@@ -719,12 +743,12 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                           </span>
                           <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${meta.className}`}>{meta.label}</span>
                           {(a.status === 'confirmed' || a.status === 'pending') &&
-                            new Date().getTime() - new Date(a.startAt).getTime() > 15 * 60000 && (
+                            ljNow().getTime() - new Date(a.startAt).getTime() > 15 * 60000 && (
                               <span
                                 className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:border-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
                                 title="Termin se je začel pred več kot 15 minutami, stranka ni prijavljena"
                               >
-                                <CalendarClock className="h-3 w-3" /> zamuja {Math.floor((new Date().getTime() - new Date(a.startAt).getTime()) / 60000)} min
+                                <CalendarClock className="h-3 w-3" /> zamuja {Math.floor((ljNow().getTime() - new Date(a.startAt).getTime()) / 60000)} min
                               </span>
                             )}
                           {a.recurWeeks != null && (
@@ -770,7 +794,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                             <Button
                               size="icon"
                               variant="outline"
-                              className="h-8 w-8 border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-300"
+                              className="h-10 w-10 border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-300"
                               onClick={() => updateStatus(a.id, 'confirmed')}
                               disabled={busyId === a.id}
                               aria-label="Potrdi termin"
@@ -784,7 +808,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                               <Button
                                 size="icon"
                                 variant="outline"
-                                className="h-8 w-8 border-teal-200 text-teal-600 hover:bg-teal-50 hover:text-teal-700 dark:border-teal-800 dark:text-teal-400 dark:hover:bg-teal-950/60 dark:hover:text-teal-300"
+                                className="h-10 w-10 border-teal-200 text-teal-600 hover:bg-teal-50 hover:text-teal-700 dark:border-teal-800 dark:text-teal-400 dark:hover:bg-teal-950/60 dark:hover:text-teal-300"
                                 onClick={() => updateStatus(a.id, 'checked_in')}
                                 disabled={busyId === a.id}
                                 aria-label="Stranka je prišla — prijavi"
@@ -796,7 +820,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                                 <Button
                                   size="icon"
                                   variant="outline"
-                                  className="h-8 w-8"
+                                  className="h-10 w-10"
                                   onClick={() => copyCancelLink(a)}
                                   aria-label="Kopiraj odpovedno povezavo"
                                   title="Kopiraj odpovedno povezavo — pošlji stranki"
@@ -807,7 +831,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                               <Button
                                 size="icon"
                                 variant="outline"
-                                className="h-8 w-8 border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/60 dark:hover:text-red-300"
+                                className="h-10 w-10 border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/60 dark:hover:text-red-300"
                                 onClick={() => updateStatus(a.id, 'cancelled')}
                                 disabled={busyId === a.id}
                                 aria-label="Odpovej termin"
@@ -822,7 +846,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                               <Button
                                 size="icon"
                                 variant="outline"
-                                className="h-8 w-8"
+                                className="h-10 w-10"
                                 onClick={() => setCompleteTarget(a)}
                                 disabled={busyId === a.id}
                                 aria-label="Zaključi termin"
@@ -833,7 +857,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                               <Button
                                 size="icon"
                                 variant="outline"
-                                className="h-8 w-8 border-rose-200 text-rose-500 hover:bg-rose-50 hover:text-rose-600 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-950/60 dark:hover:text-rose-300"
+                                className="h-10 w-10 border-rose-200 text-rose-500 hover:bg-rose-50 hover:text-rose-600 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-950/60 dark:hover:text-rose-300"
                                 onClick={() => updateStatus(a.id, 'no_show')}
                                 disabled={busyId === a.id}
                                 aria-label="Stranka ni prišla"
@@ -844,7 +868,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                             </>
                           )}
                           {a.status === 'no_show' && (
-                            <Button asChild size="icon" variant="outline" className="h-8 w-8 border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-300">
+                            <Button asChild size="icon" variant="outline" className="h-10 w-10 border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-300">
                               <a
                                 href={waLink(
                                   a.client.phone,
@@ -863,7 +887,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
                             <Button
                               size="icon"
                               variant="outline"
-                              className="h-8 w-8"
+                              className="h-10 w-10"
                               onClick={() => setCompleteTarget(a)}
                               disabled={busyId === a.id}
                               aria-label="Zaključi termin"
@@ -963,7 +987,13 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
         </TabsContent>
 
         <TabsContent value="stranke" className="mt-4">
-          <ClientsTab businessName={businessName} />
+          <ClientsTab
+            businessName={businessName}
+            onDataChanged={() => {
+              loadStats()
+              if (selectedDateRef.current) loadAppointments(selectedDateRef.current)
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="porocila" className="mt-4">
@@ -1068,7 +1098,7 @@ export function Dashboard({ onRefreshKey, onServicesChanged, businessName }: { o
             </table>
           )}
           <div style={{ marginTop: 24, fontSize: 11, color: '#555', textAlign: 'right' }}>
-            Natisnjeno {new Date().getUTCDate()}.{new Date().getUTCMonth() + 1}.{new Date().getUTCFullYear()} · TerminAI
+            Natisnjeno {ljNow().getUTCDate()}.{ljNow().getUTCMonth() + 1}.{ljNow().getUTCFullYear()} · TerminAI
           </div>
         </div>
       </div>

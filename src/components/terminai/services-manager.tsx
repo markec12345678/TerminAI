@@ -37,7 +37,7 @@ import { useToast } from '@/hooks/use-toast'
 import { ownerFetch, setStoredPin } from '@/lib/owner-fetch'
 import { Plus, Pencil, Trash2, Scissors, RefreshCcw, Store, Clock, Flame, MapPin, Phone, Mail, Save, Building2, KeyRound, CalendarClock, CalendarX, PartyPopper, Sun, X, Upload, History } from 'lucide-react'
 import type { ServiceDto, BusinessDto, ClosedDayDto } from './types'
-import { durationLabel, formatPrice, dateParts } from './types'
+import { durationLabel, formatPrice, dateParts, slCount } from './types'
 import { Switch } from '@/components/ui/switch'
 
 const DURATIONS = [15, 30, 45, 60, 90, 120, 150, 180]
@@ -392,7 +392,13 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      toast({ title: 'Dan zaprt ✓', description: `${cdForm.date}${cdForm.reason ? ` — ${cdForm.reason}` : ''} — stranke ga ne morejo izbrati.` })
+      toast({
+        title: 'Dan zaprt ✓',
+        description:
+          (data.affectedAppointments ?? 0) > 0
+            ? `${cdForm.date}${cdForm.reason ? ` — ${cdForm.reason}` : ''} · POZOR: ${slCount(data.affectedAppointments, 'obstoječi termin', 'obstoječa termina', 'obstoječi termini', 'obstoječih terminov')} — odpovejte jih ali obvestite stranke (Sporočila → WhatsApp).`
+            : `${cdForm.date}${cdForm.reason ? ` — ${cdForm.reason}` : ''} — stranke ga ne morejo izbrati, obstoječih terminov ni.`,
+      })
       setCdForm({ date: '', reason: '' })
       loadClosedDays()
     } catch {
@@ -420,7 +426,13 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      toast({ title: 'Dopust zaprt ✓', description: `Zaprtih dni: ${data.added} — spomniki in rezervacije se prilagodijo.` })
+      toast({
+        title: 'Dopust zaprt ✓',
+        description:
+          (data.affectedAppointments ?? 0) > 0
+            ? `Zaprtih dni: ${data.added} · POZOR: ${slCount(data.affectedAppointments, 'obstoječi termin', 'obstoječa termina', 'obstoječi termini', 'obstoječih terminov')} — odpovejte jih ali obvestite stranke (Sporočila → WhatsApp).`
+            : `Zaprtih dni: ${data.added} — nove rezervacije niso več možne, obstoječih terminov ni.`,
+      })
       setVacForm({ from: '', to: '', reason: 'dopust' })
       loadClosedDays()
     } catch {
@@ -442,7 +454,7 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       toast({
-        title: data.added > 0 ? `Dodanih ${data.added} praznikov ✓` : 'Prazniki so že uvoženi',
+        title: data.added > 0 ? `${slCount(data.added, 'dodan praznik', 'dodana praznika', 'dodani prazniki', 'dodanih praznikov')} ✓` : 'Prazniki so že uvoženi',
         description: `${year} in ${year + 1} — salon teh dni ne ponuja terminov.`,
       })
       loadClosedDays()
@@ -469,7 +481,7 @@ export function ServicesManager({ refreshKey, onServicesChanged }: { refreshKey:
 
   const savePin = async () => {
     if (pinNew.length < 4) {
-      toast({ title: 'PIN je prekratki', description: 'Uporabite 4–6 števk.', variant: 'destructive' })
+      toast({ title: 'PIN je prekratek', description: 'Uporabite 4–6 števk.', variant: 'destructive' })
       return
     }
     if (pinSet && pinCurrent.length < 4) {

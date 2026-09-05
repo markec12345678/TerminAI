@@ -8,8 +8,23 @@ import { pinAllows } from '@/lib/pin'
  * Apple Koledar ali telefon. PIN zaščiten (vsebuje imena strank).
  */
 
-function icsDate(d: Date): string {
+/** Pravi UTC trenutek (DTSTAMP) — z Z priponom. */
+function icsStamp(d: Date): string {
   return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
+}
+
+/**
+ * Termin kot LEBDEČI čas (brez Z). Podatki so naivni-UTC (ljubljanski
+ * wall-clock zapisan kot UTC); če bi izpisali Z, bi Google/Apple Koledar
+ * vsak termin premaknili za 1–2 uri (počasnejši UTC). Brez Z koledar
+ * datum obravnava kot lokalni wall-clock — točno to, kar salon vidi.
+ */
+function icsFloating(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0')
+  return (
+    `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}` +
+    `T${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}`
+  )
 }
 
 /** ICS tekstne vrednosti: escape \ ; , in nove vrstice. */
@@ -54,9 +69,9 @@ export async function GET(req: NextRequest) {
     for (const a of appointments) {
       lines.push(icsLine('BEGIN', 'VEVENT'))
       lines.push(icsLine('UID', `${a.id}@terminai`))
-      lines.push(icsLine('DTSTAMP', icsDate(now)))
-      lines.push(icsLine('DTSTART', icsDate(a.startAt)))
-      lines.push(icsLine('DTEND', icsDate(a.endAt)))
+      lines.push(icsLine('DTSTAMP', icsStamp(now)))
+      lines.push(icsLine('DTSTART', icsFloating(a.startAt)))
+      lines.push(icsLine('DTEND', icsFloating(a.endAt)))
       lines.push(icsLine('SUMMARY', icsEscape(`${a.client.name} — ${a.service.name}`)))
       lines.push(
         icsLine(

@@ -27,6 +27,7 @@ import { WhatsAppIcon as WaIcon, waLink } from './whatsapp'
 import { ownerFetch } from '@/lib/owner-fetch'
 import type { ManualPrefill } from './manual-booking-dialog'
 import type { AppointmentDto } from './types'
+import { slCount } from './types'
 
 interface MessageRow {
   id: string
@@ -368,7 +369,7 @@ export function MessageInbox({ onBookForCustomer }: Props) {
             <History className="h-4 w-4 text-primary" />
             <h3 className="font-semibold">Zgodovina sporočil</h3>
           </div>
-          <span className="text-xs text-muted-foreground">{history.length} shranjenih</span>
+          <span className="text-xs text-muted-foreground">{slCount(history.length, 'shranjeno', 'shranjeni', 'shranjena', 'shranjenih')}</span>
         </CardHeader>
         <CardContent className="p-4">
           {historyLoading ? (

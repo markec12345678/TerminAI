@@ -26,21 +26,12 @@ import { playSound } from '@/lib/sounds'
 import { Footprints, Phone, Sparkles, RefreshCw, UserRound } from 'lucide-react'
 import type { AppointmentDto, AvailabilityDto, ServiceDto, SlotDto } from './types'
 import { formatPrice } from './types'
+import { ljTodayKey, ljMinutesOfDay } from '@/lib/ljubljana'
 
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
   onCreated: (appointment: AppointmentDto) => void
-}
-
-function todayKey(): string {
-  const now = new Date()
-  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`
-}
-
-function nowMinutes(): number {
-  const now = new Date()
-  return now.getUTCHours() * 60 + now.getUTCMinutes()
 }
 
 interface ClientMini {
@@ -66,9 +57,9 @@ export function WalkInDialog({ open, onOpenChange, onCreated }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const { toast } = useToast()
 
-  // Današnji datum (UTC — termini so shranjeni kot naivni UTC)
-  const date = todayKey()
-  const nowMin = nowMinutes()
+  // Današnji datum po ljubljanskem wall-clocku (termini so naivni UTC)
+  const date = ljTodayKey()
+  const nowMin = ljMinutesOfDay()
 
   useEffect(() => {
     if (!open) return
@@ -276,7 +267,11 @@ export function WalkInDialog({ open, onOpenChange, onCreated }: Props) {
               <div className="font-medium">{service.name}</div>
               <div className="mt-1 flex items-center justify-between text-muted-foreground">
                 <span>danes, od {time} naprej</span>
-                <span className="font-semibold text-primary">{formatPrice(service.priceCents)}</span>
+                {/* Cena iz izbranega slota — sobote/popoldne se obračuna vršna cena,
+                    zato mora povzetek pokazati natanko tisto, kar bo vpišano. */}
+                <span className="font-semibold text-primary">
+                  {formatPrice(slots.find((s) => s.time === time)?.priceCents ?? service.priceCents)}
+                </span>
               </div>
             </div>
           )}

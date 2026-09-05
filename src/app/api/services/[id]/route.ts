@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
+import { nowWallClock } from '@/lib/booking'
 import { pinAllows } from '@/lib/pin'
 
 const patchSchema = z.object({
@@ -56,7 +57,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const { id } = await params
 
     // Blokiraj brisanje, če obstajajo prihodnji aktivni termini te storitve
-    const now = new Date()
+    // (nowWallClock = ljubljanski wall-clock, skladno s shranjenimi termini)
+    const now = nowWallClock()
     const upcoming = await db.appointment.count({
       where: {
         serviceId: id,

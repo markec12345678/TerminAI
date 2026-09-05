@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import ZAI from 'z-ai-web-dev-sdk'
 import { db } from '@/lib/db'
-import { dayNameFull, formatPrice, getHoursForDay } from '@/lib/booking'
+import { dayNameFull, formatPrice, getBusinessHours } from '@/lib/booking'
 
 const chatSchema = z.object({
   messages: z
@@ -43,7 +43,17 @@ export async function POST(req: NextRequest) {
       )
       .join('\n')
 
-    const hoursDesc = ['ponedeljek–petek 9:00–18:00', 'sobota 9:00–13:00', 'nedelja zaprto'].join('; ')
+    // Delovni čas IZ BAZE (tudi po lastničini spremembi v modulu Delovni čas) —
+    // prej je bil hardkodiran in je Ana lažno citirala privzete ure.
+    const hoursMap = await getBusinessHours()
+    // 7. 1. 2024 je nedelja — s tem dobimo datum za vsak dan v tednu (0–6)
+    const dowDate = (i: number) => `2024-01-${String(7 + i).padStart(2, '0')}`
+    const hoursDesc = Array.from({ length: 7 }, (_, i) => {
+      const h = hoursMap.get(i)
+      if (!h) return `${dayNameFull(dowDate(i))} zaprto`
+      const premor = h.breakStart && h.breakEnd ? ` (premor ${h.breakStart}–${h.breakEnd})` : ''
+      return `${dayNameFull(dowDate(i))} ${h.open}–${h.close}${premor}`
+    }).join('; ')
 
     const systemPrompt = `Ti si Ana, prijazna recepcionarka salona ${business?.name ?? 'Studio Aura'} v Ljubljani. Odgovarjaš izključno v slovenščini, vljudno, kratko in konkretno (največ 3–4 stavke ali kratka lista).
 

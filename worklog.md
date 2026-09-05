@@ -481,3 +481,41 @@ Stage Summary:
 - Tehnično odkritje: Vercel multi-instanca dela spletni demo nezanesljiv za "testiranje" (izguba rezervacije med sejo) — dokumentirano v README kot argument ZA lokalno namestitev
 - Deliverables: DEMO-VODIK.pdf (3 strani, prodajni skript) + QR WiFi izboljšava + /api/network + gumb na strani + USB/README/ZA-TEBE dokumentacija
 - Naslednji možni koraki: pilot pri pravem salonu (vodik + letak natisnjena, USB), online faza (prava baza Postgres/Turso + WhatsApp Business API)
+---
+Task ID: 37
+Agent: Z.ai Code (glavni agent) + Explore podagent (revizija)
+Task: "Zgibal se je temni način" — popravilo + sistematični lov na podobne neopazene napake (uporabnik: "išči podobne napake, ki jih jaz še nisem zaznal")
+
+Work Log:
+- DIAGNOZA teme: navbar je imel ThemeToggle (lucide Moon/Sun) + next-themes enableSystem — en pomotoma tapnjen mesec (obil hamburgerja tudi na mobilnem) je v localStorage trajno zagnal temni način; ThemeToggle ni bil viden/najden
+- POPRAVILO TEMA: theme-provider.tsx forcedTheme="light" (povozi localStorage + sistemsko nastavitev), ThemeToggle odstranjen iz navbarja in datoteka pobrisana, globals.css: blok .dark spremenjen v mrtvega (razred nikoli ne more biti nanesen), :root dobi color-scheme: light (avtohteni vgradniki ostanejo svetli tudi ob temnem OS), @custom-variant dark obveljal (sicer bi Tailwindovi dark: modifikatorji sledili prefers-color-scheme!)
+- NEODVISNA REVIZIJA (Explore podagent, branje vseh API-jev + komponent): 15+ najdenih napak; varnost (PIN pokritost, cancel-token, Zod validacija, GDPR izvoz) ČISTA
+- POPRAVLJENE NAJDENE NAPAKE:
+  1) iCal DTSTART/DTEND z Z priponom → vsak termin v Google/Apple +1–2 uri zamaknjen: sedaj LEBDEČI časi (brez Z), DTSTAMP ostaja UTC z Z
+  2) ČASOVNA CONA (sistemsko): lib/booking.ts todayKey/nowWallClock sta jemala strežniško UTC uro namesto ljubljanskega wall-clocka → dan se je preklopil ob 01:00/02:00, sloti "prosti" še 1–2 uri v preteklost; NOVA izomorfna lib/ljubljana.ts (ljNow/ljTodayKey/ljTomorrowKey/ljMinutesOfDay/ljDateKeyOf prek Intl Europe/Ljubljana) uporabljena v: booking.ts, dashboard (danes/jutri, trak dni, "zamuja X min", noga tiskanja), waitlist-card, booking-widget (14 dni), walk-in-dialog, complete-dialog, stats week bucketi (createdAt po lj. dnevu), services/[id] delete guard, setup leto, reports currentMonthKey
+  3) POLLING tihe odpovedi: odpoved bodočega termina (prek povezave medtem, ko je plošča odprta) ni sprožila niti zvoka niti toast (seenRef pozna samo izbrani dan) → nov veja za nevidene vrstice z recent updatedAt + cancelled (zvok + toast + waitlist namig)
+  4) WALK-IN vršna cena: povzetek je kazal redno ceno, vpišala se je vršna → sedaj cena izbranega slota
+  5) BUFFER (razkuževanje) polovično uveljavljen: shranjeni endAt brez bufferja obstoječih terminov → back-to-back dvojne rezervacije; NOVA blocksForDay() v booking.ts (+buffer obstoječega termina) uporabljena na vseh 4 mestih (availability, appointments POST, messages 2×)
+  6) ZAPRTI DNEVI lažni toast ("spomniki in rezervacije se prilagodijo") → API vrača affectedAppointments, UI POZOR opozorilo s številom in nasvetom (Sporočila → WhatsApp)
+  7) AI asistent hardkodiran Studio Aura/telefon/ure → businessName/businessPhone propa + delovni čas iz baze (getBusinessHours; dowDate trik za imena dni)
+  8) GDPR izbris stranke je pustil ploščo stalo (hard-delete se ne vidi v ?since= polling) → ClientsTab onDataChanged → loadStats + loadAppointments
+  9) CancelDialog mrtvi X/Esc/overlay → onOpenChange setToken(null)
+  10) "danes" marker v traku dni stranke je bil prazen span → prava pika (bg-primary) + sr-only
+  11) SMS laži v UI: 5 napisov obljublja SMS, ki se ne pošilja → poštena WhatsApp/spominik besedila
+  12) Leto na potrditvi rezervacije oklesteno (reverse().join('.').slice(0,8) → "15.01.20") → dateParts format "pon, 7. sep ob 09:00"
+  13) WhatsApp osnutek odgovora navajal samo redne cene (sobota nato zaračunala višjo) → vršne cene v seznamu + skupaj
+  14) Tap tarče 32px → 40px (h-10 w-10) na vseh kritičnih akcijskih gumbih (dashboard koledar, waitlist, clients, birthday)
+  15) Spomniki "poslano" reset ob vsakem odpiranju → persistanca v localStorage (ključ po datumu, prune 14 dni) + "Ponastavi oznake"
+  16) Slovenske dvojine/množine: NOVA slCount() v types.ts (1/dual/3-4/5+) uporabljena v dashboard (2×), clients-tab (4×), reports-tab (2×), message-inbox, services-manager (2×), waitlist-card; tipka "prekratki"→"prekratek"
+  17) /api korenska pot "Hello, world!" → slovenski health-check (app/status/jezik)
+- E2E (agent-browser, localhost + produkcija): tema "light" pod vsemi tremi pogoji (privzeto / set media dark / localStorage theme=dark + reload; body bg kremna) + VLM 9/10; rezervacija e2e (storitev → PON 7 → 09:00 → forma → "Termin potrjen!"); DOM potrditev "pon, 7. sep ob 09:00" in poštenega besedila o spominiku; lastniška plošča: SOB 5 danes selected, nov termin viden v ponedeljek; iCal 0× Z; mobil 390px scrollW=clientW (0 preliva), noga bottom=844 (na dnu); CancelDialog se odpre, X zapre, odpoved deluje; 0 page error, 0 konzolnih napak (edino HMR/DevTools info); lint čist
+- NESTABILNOST sandboxa: dev strežnik večkrat tiho umrl + Turbopack cache panic (po produkcijskem buildu) → /tmp/ensure-server.sh vzdrževalni skript; po USB buildu rm -rf .next + čist zagon (200)
+- DEPLOY: sourceless (rsync src/public/prisma/db+config → /tmp/terminai-deploy + .vercel/project.json prj_2TjxZGmyrJbzGj6pLDxQrKN5iQIH) → vercel deploy --prod → terminai-eight.vercel.app 200, services/health/availability živi (Ponedeljek 17/17 prostih), produkcijska stran "light" tudi pod set media dark
+- USB: export-usb.sh (build, offline test 3456: 200 + API + 0 CDN odvisnosti) → dist-usb/TERMINAI (569 MB) + TERMINAI-USB.zip (586 MB) + ZA-TEBE.txt NOVOSTI 37
+
+Stage Summary:
+- Temni način je ARHITEKTURSKO nemogoč: forcedTheme + odstranjen preklop + mrtva .dark blokada — ne more se prižgati ne pomotoma ne s temnim OS
+- Največji str_hidden popravki: časovna cona (celoten sistem zdaj res deluje po ljubljanskem wall-clocku), iCal lebdeči časi, tihe odpovedi bodočih terminov, buffer double-booking, lažni SMS obljubi, oklesteno leto na potrditvi
+- "Podobne napake" najdene z neodvisno revizijo (Explore podagent): 15+ popravkov, vsi E2E preverjeni; varnostna revizija čista
+- Deliverables: src/lib/ljubljana.ts (nova), blocksForDay (booking.ts), slCount (types.ts), ~20 datotek popravljeno, produkcija + USB + zip + ZA-TEBE posodobljeni
+- Naslednji možni koraki: P4 Motor zvestobe (win-back + rojstnodnevna sporočila + pametni rebooking — že odobren), posodobitev GitHub repozitorija (zaostanek od Taska 19), README posodobitev o odstranitvi temnega načina

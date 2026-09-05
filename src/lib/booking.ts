@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto'
 import { db } from '@/lib/db'
 import { closedDayReason, ensureHolidays } from '@/lib/holidays'
+import { ljNow, ljTodayKey } from '@/lib/ljubljana'
 import type { Service } from '@prisma/client'
 
 /**
@@ -41,15 +42,14 @@ export function dateKey(d: Date): string {
   return `${y}-${m}-${dd}`
 }
 
-/** Danes v Ljubljanskem wall-clocku glede na strežniški čas. */
+/** Danes po ljubljanskem wall-clocku (ne glede na strežniški TZ). */
 export function todayKey(): string {
-  const now = new Date()
-  return dateKey(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())))
+  return ljTodayKey()
 }
 
+/** Trenutni čas kot naivni-UTC (ljubljanski wall-clock), ne glede na strežniški TZ. */
 export function nowWallClock(): Date {
-  const now = new Date()
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours(), now.getUTCMinutes()))
+  return ljNow()
 }
 
 /** "HH:mm" iz Date. */
@@ -132,6 +132,21 @@ export interface Slot {
 export interface AppointmentBlock {
   startAt: Date
   endAt: Date
+}
+
+/**
+ * Bloki zasedenosti za dan — vključijo tudi pripravo/razkuževanje (buffer)
+ * obstoječih terminov. Shranjeni endAt pokriva samo trajanje storitve;
+ * brez tega bi se dve rezervaciji lahko bile neposredno druga za drugo
+ * in bi čiščevalni zamik, ki ga lastnica nastavi, tiho izginil.
+ */
+export function blocksForDay(
+  appointments: { startAt: Date; endAt: Date; service: { bufferMin: number | null } }[]
+): AppointmentBlock[] {
+  return appointments.map((a) => ({
+    startAt: a.startAt,
+    endAt: addMinutes(a.endAt, a.service.bufferMin ?? 0),
+  }))
 }
 
 /** Zgenerira vse možne terminske lokacije za storitev na dan. Ure so lahko podane (iz baze). */

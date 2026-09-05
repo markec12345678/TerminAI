@@ -93,7 +93,7 @@ export function DemoSection() {
             </div>
             <div className="lg:col-span-2 lg:sticky lg:top-20">
               {AI_ENABLED ? (
-                <AiAssistant />
+                <AiAssistant businessName={business?.name ?? 'salon'} businessPhone={business?.phone ?? ''} />
               ) : (
                 <AiAssistantOffline
                   businessName={business?.name ?? 'salon'}

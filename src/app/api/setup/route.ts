@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { BUSINESS_SLUG, nowWallClock, seedDemo } from '@/lib/booking'
+import { BUSINESS_SLUG, nowWallClock, seedDemo, todayKey } from '@/lib/booking'
 import { ensureHolidays } from '@/lib/holidays'
 import { pinAllows } from '@/lib/pin'
 
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
     await wipeAll()
 
     // Nov salon takoj dobi slovenske praznike (tekoče + naslednje leto)
-    const year = new Date().getUTCFullYear()
+    const year = Number(todayKey().slice(0, 4))
     await ensureHolidays([year, year + 1])
 
     await db.business.create({

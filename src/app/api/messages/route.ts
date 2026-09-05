@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { BUSINESS_SLUG, generateSlots, nextDays, naiveDate, todayKey, getHoursForDayAsync } from '@/lib/booking'
+import { BUSINESS_SLUG, generateSlots, nextDays, naiveDate, todayKey, getHoursForDayAsync, blocksForDay } from '@/lib/booking'
 import { closedDayReason } from '@/lib/holidays'
 import { parseMessage, composeReply, dayLabel, type ReplyAvailability } from '@/lib/message-parser'
 import { pinAllows } from '@/lib/pin'
@@ -83,12 +83,12 @@ export async function POST(req: NextRequest) {
         const dayEnd = naiveDate(target, '23:59')
         const existing = await db.appointment.findMany({
           where: { startAt: { gte: dayStart, lte: dayEnd }, status: { notIn: ['cancelled', 'no_show'] } },
-          select: { startAt: true, endAt: true },
+          select: { startAt: true, endAt: true, service: { select: { bufferMin: true } } },
         })
         const hours = await getHoursForDayAsync(target)
         // Zaprt dan (praznik, dopust ali tedensko zaprt) — razlog za odgovor
         const closedReason = hours === null ? ((await closedDayReason(target)) ?? '') : null
-        const slots = generateSlots(svcRow, target, existing, hours)
+        const slots = generateSlots(svcRow, target, blocksForDay(existing), hours)
         const free = slots.filter((s) => s.available)
 
         // Zahtevana ura — prost/zaseden?
@@ -107,9 +107,9 @@ export async function POST(req: NextRequest) {
             const de = naiveDate(d, '23:59')
             const ex = await db.appointment.findMany({
               where: { startAt: { gte: ds, lte: de }, status: { notIn: ['cancelled', 'no_show'] } },
-              select: { startAt: true, endAt: true },
+              select: { startAt: true, endAt: true, service: { select: { bufferMin: true } } },
             })
-            const f = generateSlots(svcRow, d, ex, await getHoursForDayAsync(d)).filter((s) => s.available)
+            const f = generateSlots(svcRow, d, blocksForDay(ex), await getHoursForDayAsync(d)).filter((s) => s.available)
             if (f.length > 0) altDays.push({ dayLabel: dayLabel(d), times: f.slice(0, 2).map((s) => s.time) })
           }
         }

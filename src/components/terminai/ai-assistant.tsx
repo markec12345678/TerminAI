@@ -11,6 +11,11 @@ interface Msg {
   content: string
 }
 
+interface Props {
+  businessName: string
+  businessPhone: string
+}
+
 const SUGGESTIONS = [
   'Koliko stane barvanje?',
   'Kdaj imate proste termine v soboto?',
@@ -18,13 +23,9 @@ const SUGGESTIONS = [
   'Kako se lahko odpovem termin?',
 ]
 
-export function AiAssistant() {
-  const [messages, setMessages] = useState<Msg[]>([
-    {
-      role: 'assistant',
-      content: 'Pozdravljeni! Sem Ana, recepcionarka Studia Aura. 👋 Kako vam lahko pomagam?',
-    },
-  ])
+export function AiAssistant({ businessName, businessPhone }: Props) {
+  const greeting = `Pozdravljeni! Sem Ana, recepcionarka ${businessName}. 👋 Kako vam lahko pomagam?`
+  const [messages, setMessages] = useState<Msg[]>([{ role: 'assistant', content: greeting }])
   const [input, setInput] = useState('')
   const [thinking, setThinking] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -53,7 +54,12 @@ export function AiAssistant() {
     } catch (e) {
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: 'Oprostite, trenutno ne morem odgovoriti. Pokličite nas na +386 40 123 456.' },
+        {
+          role: 'assistant',
+          content: businessPhone
+            ? `Oprostite, trenutno ne morem odgovoriti. Pokličite nas na ${businessPhone}.`
+            : 'Oprostite, trenutno ne morem odgovoriti. Poskusite znova čez trenutek.',
+        },
       ])
       toast({ title: 'AI ni odgovoril', description: 'Poskusite znova.', variant: 'destructive' })
     } finally {
@@ -83,9 +89,7 @@ export function AiAssistant() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() =>
-              setMessages([{ role: 'assistant', content: 'Pozdravljeni! Sem Ana, recepcionarka Studia Aura. 👋 Kako vam lahko pomagam?' }])
-            }
+            onClick={() => setMessages([{ role: 'assistant', content: greeting }])}
             aria-label="Ponastavi pogovor"
             title="Ponastavi pogovor"
           >

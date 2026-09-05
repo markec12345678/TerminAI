@@ -27,7 +27,8 @@ import { ownerFetch } from '@/lib/owner-fetch'
 import { waLink, WhatsAppIcon } from './whatsapp'
 import { Hourglass, Plus, Phone, Trash2, RefreshCw, Sparkles } from 'lucide-react'
 import type { ServiceDto, WaitlistEntryDto } from './types'
-import { dateParts } from './types'
+import { dateParts, slCount } from './types'
+import { ljTodayKey } from '@/lib/ljubljana'
 
 interface Props {
   businessName: string
@@ -142,7 +143,7 @@ export function WaitlistCard({ businessName, onCountChange }: Props) {
       `Živjo ${e.name.split(' ')[0]}! Pri ${businessName} se je sprostil termin${e.service ? ` za ${e.service.name}` : ''} — če vam ustreza, vas z veseljem uvrstim. Lep pozdrav!`
     )
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = ljTodayKey()
 
   return (
     <Card className="border-border/60">
@@ -153,7 +154,7 @@ export function WaitlistCard({ businessName, onCountChange }: Props) {
         </div>
         {entries.length > 0 && (
           <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-            {entries.length} {entries.length === 1 ? 'stranka' : entries.length === 2 ? 'stranki' : 'stranke'}
+            {slCount(entries.length, 'stranka', 'stranki', 'stranke', 'strank')}
           </span>
         )}
         <Button size="sm" variant="outline" className="ml-auto gap-1.5" onClick={() => setAddOpen(true)}>
@@ -201,7 +202,7 @@ export function WaitlistCard({ businessName, onCountChange }: Props) {
                   {e.note && <div className="mt-1 line-clamp-1 text-[11px] text-muted-foreground">{e.note}</div>}
                 </div>
                 <div className="flex shrink-0 gap-1">
-                  <Button asChild size="icon" variant="outline" className="h-8 w-8 border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-300">
+                  <Button asChild size="icon" variant="outline" className="h-10 w-10 border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-300">
                     <a href={invite(e)} target="_blank" rel="noopener noreferrer" aria-label={`Povabi ${e.name} na WhatsApp`} title="Povabi na WhatsApp — sporočilo je pripravljeno">
                       <WhatsAppIcon className="h-4 w-4" />
                     </a>
@@ -209,7 +210,7 @@ export function WaitlistCard({ businessName, onCountChange }: Props) {
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-950/60 dark:hover:text-red-300"
+                    className="h-10 w-10 text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-950/60 dark:hover:text-red-300"
                     disabled={busyId === e.id}
                     onClick={() => void remove(e.id)}
                     aria-label={`Odstrani ${e.name} s seznama`}

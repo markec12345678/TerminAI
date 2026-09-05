@@ -16,6 +16,24 @@ import { ownerFetch } from '@/lib/owner-fetch'
 import { WhatsAppIcon as WaIcon, waLink } from './whatsapp'
 import type { AppointmentDto } from './types'
 import { timeOfIso, cancelUrl } from './types'
+import { ljDateKeyOf } from '@/lib/ljubljana'
+
+const SENT_PREFIX = 'terminai-reminders-sent:'
+
+/** Pobriši oznake „poslano", starejše od 14 dni — shramba naj ne raste večno. */
+function pruneOldSentKeys() {
+  try {
+    const cutoff = ljDateKeyOf(new Date(Date.now() - 14 * 86400000))
+    for (let i = window.localStorage.length - 1; i >= 0; i--) {
+      const k = window.localStorage.key(i)
+      if (k && k.startsWith(SENT_PREFIX) && k.slice(SENT_PREFIX.length) < cutoff) {
+        window.localStorage.removeItem(k)
+      }
+    }
+  } catch {
+    /* zasebni način brskalnika ipd. — ni kritično */
+  }
+}
 
 interface Props {
   open: boolean
@@ -42,20 +60,40 @@ export function RemindersDialog({ open, onOpenChange, businessName, tomorrowDate
   const [data, setData] = useState<{ date: string; appointments: AppointmentDto[] } | null>(null)
   const [sent, setSent] = useState<Set<string>>(new Set())
 
+  // Oznake „poslano" preživijo ponovno odpiranje (po datumu) — sicer bi
+  // vsako odpiranje dialoga ponudilo spomnike znova in stranke dobile dvojna
+  // sporočila.
+  const loadSent = (dateStr: string): Set<string> => {
+    try {
+      const raw = window.localStorage.getItem(SENT_PREFIX + dateStr)
+      return new Set(raw ? (JSON.parse(raw) as string[]) : [])
+    } catch {
+      return new Set()
+    }
+  }
+  const persistSent = (next: Set<string>, dateStr: string) => {
+    try {
+      window.localStorage.setItem(SENT_PREFIX + dateStr, JSON.stringify([...next]))
+    } catch {
+      /* ne kritično */
+    }
+  }
+
   useEffect(() => {
     if (!open || !tomorrowDate) return
+    pruneOldSentKeys()
     let cancelled = false
     ownerFetch(`/api/appointments?date=${tomorrowDate}`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((d) => {
         if (cancelled) return
         setData({ date: tomorrowDate, appointments: d.appointments })
-        setSent(new Set())
+        setSent(loadSent(tomorrowDate))
       })
       .catch(() => {
         if (cancelled) return
         setData({ date: tomorrowDate, appointments: [] })
-        setSent(new Set())
+        setSent(loadSent(tomorrowDate))
       })
     return () => {
       cancelled = true
@@ -117,7 +155,13 @@ export function RemindersDialog({ open, onOpenChange, businessName, tomorrowDate
                         href={waLink(a.client.phone, reminderText(businessName, a))}
                         target="_blank"
                         rel="noopener noreferrer"
-                        onClick={() => setSent((s) => new Set(s).add(a.id))}
+                        onClick={() => {
+                          setSent((s) => {
+                            const next = new Set(s).add(a.id)
+                            if (tomorrowDate) persistSent(next, tomorrowDate)
+                            return next
+                          })
+                        }}
                       >
                         <WaIcon className="h-3.5 w-3.5" /> Pošlji
                       </a>
@@ -129,7 +173,24 @@ export function RemindersDialog({ open, onOpenChange, businessName, tomorrowDate
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="gap-2">
+          {sent.size > 0 && tomorrowDate && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mr-auto text-muted-foreground"
+              onClick={() => {
+                setSent(new Set())
+                try {
+                  window.localStorage.removeItem(SENT_PREFIX + tomorrowDate)
+                } catch {
+                  /* ne kritično */
+                }
+              }}
+            >
+              Ponastavi oznake
+            </Button>
+          )}
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Zapri
           </Button>

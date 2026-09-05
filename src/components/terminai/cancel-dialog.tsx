@@ -83,7 +83,13 @@ export function CancelDialog() {
   const dp = info ? dateParts(info.startAt.slice(0, 10)) : null
 
   return (
-    <Dialog open={open}>
+    <Dialog
+      open={open}
+      // X / Esc / klik mimo naj res zapreta dialog — prej so bile mrtve kontrole.
+      onOpenChange={(o) => {
+        if (!o) setToken(null)
+      }}
+    >
       <DialogContent className="sm:max-w-sm">
         {phase === 'cancelled' ? (
           <>

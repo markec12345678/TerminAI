@@ -136,7 +136,7 @@ export function BirthdayCard({ businessName }: Props) {
                   asChild
                   size="icon"
                   variant="outline"
-                  className="h-8 w-8 shrink-0 border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-300"
+                  className="h-10 w-10 shrink-0 border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-300"
                 >
                   <a
                     href={greet(b)}

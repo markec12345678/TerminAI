@@ -21,12 +21,14 @@ import {
   FileSpreadsheet,
 } from 'lucide-react'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid } from 'recharts'
+import { ljTodayKey } from '@/lib/ljubljana'
 import type { ReportDto } from './types'
-import { formatPrice } from './types'
+import { formatPrice, slCount } from './types'
 
 function currentMonthKey(): string {
-  const now = new Date()
-  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
+  // Mesec po ljubljanskem wall-clocku (ne po UTC — sicer bi se ob koncu
+  // meseca ponoči poročila odprla napačen mesec)
+  return ljTodayKey().slice(0, 7)
 }
 
 function shiftMonth(month: string, delta: number): string {
@@ -208,14 +210,14 @@ export function ReportsTab({ businessName }: { businessName: string }) {
               icon={<Wallet className="h-5 w-5" />}
               label="Realizirano"
               value={formatPrice(report.realizedRevenueCents)}
-              sub={`${report.realizedVisits} zaključenih obiskov`}
+              sub={slCount(report.realizedVisits, 'zaključen obisk', 'zaključena obiska', 'zaključeni obiski', 'zaključenih obiskov')}
               accent="primary"
             />
             <KpiCard
               icon={<CalendarCheck className="h-5 w-5" />}
               label="Pričakovano še"
               value={formatPrice(report.expectedRevenueCents)}
-              sub={`${report.expectedVisits} odprtih terminov`}
+              sub={slCount(report.expectedVisits, 'odprt termin', 'odprta termina', 'odprti termini', 'odprtih terminov')}
               accent="emerald"
             />
             <KpiCard

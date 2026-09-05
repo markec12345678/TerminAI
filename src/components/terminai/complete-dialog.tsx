@@ -23,6 +23,7 @@ import { useToast } from '@/hooks/use-toast'
 import { ownerFetch } from '@/lib/owner-fetch'
 import { playSound } from '@/lib/sounds'
 import { shrinkFull, shrinkThumb } from '@/lib/image-resize'
+import { ljNow } from '@/lib/ljubljana'
 import { Palette, CheckCircle2, CalendarPlus, Sparkles, RefreshCw, Camera, Trash2 } from 'lucide-react'
 import type { AppointmentDto, PhotoDto } from './types'
 import { formatPrice, timeOfIso } from './types'
@@ -164,7 +165,7 @@ export function CompleteDialog({ open, onOpenChange, appointment, onCompleted, o
               </DialogTitle>
               <DialogDescription>
                 {appointment.client.name} — {appointment.service.name} ({formatPrice(appointment.priceCents)})
-                {apptDate.getTime() < Date.now() && ` · ${timeOfIso(appointment.startAt)}`}
+                {apptDate.getTime() < ljNow().getTime() && ` · ${timeOfIso(appointment.startAt)}`}
               </DialogDescription>
             </DialogHeader>
 

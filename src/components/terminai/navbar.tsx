@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Scissors, Menu, X, Sparkles } from 'lucide-react'
-import { ThemeToggle } from '@/components/theme-toggle'
 
 const LINKS = [
   { href: '#demo', label: 'Živi demo' },
@@ -40,7 +39,6 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <ThemeToggle />
           <Button asChild className="hidden gap-1.5 sm:inline-flex">
             <a href="#demo">
               <Sparkles className="h-4 w-4" /> Preizkusi demo
